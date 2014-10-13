@@ -120,10 +120,26 @@ module Rscons
 
     # Add a {Builder} object to the Environment.
     #
-    # @param builder [Builder] The {Builder} object to add.
+    # @overload add_builder(builder)
+    #   Registers a builder with the environment
+    #   @param builder [Builder] An instance of the builder to register.
+    #
+    # @overload add_builder(builder,&action)
+    #   Register a new {Builders::SimpleBuilder} with the environment.
+    #
+    #   @param builder [String,Symbol]
+    #     The name of the builder to add.
+    #
+    #   @param action [Block]
+    #     A block that will be called when the builder is executed to generate
+    #     a target file. The provided block should have the same prototype as
+    #     {Rscons::Builder#run}
     #
     # @return [void]
-    def add_builder(builder)
+    def add_builder(builder, &action)
+      if not builder.is_a? Rscons::Builder
+        builder = Rscons::Builders::SimpleBuilder.new(builder, &action)
+      end
       @builders[builder.name] = builder
       var_defs = builder.default_variables(self)
       if var_defs

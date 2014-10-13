@@ -249,6 +249,27 @@ describe Rscons do
     ]
   end
 
+  it 'supports simple builders' do
+    test_dir('json_to_yaml')
+    Rscons::Environment.new do |env|
+      require 'json'
+      require 'yaml'
+      env.add_builder(:JsonToYaml) do |target, sources, cache, env, vars|
+        unless cache.up_to_date?(target, :JsonToYaml, sources, env)
+          cache.mkdir_p(File.dirname(target))
+          File.open(target, 'w') do |f|
+            f.write(YAML.dump(JSON.load(IO.read(sources.first))))
+          end
+          cache.register_build(target, :JsonToYaml, sources, env)
+        end
+        target
+      end
+      env.JsonToYaml('foo.yml','foo.json')
+    end
+    expect(File.exists?('foo.yml')).to be_truthy
+    expect(IO.read('foo.yml')).to eq("---\nkey: value\n")
+  end
+
   it 'cleans built files' do
     test_dir('build_dir')
     Rscons::Environment.new do |env|

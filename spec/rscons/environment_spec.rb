@@ -72,6 +72,13 @@ module Rscons
         env.add_builder(Rscons::Builders::Object.new)
         expect(env.builders.keys).to eq ["Object"]
       end
+
+      it "adds a new simple builder to the list of builders" do
+        env = Environment.new(exclude_builders: true)
+        expect(env.builders.keys).to eq []
+        env.add_builder(:Foo) {}
+        expect(env.builders.keys).to eq ["Foo"]
+      end
     end
 
     describe "#get_build_fname" do
