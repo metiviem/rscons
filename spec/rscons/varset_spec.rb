@@ -1,5 +1,6 @@
 module Rscons
   describe VarSet do
+
     describe '#initialize' do
       it "initializes variables from a Hash" do
         v = VarSet.new({"one" => 1, "two" => :two})
@@ -168,5 +169,35 @@ module Rscons
         expect { v.expand_varref("${bad}", :lambda_args) }.to raise_error /I do not know how to expand a variable reference to a Hash/
       end
     end
+
+    describe "#to_h" do
+      it "returns a Hash of all variables in the VarSet" do
+        v = VarSet.new({"fuz" => "a string", "foo" => 42, "bar" => :baz,
+                        "qax" => [3, 6], "qux" => {a: :b}})
+        v2 = v.merge("baz" => "qux", "qax" => [4, 7])
+        v3 = v2.merge("fuz" => nil)
+        v4 = v3.clone
+        v4["fuz"] = :fuzzy
+        v4["foo"] = 43
+        expect(v.to_h).to eq({
+          "fuz" => "a string", "foo" => 42, "bar" => :baz,
+          "qax" => [3, 6], "qux" => {a: :b},
+        })
+        expect(v2.to_h).to eq({
+          "fuz" => "a string", "foo" => 42, "bar" => :baz,
+          "qax" => [4, 7], "qux" => {a: :b}, "baz" => "qux",
+        })
+        expect(v3.to_h).to eq({
+          "fuz" => nil, "foo" => 42, "bar" => :baz,
+          "qax" => [4, 7], "qux" => {a: :b}, "baz" => "qux",
+        })
+        expect(v4.to_h).to eq({
+          "fuz" => :fuzzy, "foo" => 43, "bar" => :baz,
+          "qax" => [4, 7], "qux" => {a: :b}, "baz" => "qux",
+        })
+        expect(VarSet.new.to_h).to eq({})
+      end
+    end
+
   end
 end

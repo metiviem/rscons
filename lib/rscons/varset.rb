@@ -121,6 +121,26 @@ module Rscons
       end
     end
 
+    # Return a Hash containing all variables in the VarSet.
+    #
+    # @since 1.8.0
+    #
+    # This method is not terribly efficient. It is intended to be used only by
+    # debugging code to dump out a VarSet's variables.
+    #
+    # @return [Hash] All variables in the VarSet.
+    def to_h
+      result = deep_dup(@my_vars)
+      @coa_vars.reduce(result) do |result, coa_vars|
+        coa_vars.each_pair do |key, value|
+          unless result.include?(key)
+            result[key] = deep_dup(value)
+          end
+        end
+        result
+      end
+    end
+
     private
 
     # Move all VarSet variables into the copy-on-access list.
