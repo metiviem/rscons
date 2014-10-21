@@ -58,7 +58,7 @@ module Rscons
     #
     # @param values [VarSet, Hash] New set of variables.
     #
-    # @return [self]
+    # @return [VarSet] Returns self.
     def append(values)
       coa!
       if values.is_a?(VarSet)

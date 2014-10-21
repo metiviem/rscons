@@ -33,6 +33,8 @@ module Rscons
   class BuildError < RuntimeError; end
 
   # Remove all generated files.
+  #
+  # @return [void]
   def self.clean
     cache = Cache.instance
     # remove all built files
@@ -121,6 +123,8 @@ module Rscons
   # Set the command executer array.
   #
   # @param val [Array<String>] Command used to execute commands.
+  #
+  # @return [Array<String>] Command used to execute commands.
   def self.command_executer=(val)
     @@command_executer = val
   end

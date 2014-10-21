@@ -62,7 +62,7 @@ module Rscons
       # file name from a given source file name.
       #
       # @param target [String] The target file name.
-      # @param source [String, Array] The source file name(s).
+      # @param source [String] The source file name.
       # @param env [Environment] The Environment.
       #
       # @return [Boolean]

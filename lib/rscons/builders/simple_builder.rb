@@ -2,8 +2,10 @@ module Rscons
   module Builders
     # A Generic builder class whose name and operation is defined at
     # instantiation.
+    #
+    # @since 1.8.0
     class SimpleBuilder < Builder
-      # The name of this builder when registered in an environment
+      # @return [String] The name of this builder.
       attr_reader :name
 
       # Create a new builder with the given name and action.

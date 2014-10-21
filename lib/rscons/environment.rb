@@ -10,7 +10,7 @@ module Rscons
     # @return [Hash] Set of !{"builder_name" => builder_object} pairs.
     attr_reader :builders
 
-    # :command, :short, or :off
+    # @return [Symbol] :command, :short, or :off
     attr_accessor :echo
 
     # @return [String, nil] The build root.
@@ -79,7 +79,7 @@ module Rscons
     #
     # Any options that #initialize receives can also be specified here.
     #
-    # @return a new {Environment} object.
+    # @return [Environment] The newly created {Environment} object.
     def clone(options = {})
       clone = options[:clone] || Set[:variables, :builders]
       clone = Set[:variables, :builders, :build_root, :build_dirs, :build_hooks] if clone == :all
@@ -121,11 +121,17 @@ module Rscons
     # Add a {Builder} object to the Environment.
     #
     # @overload add_builder(builder)
-    #   Registers a builder with the environment
+    #
+    #   Add the given builder to the Environment.
+    #
     #   @param builder [Builder] An instance of the builder to register.
     #
     # @overload add_builder(builder,&action)
-    #   Register a new {Builders::SimpleBuilder} with the environment.
+    #
+    #   Create a new {Builders::SimpleBuilder} instance and add it to the
+    #   environment.
+    #
+    #   @since 1.8.0
     #
     #   @param builder [String,Symbol]
     #     The name of the builder to add.
@@ -133,7 +139,7 @@ module Rscons
     #   @param action [Block]
     #     A block that will be called when the builder is executed to generate
     #     a target file. The provided block should have the same prototype as
-    #     {Rscons::Builder#run}
+    #     {Rscons::Builder#run}.
     #
     # @return [void]
     def add_builder(builder, &action)
@@ -200,8 +206,13 @@ module Rscons
     #
     # Source files from src_dir will produce object files under obj_dir.
     #
-    # @param src_dir [String, Regexp] Path to the source directory.
-    # @param obj_dir [String] Path to the object directory.
+    # @param src_dir [String, Regexp]
+    #   Path to the source directory. If a Regexp is given, it will be matched
+    #   to source file names.
+    # @param obj_dir [String]
+    #   Path to the object directory. If a Regexp is given as src_dir, then
+    #   obj_dir can contain backreferences to groups matched from the source
+    #   file name.
     #
     # @return [void]
     def build_dir(src_dir, obj_dir)
@@ -239,25 +250,27 @@ module Rscons
       build_fname
     end
 
-    # Access a construction variable or environment option.
+    # Get a construction variable's value.
     #
     # @see VarSet#[]
     def [](*args)
       @varset.send(:[], *args)
     end
 
-    # Set a construction variable or environment option.
+    # Set a construction variable's value.
     #
     # @see VarSet#[]=
     def []=(*args)
       @varset.send(:[]=, *args)
     end
 
-    # Add a set of construction variables or environment options.
+    # Add a set of construction variables to the Environment.
     #
-    # @see VarSet#append
-    def append(*args)
-      @varset.append(*args)
+    # @param values [VarSet, Hash] New set of variables.
+    #
+    # @return [void]
+    def append(values)
+      @varset.append(values)
     end
 
     # Build all build targets specified in the Environment.
@@ -303,6 +316,8 @@ module Rscons
     end
 
     # Clear all targets registered for the Environment.
+    #
+    # @return [void]
     def clear_targets
       @targets = {}
     end
@@ -426,8 +441,9 @@ module Rscons
     #
     # This method is used internally by Rscons builders.
     #
-    # @param sources [Array] List of source files to build.
-    # @param suffixes [Array] List of suffixes to try to convert source files into.
+    # @param sources [Array<String>] List of source files to build.
+    # @param suffixes [Array<String>]
+    #   List of suffixes to try to convert source files into.
     # @param cache [Cache] The Cache.
     # @param vars [Hash] Extra variables to pass to the builder.
     #
@@ -456,7 +472,7 @@ module Rscons
     #
     # @param builder [Builder] The Builder to use.
     # @param target [String] The target output file.
-    # @param sources [Array] List of source files.
+    # @param sources [Array<String>] List of source files.
     # @param cache [Cache] The Cache.
     # @param vars [Hash] Extra variables to pass to the builder.
     #
@@ -522,10 +538,10 @@ module Rscons
     # Parse command-line flags for compilation/linking options into separate
     # construction variables.
     #
-    # The parsed construction variables are returned in a Hash instead of
-    # merging them directly to the Environment. They can be merged with
-    # {#merge_flags}. The {#parse_flags!} version immediately merges the parsed
-    # flags as well.
+    # For {#parse_flags}, the parsed construction variables are returned in a
+    # Hash instead of merging them directly to the Environment. They can be
+    # merged with {#merge_flags}. The {#parse_flags!} version immediately
+    # merges the parsed flags as well.
     #
     # Example:
     #   # Import FreeType build options

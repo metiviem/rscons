@@ -63,17 +63,23 @@ module Rscons
     end
 
     # Remove the cache file.
+    #
+    # @return [void]
     def clear
       FileUtils.rm_f(CACHE_FILE)
       initialize!
     end
 
     # Clear the cached file checksums.
+    #
+    # @return [void]
     def clear_checksum_cache!
       @lookup_checksums = {}
     end
 
     # Write the cache to disk to be loaded next time.
+    #
+    # @return [void]
     def write
       if @dirty || (@cache["version"] != VERSION)
         @cache["version"] = VERSION
@@ -86,9 +92,14 @@ module Rscons
 
     # Check if target(s) are up to date.
     #
-    # @param targets [String, Array] The name(s) of the target file(s).
-    # @param command [String, Array] The command used to build the target.
-    # @param deps [Array] List of the target's dependency files.
+    # @param targets [String, Array<String>] The name(s) of the target file(s).
+    # @param command [String, Array, Hash]
+    #   The command used to build the target. The command parameter can
+    #   actually be a String, Array, or Hash and could contain information
+    #   other than just the actual command used to build the target. For the
+    #   purposes of the Cache, any difference in the command argument will
+    #   trigger a rebuild.
+    # @param deps [Array<String>] List of the target's dependency files.
     # @param env [Environment] The Rscons::Environment.
     # @param options [Hash] Optional options.
     # @option options [Boolean] :strict_deps
@@ -148,9 +159,14 @@ module Rscons
 
     # Store cache information about target(s) built by a builder.
     #
-    # @param targets [String, Array] The name of the target(s) built.
-    # @param command [String, Array] The command used to build the target.
-    # @param deps [Array] List of dependencies for the target.
+    # @param targets [String, Array<String>] The name of the target(s) built.
+    # @param command [String, Array, Hash]
+    #   The command used to build the target. The command parameter can
+    #   actually be a String, Array, or Hash and could contain information
+    #   other than just the actual command used to build the target. For the
+    #   purposes of the Cache, any difference in the command argument will
+    #   trigger a rebuild.
+    # @param deps [Array<String>] List of dependencies for the target.
     # @param env [Environment] The {Rscons::Environment}.
     #
     # @return [void]

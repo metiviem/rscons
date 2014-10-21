@@ -3,9 +3,11 @@ module Rscons
     # Execute a command that will produce the given target based on the given
     # sources.
     #
-    # Example::
+    # @since 1.8.0
+    #
+    # Example:
     #   env.Command("docs.html", "docs.md",
-    #       CMD => ['pandoc', '-fmarkdown', '-thtml', '-o${_TARGET}', '${_SOURCES}'])
+    #               CMD => %w[pandoc -fmarkdown -thtml -o${_TARGET} ${_SOURCES}])
     class Command < Builder
       # Run the builder to produce a build target.
       #

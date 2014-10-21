@@ -9,6 +9,8 @@ module Rscons
     # Return the name of the builder.
     #
     # If not overridden this defaults to the last component of the class name.
+    #
+    # @return [String] The name of the builder.
     def name
       self.class.name.split(":").last
     end
@@ -44,7 +46,7 @@ module Rscons
     # file name from a given source file name.
     #
     # @param target [String] The target file name.
-    # @param source [String, Array] The source file name(s).
+    # @param source [String] The source file name.
     # @param env [Environment] The Environment.
     #
     # @return [Boolean]
