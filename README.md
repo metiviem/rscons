@@ -383,6 +383,14 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
+### v1.8.0
+
+- new Command builder to execute arbitrary user commands
+- new SimpleBuilder class
+  - create new builders quickly by passing a block to Environment#add_builder
+- improved YARD documentation
+- add Environment#dump to debug Environment construction variables
+
 ### v1.7.0
 
 - allow build hooks to register new build targets
