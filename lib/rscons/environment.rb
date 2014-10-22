@@ -662,8 +662,10 @@ module Rscons
 
     # Print the Environment's construction variables for debugging.
     def dump
-      @varset.to_h.sort.each do |var, val|
-        puts "#{var} => #{val.inspect}"
+      varset_hash = @varset.to_h
+      varset_hash.keys.sort_by(&:to_s).each do |var|
+        var_str = var.is_a?(Symbol) ? var.inspect : var
+        puts "#{var_str} => #{varset_hash[var].inspect}"
       end
     end
 

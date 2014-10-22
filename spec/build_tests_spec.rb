@@ -725,9 +725,11 @@ EOF
     test_dir("simple")
     env = Rscons::Environment.new do |env|
       env["CFLAGS"] += %w[-O2 -fomit-frame-pointer]
+      env[:foo] = :bar
     end
     env.dump
     result = lines
+    expect(result.include?(%{:foo => :bar})).to be_truthy
     expect(result.include?(%{CFLAGS => ["-O2", "-fomit-frame-pointer"]})).to be_truthy
     expect(result.include?(%{CPPPATH => []})).to be_truthy
   end
