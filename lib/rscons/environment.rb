@@ -660,6 +660,13 @@ module Rscons
       end
     end
 
+    # Print the Environment's construction variables for debugging.
+    def dump
+      @varset.to_h.sort.each do |var, val|
+        puts "#{var} => #{val.inspect}"
+      end
+    end
+
     private
 
     # Expand target and source paths before invoking builders.
