@@ -383,6 +383,10 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
+### v1.9.0
+
+- fix Rscons.set_suffix to append the given suffix if the filename has none
+
 ### v1.8.1
 
 - fix Environment#dump when construction variables are symbols

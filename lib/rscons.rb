@@ -67,7 +67,7 @@ module Rscons
   #
   # @return [String] New path.
   def self.set_suffix(path, suffix)
-    path.sub(/\.[^.]*$/, suffix)
+    path.sub(/\.[^.]*$/, "") + suffix
   end
 
   # Return the system shell and arguments for executing a shell command.
