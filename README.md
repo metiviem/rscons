@@ -249,10 +249,10 @@ you can use the `exclude_builders` key to the Environment constructor.
 #### Command
 
 ```ruby
-env.Command(target, sources, 'CMD' => command)
+env.Command(target, sources, "CMD" => command)
 # Example
 env.Command("docs.html", "docs.md",
-    CMD => ['pandoc', '-fmarkdown', '-thtml', '-o${_TARGET}', '${_SOURCES}'])
+    "CMD" => ["pandoc", "-fmarkdown", "-thtml", "-o${_TARGET}", "${_SOURCES}"])
 ```
 
 The command builder executes a user-defined command in order to produce the
