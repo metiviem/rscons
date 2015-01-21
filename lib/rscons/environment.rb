@@ -696,7 +696,8 @@ module Rscons
     # This method is used internally by Rscons builders.
     #
     # @param mf_fname [String] File name of the Makefile to read.
-    # @param target [String] Name of the target to gather dependencies for.
+    # @param target [String, nil]
+    #   Name of the target to gather dependencies for, nil for any/all.
     #
     # @return [Array<String>] Paths of dependency files.
     def self.parse_makefile_deps(mf_fname, target)
@@ -709,7 +710,7 @@ module Rscons
           buildup += ' ' + line
           if buildup =~ /^(.*): (.*)$/
             mf_target, mf_deps = $1.strip, $2
-            if mf_target == target
+            if target.nil? or mf_target == target
               deps += mf_deps.split(' ').map(&:strip)
             end
           end

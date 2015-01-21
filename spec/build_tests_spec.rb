@@ -734,4 +734,24 @@ EOF
     expect(result.include?(%{CPPPATH => []})).to be_truthy
   end
 
+  it "considers deep dependencies when deciding whether to rerun Preprocess builder" do
+    test_dir("preprocess")
+    env = Rscons::Environment.new do |env|
+      env.Preprocess("pp", "foo.h")
+    end
+    expect(File.read("pp")).to match(%r{xyz42abc}m)
+    expect(lines).to eq(["Preprocess pp"])
+    env.Preprocess("pp", "foo.h")
+    env.process
+    expect(lines).to eq([])
+    File.open("bar.h", "w") do |fh|
+      fh.puts "#define BAR abc88xyz"
+    end
+    $ttt = true
+    env.Preprocess("pp", "foo.h")
+    env.process
+    expect(lines).to eq(["Preprocess pp"])
+    expect(File.read("pp")).to match(%r{abc88xyz}m)
+  end
+
 end
