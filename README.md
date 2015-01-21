@@ -387,6 +387,7 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 - fix Rscons.set_suffix to append the given suffix if the filename has none
 - rework Preprocess builder to consider deep dependencies
+- remove ${CFLAGS} from default CPP_CMD
 
 ### v1.8.1
 
