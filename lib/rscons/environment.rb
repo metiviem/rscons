@@ -683,7 +683,7 @@ module Rscons
         sources = target_params[:sources].map do |source|
           source = expand_path(source) if @build_root
           expand_varref(source)
-        end
+        end.flatten
         target = expand_path(target) if @build_root
         target = expand_varref(target)
         result[target] = target_params.merge(sources: sources)

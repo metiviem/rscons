@@ -754,4 +754,14 @@ EOF
     expect(File.read("pp")).to match(%r{abc88xyz}m)
   end
 
+  it "allows construction variable references which expand to arrays in sources of a build target" do
+    test_dir("simple")
+    Rscons::Environment.new do |env|
+      env["sources"] = Dir["*.c"]
+      env.Program("simple", "${sources}")
+    end
+    expect(File.exists?("simple.o")).to be_truthy
+    expect(`./simple`).to eq "This is a simple C program\n"
+  end
+
 end
