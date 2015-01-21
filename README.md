@@ -383,6 +383,10 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
+### v1.8.1
+
+- fix Environment#dump when construction variables are symbols
+
 ### v1.8.0
 
 - new Command builder to execute arbitrary user commands
