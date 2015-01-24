@@ -252,7 +252,8 @@ you can use the `exclude_builders` key to the Environment constructor.
 env.Command(target, sources, "CMD" => command)
 # Example
 env.Command("docs.html", "docs.md",
-    "CMD" => ["pandoc", "-fmarkdown", "-thtml", "-o${_TARGET}", "${_SOURCES}"])
+    "CMD" => ["pandoc", "-fmarkdown", "-thtml", "-o${_TARGET}", "${_SOURCES}"],
+    "CMD_DESC" => "PANDOC")
 ```
 
 The command builder executes a user-defined command in order to produce the
@@ -389,6 +390,7 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 - rework Preprocess builder to consider deep dependencies
 - remove ${CFLAGS} from default CPP_CMD
 - fix variable references that expand to arrays in build target sources
+- allow overriding Command builder short description with CMD_DESC variable
 
 ### v1.8.1
 
