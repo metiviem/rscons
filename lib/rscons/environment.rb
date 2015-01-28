@@ -280,33 +280,35 @@ module Rscons
     #
     # @return [void]
     def process
-      expand_paths!
       while @targets.size > 0
+        expand_paths!
         targets = @targets
         @targets = {}
         cache = Cache.instance
         cache.clear_checksum_cache!
-        targets_processed = {}
+        targets_processed = Set.new
         process_target = proc do |target|
-          targets_processed[target] ||= begin
-            targets[target][:sources].each do |src|
-              if targets.include?(src) and not targets_processed.include?(src)
-                process_target.call(src)
+          unless targets_processed.include?(target)
+            targets_processed << target
+            targets[target].each do |target_params|
+              target_params[:sources].each do |src|
+                if targets.include?(src) and not targets_processed.include?(src)
+                  process_target.call(src)
+                end
+              end
+              result = run_builder(target_params[:builder],
+                                   target,
+                                   target_params[:sources],
+                                   cache,
+                                   target_params[:vars] || {})
+              unless result
+                raise BuildError.new("Failed to build #{target}")
               end
             end
-            result = run_builder(targets[target][:builder],
-                                 target,
-                                 targets[target][:sources],
-                                 cache,
-                                 targets[target][:vars] || {})
-            unless result
-              raise BuildError.new("Failed to build #{target}")
-            end
-            result
           end
         end
         begin
-          targets.each do |target, target_params|
+          targets.each_key do |target|
             process_target.call(target)
           end
         ensure
@@ -404,7 +406,8 @@ module Rscons
     #
     # @return [void]
     def add_target(target, builder, sources, vars, args)
-      @targets[target] = {
+      @targets[target] ||= []
+      @targets[target] << {
         builder: builder,
         sources: sources,
         vars: vars,
@@ -679,14 +682,16 @@ module Rscons
     #
     # @return [void]
     def expand_paths!
-      @targets = @targets.reduce({}) do |result, (target, target_params)|
-        sources = target_params[:sources].map do |source|
-          source = expand_path(source) if @build_root
-          expand_varref(source)
-        end.flatten
+      @targets = @targets.reduce({}) do |result, (target, target_params_list)|
         target = expand_path(target) if @build_root
         target = expand_varref(target)
-        result[target] = target_params.merge(sources: sources)
+        result[target] = target_params_list.map do |target_params|
+          sources = target_params[:sources].map do |source|
+            source = expand_path(source) if @build_root
+            expand_varref(source)
+          end.flatten
+          target_params.merge(sources: sources)
+        end
         result
       end
     end

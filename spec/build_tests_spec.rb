@@ -764,4 +764,18 @@ EOF
     expect(`./simple`).to eq "This is a simple C program\n"
   end
 
+  it "supports registering multiple build targets with the same target path" do
+    test_dir("build_dir")
+    Rscons::Environment.new do |env|
+      env["CPPPATH"] << "src/two"
+      env.Object("one.o", "src/one/one.c")
+      env.Object("one.o", "src/two/two.c")
+    end
+    expect(File.exists?("one.o")).to be_truthy
+    expect(lines).to eq([
+      "CC one.o",
+      "CC one.o",
+    ])
+  end
+
 end

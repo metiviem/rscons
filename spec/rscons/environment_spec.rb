@@ -305,10 +305,10 @@ module Rscons
         env.Object("target.o", ["src1.c", "src2.c"], var: "val")
         target = env.instance_variable_get(:@targets)["target.o"]
         expect(target).to_not be_nil
-        expect(target[:builder].is_a?(Builder)).to be_truthy
-        expect(target[:sources]).to eq ["src1.c", "src2.c"]
-        expect(target[:vars]).to eq({var: "val"})
-        expect(target[:args]).to eq []
+        expect(target[0][:builder].is_a?(Builder)).to be_truthy
+        expect(target[0][:sources]).to eq ["src1.c", "src2.c"]
+        expect(target[0][:vars]).to eq({var: "val"})
+        expect(target[0][:args]).to eq []
       end
 
       it "raises an error when vars is not a Hash" do
