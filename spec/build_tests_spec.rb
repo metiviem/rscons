@@ -778,4 +778,24 @@ EOF
     ])
   end
 
+  it "expands target and source paths when builders are registered in build hooks" do
+    test_dir("build_dir")
+    Rscons::Environment.new do |env|
+      env["CPPPATH"] << "src/two"
+      env.Object("one.o", "src/one/one.c")
+      env.add_post_build_hook do |build_op|
+        if build_op[:target] == "one.o"
+          env["MODULE"] = "two"
+          env.Object("${MODULE}.o", "src/${MODULE}/${MODULE}.c")
+        end
+      end
+    end
+    expect(File.exists?("one.o")).to be_truthy
+    expect(File.exists?("two.o")).to be_truthy
+    expect(lines).to eq([
+      "CC one.o",
+      "CC two.o",
+    ])
+  end
+
 end
