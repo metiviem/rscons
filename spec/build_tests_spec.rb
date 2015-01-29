@@ -798,4 +798,38 @@ EOF
     ])
   end
 
+  context "Directory builder" do
+    it "creates the requested directory" do
+      test_dir("simple")
+      Rscons::Environment.new do |env|
+        env.Directory("teh_dir")
+      end
+      expect(File.directory?("teh_dir")).to be_truthy
+      expect(lines).to eq(["Directory teh_dir"])
+    end
+
+    it "succeeds when the requested directory already exists" do
+      test_dir("simple")
+      FileUtils.mkdir("teh_dir")
+      Rscons::Environment.new do |env|
+        env.Directory("teh_dir")
+      end
+      expect(File.directory?("teh_dir")).to be_truthy
+      expect(lines).to eq([])
+    end
+
+    it "fails when the target path is a file" do
+      test_dir("simple")
+      FileUtils.touch("teh_dir")
+      expect do
+        Rscons::Environment.new do |env|
+          env.Directory("teh_dir")
+        end
+      end.to raise_error /Failed to build teh_dir/
+      expect(lines).to eq([
+        "Error: `teh_dir' already exists and is not a directory",
+      ])
+    end
+  end
+
 end
