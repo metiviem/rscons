@@ -832,4 +832,87 @@ EOF
     end
   end
 
+  context "Install buildler" do
+    let(:base_env) do
+      test_dir("build_dir")
+      Rscons::Environment.new do |env|
+        env["CPPPATH"] = Dir["src/**/"]
+        env["sources"] = Dir["src/**/*.c"]
+        env.Program("simple.exe", "${sources}")
+      end
+    end
+
+    it "copies a file to the target file name" do
+      env = base_env.clone do |env|
+        lines
+        env.Install("inst.exe", "simple.exe")
+      end
+      expect(lines).to eq(["Install inst.exe"])
+      env.Install("inst.exe", "simple.exe")
+      env.process
+      expect(lines).to eq([])
+      expect(File.exists?("inst.exe")).to be_truthy
+      expect(File.read("inst.exe", mode: "rb")).to eq(File.read("simple.exe", mode: "rb"))
+      FileUtils.rm("inst.exe")
+      env.Install("inst.exe", "simple.exe")
+      env.process
+      expect(lines).to eq(["Install inst.exe"])
+    end
+
+    it "copies a file to the target directory name" do
+      env = base_env.clone do |env|
+        lines
+        env.Directory("inst")
+        env.Install("inst", "simple.exe")
+      end
+      expect(lines).to eq([
+        "Directory inst",
+        "Install inst",
+      ])
+      env.Install("inst", "simple.exe")
+      env.process
+      expect(lines).to eq([])
+      expect(File.exists?("inst/simple.exe")).to be_truthy
+      expect(File.read("inst/simple.exe", mode: "rb")).to eq(File.read("simple.exe", mode: "rb"))
+    end
+
+    it "copies a directory to the non-existent target directory name" do
+      env = base_env.clone do |env|
+        lines
+        env.Install("dist/src", "src")
+      end
+      expect(lines).to eq(["Install dist/src"])
+      env.Install("dist/src", "src")
+      env.process
+      expect(lines).to eq([])
+      %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
+        expect(File.exists?("dist/#{f}")).to be_truthy
+        expect(File.read("dist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
+      end
+    end
+
+    it "copies a directory to the existent target directory name" do
+      env = base_env.clone do |env|
+        lines
+        env.Directory("dist/src")
+        env.Install("dist/src", "src")
+      end
+      expect(lines).to eq([
+        "Directory dist/src",
+        "Install dist/src",
+      ])
+      env.Install("dist/src", "src")
+      env.process
+      expect(lines).to eq([])
+      %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
+        expect(File.exists?("dist/#{f}")).to be_truthy
+        expect(File.read("dist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
+      end
+      FileUtils.rm("dist/src/two/two.c")
+      env.Install("dist/src", "src")
+      env.process
+      expect(lines).to eq(["Install dist/src"])
+    end
+  end
+
 end
