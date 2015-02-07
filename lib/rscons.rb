@@ -22,8 +22,9 @@ module Rscons
   # Names of the default builders which will be added to all newly created
   # {Environment} objects.
   DEFAULT_BUILDERS = [
-    :Command,
     :CFile,
+    :Command,
+    :Copy,
     :Directory,
     :Disassemble,
     :Install,

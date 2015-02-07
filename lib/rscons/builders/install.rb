@@ -54,6 +54,10 @@ module Rscons
         target if (target_is_dir ? Dir.exists?(target) : File.exists?(target))
       end
 
+
     end
+
+    class Copy < Install; end
+
   end
 end

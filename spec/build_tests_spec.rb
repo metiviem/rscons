@@ -859,6 +859,23 @@ EOF
       expect(lines).to eq(["Install inst.exe"])
     end
 
+    it "operates the same as a Copy builder" do
+      env = base_env.clone do |env|
+        lines
+        env.Copy("inst.exe", "simple.exe")
+      end
+      expect(lines).to eq(["Copy inst.exe"])
+      env.Copy("inst.exe", "simple.exe")
+      env.process
+      expect(lines).to eq([])
+      expect(File.exists?("inst.exe")).to be_truthy
+      expect(File.read("inst.exe", mode: "rb")).to eq(File.read("simple.exe", mode: "rb"))
+      FileUtils.rm("inst.exe")
+      env.Copy("inst.exe", "simple.exe")
+      env.process
+      expect(lines).to eq(["Copy inst.exe"])
+    end
+
     it "copies a file to the target directory name" do
       env = base_env.clone do |env|
         lines
