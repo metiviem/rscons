@@ -25,7 +25,7 @@ module Rscons
           "_SOURCES" => sources,
         })
         command = env.build_command("${CMD}", vars)
-        cmd_desc = vars["CMD_DESC"] || "cmd_desc"
+        cmd_desc = vars["CMD_DESC"] || "Command"
         standard_build("#{cmd_desc} #{target}", target, command, sources, env, cache)
       end
     end
