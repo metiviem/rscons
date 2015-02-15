@@ -87,8 +87,10 @@ module Rscons
     #   The name of the target on success or false on failure.
     def standard_build(short_cmd_string, target, command, sources, env, cache)
       unless cache.up_to_date?(target, command, sources, env)
-        cache.mkdir_p(File.dirname(target))
-        FileUtils.rm_f(target)
+        unless Rscons.phony_target?(target)
+          cache.mkdir_p(File.dirname(target))
+          FileUtils.rm_f(target)
+        end
         return false unless env.execute(short_cmd_string, command)
         cache.register_build(target, command, sources, env)
       end

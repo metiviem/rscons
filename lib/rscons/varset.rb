@@ -116,6 +116,8 @@ module Rscons
         expand_varref(varref[*lambda_args], lambda_args)
       elsif varref.nil?
         nil
+      elsif varref.is_a?(Symbol)
+        varref
       else
         raise "Unknown varref type: #{varref.class} (#{varref.inspect})"
       end

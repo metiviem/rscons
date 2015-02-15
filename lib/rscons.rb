@@ -65,6 +65,15 @@ module Rscons
     path =~ %r{^(/|\w:[\\/])}
   end
 
+  # Return whether the given target is a phony target.
+  #
+  # @param target [Symbol, String] Target name.
+  #
+  # @return [Boolean] Whether the given target is a phony target.
+  def self.phony_target?(target)
+    target.is_a?(Symbol)
+  end
+
   # Return a new path by changing the suffix in path to suffix.
   #
   # @param path [String] The path to alter.

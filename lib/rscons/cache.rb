@@ -56,6 +56,9 @@ module Rscons
     # Name of the file to store cache information in
     CACHE_FILE = ".rsconscache"
 
+    # Prefix for phony cache entries.
+    PHONY_PREFIX = ":PHONY:"
+
     # Create a Cache object and load in the previous contents from the cache
     # file.
     def initialize
@@ -92,7 +95,8 @@ module Rscons
 
     # Check if target(s) are up to date.
     #
-    # @param targets [String, Array<String>] The name(s) of the target file(s).
+    # @param targets [Symbol, String, Array<String>]
+    #   The name(s) of the target file(s).
     # @param command [String, Array, Hash]
     #   The command used to build the target. The command parameter can
     #   actually be a String, Array, or Hash and could contain information
@@ -120,19 +124,25 @@ module Rscons
     #     stored in the cache file
     def up_to_date?(targets, command, deps, env, options = {})
       Array(targets).each do |target|
-        # target file must exist on disk
-        return false unless File.exists?(target)
+        cache_key = get_cache_key(target)
+
+        unless Rscons.phony_target?(target)
+          # target file must exist on disk
+          return false unless File.exists?(target)
+        end
 
         # target must be registered in the cache
-        return false unless @cache["targets"].has_key?(target)
+        return false unless @cache["targets"].has_key?(cache_key)
 
-        # target must have the same checksum as when it was built last
-        return false unless @cache["targets"][target]["checksum"] == lookup_checksum(target)
+        unless Rscons.phony_target?(target)
+          # target must have the same checksum as when it was built last
+          return false unless @cache["targets"][cache_key]["checksum"] == lookup_checksum(target)
+        end
 
         # command used to build target must be identical
-        return false unless @cache["targets"][target]["command"] == Digest::MD5.hexdigest(command.inspect)
+        return false unless @cache["targets"][cache_key]["command"] == Digest::MD5.hexdigest(command.inspect)
 
-        cached_deps = @cache["targets"][target]["deps"] || []
+        cached_deps = @cache["targets"][cache_key]["deps"] || []
         cached_deps_fnames = cached_deps.map { |dc| dc["fname"] }
         if options[:strict_deps]
           # depedencies passed in must exactly equal those in the cache
@@ -144,7 +154,7 @@ module Rscons
 
         # set of user dependencies must match
         user_deps = env.get_user_deps(target) || []
-        cached_user_deps = @cache["targets"][target]["user_deps"] || []
+        cached_user_deps = @cache["targets"][cache_key]["user_deps"] || []
         cached_user_deps_fnames = cached_user_deps.map { |dc| dc["fname"] }
         return false unless user_deps == cached_user_deps_fnames
 
@@ -159,7 +169,8 @@ module Rscons
 
     # Store cache information about target(s) built by a builder.
     #
-    # @param targets [String, Array<String>] The name of the target(s) built.
+    # @param targets [Symbol, String, Array<String>]
+    #   The name of the target(s) built.
     # @param command [String, Array, Hash]
     #   The command used to build the target. The command parameter can
     #   actually be a String, Array, or Hash and could contain information
@@ -172,9 +183,10 @@ module Rscons
     # @return [void]
     def register_build(targets, command, deps, env)
       Array(targets).each do |target|
-        @cache["targets"][target] = {
+        target_checksum = Rscons.phony_target?(target) ? "" : calculate_checksum(target)
+        @cache["targets"][get_cache_key(target)] = {
           "command" => Digest::MD5.hexdigest(command.inspect),
-          "checksum" => calculate_checksum(target),
+          "checksum" => target_checksum,
           "deps" => deps.map do |dep|
             {
               "fname" => dep,
@@ -227,6 +239,21 @@ module Rscons
     end
 
     private
+
+    # Return a String key based on the target name to use in the on-disk cache.
+    #
+    # @param target_name [Symbol, String]
+    #   Target name.
+    #
+    # @return [String]
+    #   Key name.
+    def get_cache_key(target_name)
+      if Rscons.phony_target?(target_name)
+        PHONY_PREFIX + target_name.to_s
+      else
+        target_name
+      end
+    end
 
     # Create a Cache object and load in the previous contents from the cache
     # file.
