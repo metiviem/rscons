@@ -57,6 +57,7 @@ module Rscons
 
     end
 
+    # The Copy builder is identical to the Install builder.
     class Copy < Install; end
 
   end
