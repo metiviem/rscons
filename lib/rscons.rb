@@ -91,7 +91,7 @@ module Rscons
     #
     # @return [Array<String>] The shell and flag.
     def get_system_shell
-      @@shell ||=
+      @shell ||=
         begin
           test_shell = lambda do |*args|
             begin
@@ -124,7 +124,7 @@ module Rscons
     #
     # @return [Array<String>] Command used to execute commands.
     def command_executer
-      @@command_executer ||=
+      @command_executer ||=
         if Object.const_get("RUBY_PLATFORM") =~ /mingw/
           if ENV.keys.find {|key| key =~ /MSYS/}
             begin
@@ -143,7 +143,7 @@ module Rscons
     #
     # @return [Array<String>] Command used to execute commands.
     def command_executer=(val)
-      @@command_executer = val
+      @command_executer = val
     end
 
   end

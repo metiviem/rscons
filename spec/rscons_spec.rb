@@ -36,11 +36,11 @@ describe Rscons do
 
   describe ".get_system_shell" do
     before(:each) do
-      Rscons.class_variable_set(:@@shell, nil)
+      Rscons.instance_variable_set(:@shell, nil)
     end
 
     after(:each) do
-      Rscons.class_variable_set(:@@shell, nil)
+      Rscons.instance_variable_set(:@shell, nil)
     end
 
     it "uses the SHELL environment variable if it tests successfully" do
@@ -80,11 +80,11 @@ describe Rscons do
   context "command executer" do
     describe ".command_executer" do
       before(:each) do
-        Rscons.class_variable_set(:@@command_executer, nil)
+        Rscons.instance_variable_set(:@command_executer, nil)
       end
 
       after(:each) do
-        Rscons.class_variable_set(:@@command_executer, nil)
+        Rscons.instance_variable_set(:@command_executer, nil)
       end
 
       it "returns ['env'] if mingw platform in MSYS and 'env' works" do
@@ -115,10 +115,10 @@ describe Rscons do
     end
 
     describe ".command_executer=" do
-      it "overrides the value of @@command_executer" do
-        Rscons.class_variable_set(:@@command_executer, ["env"])
+      it "overrides the value of @command_executer" do
+        Rscons.instance_variable_set(:@command_executer, ["env"])
         Rscons.command_executer = []
-        expect(Rscons.class_variable_get(:@@command_executer)).to eq([])
+        expect(Rscons.instance_variable_get(:@command_executer)).to eq([])
       end
     end
   end
