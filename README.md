@@ -1,6 +1,7 @@
 # Rscons
 
-Software construction library inspired by SCons and implemented in Ruby
+Rscons is a software construction framework inspired by SCons and implemented
+in Ruby.
 
 [![Gem Version](https://badge.fury.io/rb/rscons.png)](http://badge.fury.io/rb/rscons)
 
@@ -20,9 +21,10 @@ Or install it yourself as:
 
 ## Usage
 
-Rscons is a Ruby library.
-It can be called from a standalone Ruby script or it can be used with rake and
-called from your Rakefile.
+Rscons is implemented as a Ruby library and distributed as a gem.
+It also provides a "rscons" executable which can evaluate a build script (by
+default named Rsconsfile or Rsconsfile.rb).
+It can also be used from rake or from a standalone Ruby script.
 
 ### Example: Building a C Program
 
@@ -235,13 +237,15 @@ end
 
 Rscons ships with a number of builders:
 
-* Command, which executes a user-defined command to produce the target
-* CFile, which builds a C or C++ source file from a lex or yacc input file
-* Disassemble, which disassembles an object file to a disassembly listing
-* Library, which collects object files into a static library archive file
-* Object, which compiles source files to produce an object file
-* Preprocess, which invokes the C/C++ preprocessor on a source file
-* Program, which links object files to produce an executable
+* Command, which executes a user-defined command to produce the target.
+* Copy, which is identical to Install.
+* CFile, which builds a C or C++ source file from a lex or yacc input file.
+* Disassemble, which disassembles an object file to a disassembly listing.
+* Install, which installs files or directories to a specified destination.
+* Library, which collects object files into a static library archive file.
+* Object, which compiles source files to produce an object file.
+* Preprocess, which invokes the C/C++ preprocessor on a source file.
+* Program, which links object files to produce an executable.
 
 If you want to create an Environment that does not contain any builders,
 you can use the `exclude_builders` key to the Environment constructor.
@@ -280,6 +284,15 @@ env.Disassemble("module.dis", "module.o")
 
 The Disassemble builder generates a disassembly listing using objdump from
 and object file.
+
+#### Install
+
+```ruby
+env.Install(destination, sources)
+# Example
+env.Install("dist/bin", "app.exe")
+env.Install("dist/share", "share")
+```
 
 #### Library
 
@@ -372,6 +385,15 @@ Post-build hooks are only invoked if the build operation was a success.
 Post-build hooks can invoke commands using the newly-built files, or register
 new build targets.
 
+### Phony Targets
+
+A build target name given as a Symbol instead of a String is interpreted as a
+"phony" target.
+Phony targets operate similarly to normal build targets, except that a file is
+not expected to be produced by the builder.
+Phony targets will still be "rebuilt" if any source or the command is out of
+date.
+
 ### Construction Variable Naming
 
 * uppercase strings - the default construction variables that Rscons uses
@@ -386,11 +408,21 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ### v1.9.0
 
+#### New Features
+
+- #6 - add Install and Copy builders
+- #22 - allow overriding Command builder short description with CMD_DESC variable
+- #24 - add "rscons" executable
+- #25 - add support for phony targets given as Symbols instead of Strings
+- #26 - support registering multiple build targets with the same target name
+- #27 - add Directory builder
+
+#### Fixes
+
+- #20 - fix variable references that expand to arrays in build target sources
+- #21 - rework Preprocess builder to consider deep dependencies
 - fix Rscons.set_suffix to append the given suffix if the filename has none
-- rework Preprocess builder to consider deep dependencies
 - remove ${CFLAGS} from default CPP_CMD
-- fix variable references that expand to arrays in build target sources
-- allow overriding Command builder short description with CMD_DESC variable
 
 ### v1.8.1
 
