@@ -18,7 +18,7 @@ module Rscons
       # @return [Hash] Default construction variables for the builder.
       def default_variables(env)
         {
-          'OBJSUFFIX' => '.o',
+          'OBJSUFFIX' => ['.o'],
           'DEPFILESUFFIX' => '.mf',
 
           'CPPDEFPREFIX' => '-D',
@@ -26,7 +26,7 @@ module Rscons
 
           'AS' => '${CC}',
           'ASFLAGS' => [],
-          'ASSUFFIX' => '.S',
+          'ASSUFFIX' => ['.S'],
           'ASPPPATH' => '${CPPPATH}',
           'ASPPFLAGS' => '${CPPFLAGS}',
           'ASDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
@@ -40,19 +40,19 @@ module Rscons
 
           'CC' => 'gcc',
           'CFLAGS' => [],
-          'CSUFFIX' => '.c',
+          'CSUFFIX' => ['.c'],
           'CCDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
           'CCCMD' => ['${CC}', '-c', '-o', '${_TARGET}', '${CCDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${CFLAGS}', '${CCFLAGS}', '${_SOURCES}'],
 
           'CXX' => 'g++',
           'CXXFLAGS' => [],
-          'CXXSUFFIX' => '.cc',
+          'CXXSUFFIX' => ['.cc', '.cpp', '.cxx', '.C'],
           'CXXDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
           'CXXCMD' =>['${CXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${CXXFLAGS}', '${CCFLAGS}', '${_SOURCES}'],
 
           'DC' => 'gdc',
           'DFLAGS' => [],
-          'DSUFFIX' => '.d',
+          'DSUFFIX' => ['.d'],
           'D_IMPORT_PATH' => [],
           'DCCMD' => ['${DC}', '-c', '-o', '${_TARGET}', '${INCPREFIX}${D_IMPORT_PATH}', '${DFLAGS}', '${_SOURCES}'],
         }
