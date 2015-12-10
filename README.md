@@ -406,6 +406,12 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
+### v1.9.1
+
+- change *SUFFIX defaults to arrays
+- add various C++ file suffixes
+- use ${INCPREFIX} instead of hard-coded "-I" in Preprocess builder
+
 ### v1.9.0
 
 #### New Features
