@@ -14,7 +14,7 @@ module Rscons
         {
           "CPP_CMD" => %w[
             ${_PREPROCESS_CC} -E ${_PREPROCESS_DEPGEN}
-            -o ${_TARGET} -I${CPPPATH} ${CPPFLAGS} ${_SOURCES}],
+            -o ${_TARGET} ${INCPREFIX}${CPPPATH} ${CPPFLAGS} ${_SOURCES}],
         }
       end
 
