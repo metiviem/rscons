@@ -406,6 +406,10 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
+### v1.9.2
+
+- allow phony targets in conjunction with build roots
+
 ### v1.9.1
 
 - change *SUFFIX defaults to arrays
