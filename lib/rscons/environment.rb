@@ -509,7 +509,11 @@ module Rscons
     #
     # @return [String] The expanded path.
     def expand_path(path)
-      path.sub(%r{^\^(?=[\\/])}, @build_root)
+      if Rscons.phony_target?(path)
+        path
+      else
+        path.sub(%r{^\^(?=[\\/])}, @build_root)
+      end
     end
 
     # Execute a command using the system shell.

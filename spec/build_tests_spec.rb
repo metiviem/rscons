@@ -933,33 +933,36 @@ EOF
   end
 
   context "phony targets" do
-    it "allows specifying a Symbol as a target name and reruns the builder if the sources or command have changed" do
-      test_dir("simple")
-      env = Rscons::Environment.new do |env|
-        env.add_builder(:Checker) do |target, sources, cache, env, vars|
-          unless cache.up_to_date?(target, :Checker, sources, env)
-            puts "Checker #{sources.first}" if env.echo != :off
-            cache.register_build(target, :Checker, sources, env)
+    [false, true].each do |with_build_root|
+      it "allows specifying a Symbol as a target name and reruns the builder if the sources or command have changed" do
+        test_dir("simple")
+        env = Rscons::Environment.new do |env|
+          env.build_root = "bld" if with_build_root
+          env.add_builder(:Checker) do |target, sources, cache, env, vars|
+            unless cache.up_to_date?(target, :Checker, sources, env)
+              puts "Checker #{sources.first}" if env.echo != :off
+              cache.register_build(target, :Checker, sources, env)
+            end
+            target
           end
-          target
+          env.Program("simple.exe", "simple.c")
+          env.Checker(:checker, "simple.exe")
         end
-        env.Program("simple.exe", "simple.c")
-        env.Checker(:checker, "simple.exe")
-      end
-      expect(lines).to eq(["CC simple.o", "LD simple.exe", "Checker simple.exe"])
+        expect(lines).to eq(["CC #{with_build_root ? 'bld/' : ''}simple.o", "LD simple.exe", "Checker simple.exe"])
 
-      env.clone do |env|
-        env.Checker(:checker, "simple.exe")
-      end
-      expect(lines).to eq([])
+        env.clone do |env|
+          env.Checker(:checker, "simple.exe")
+        end
+        expect(lines).to eq([])
 
-      File.open("simple.exe", "w") do |fh|
-        fh.puts "Changed simple.exe"
+        File.open("simple.exe", "w") do |fh|
+          fh.puts "Changed simple.exe"
+        end
+        env.clone do |env|
+          env.Checker(:checker, "simple.exe")
+        end
+        expect(lines).to eq(["Checker simple.exe"])
       end
-      env.clone do |env|
-        env.Checker(:checker, "simple.exe")
-      end
-      expect(lines).to eq(["Checker simple.exe"])
     end
   end
 
