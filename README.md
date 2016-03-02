@@ -394,6 +394,19 @@ not expected to be produced by the builder.
 Phony targets will still be "rebuilt" if any source or the command is out of
 date.
 
+### Explicit Dependencies
+
+A target can be marked as depending on another file that Rscons would not
+otherwise know about via the `Environment#depends` function. For example,
+to force the linker to re-link a Program output when a linker script changes:
+
+```ruby
+Rscons::Environment.new do |env|
+  env.Program("a.out", "foo.c", "LDFLAGS" => %w[-T linker_script.ld])
+  env.depends("a.out", "linker_script.ld")
+end
+```
+
 ### Construction Variable Naming
 
 * uppercase strings - the default construction variables that Rscons uses
