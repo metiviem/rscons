@@ -407,6 +407,12 @@ Rscons::Environment.new do |env|
 end
 ```
 
+You can pass multiple dependency files to `Environment#depends`:
+
+```ruby
+env.depends("my_app", "config/link.ld", "README.txt", *Dir.glob("assets/**/*"))
+```
+
 ### Construction Variable Naming
 
 * uppercase strings - the default construction variables that Rscons uses
