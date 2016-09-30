@@ -396,24 +396,23 @@ module Rscons
     describe "#parse_flags" do
       it "executes the shell command and parses the returned flags when the input argument begins with !" do
         env = Environment.new
-        env["CFLAGS"] = ["-g"]
+        env["CCFLAGS"] = ["-g"]
         expect(env).to receive(:shell).with("my_command").and_return(%[-arch my_arch -Done=two -include ii -isysroot sr -Iincdir -Llibdir -lmy_lib -mno-cygwin -mwindows -pthread -std=c99 -Wa,'asm,args 1 2' -Wl,linker,"args 1 2" -Wp,cpp,args,1,2 -arbitrary +other_arbitrary some_lib /a/b/c/lib])
         rv = env.parse_flags("!my_command")
         expect(rv).to eq({
-          "CCFLAGS" => %w[-arch my_arch -include ii -isysroot sr -mno-cygwin -pthread -arbitrary +other_arbitrary],
+          "CCFLAGS" => %w[-arch my_arch -include ii -isysroot sr -mno-cygwin -pthread -std=c99 -arbitrary +other_arbitrary],
           "LDFLAGS" => %w[-arch my_arch -isysroot sr -mno-cygwin -mwindows -pthread] + ["linker", "args 1 2"] + %w[+other_arbitrary],
           "CPPPATH" => %w[incdir],
           "LIBS" => %w[my_lib some_lib /a/b/c/lib],
           "LIBPATH" => %w[libdir],
           "CPPDEFINES" => %w[one=two],
-          "CFLAGS" => %w[-std=c99],
           "ASFLAGS" => ["asm", "args 1 2"],
           "CPPFLAGS" => %w[cpp args 1 2],
         })
-        expect(env["CFLAGS"]).to eq(["-g"])
+        expect(env["CCFLAGS"]).to eq(["-g"])
         expect(env["ASFLAGS"]).to eq([])
         env.merge_flags(rv)
-        expect(env["CFLAGS"]).to eq(["-g", "-std=c99"])
+        expect(env["CCFLAGS"]).to eq(%w[-g -arch my_arch -include ii -isysroot sr -mno-cygwin -pthread -std=c99 -arbitrary +other_arbitrary])
         expect(env["ASFLAGS"]).to eq(["asm", "args 1 2"])
       end
     end

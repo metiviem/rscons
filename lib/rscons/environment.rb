@@ -618,8 +618,6 @@ module Rscons
         elsif word == "-pthread"
           append["CCFLAGS", [word]]
           append["LDFLAGS", [word]]
-        elsif word =~ /^-std=/
-          append["CFLAGS", [word]]
         elsif word =~ /^-Wa,(.*)$/
           append["ASFLAGS", $1.split(",")]
         elsif word =~ /^-Wl,(.*)$/
