@@ -425,6 +425,10 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
+### v1.9.3
+
+- Environment#parse_flags should put -std=XXX flags in CCFLAGS, not CFLAGS
+
 ### v1.9.2
 
 - allow phony targets in conjunction with build roots
