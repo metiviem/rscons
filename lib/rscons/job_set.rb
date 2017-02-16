@@ -20,7 +20,12 @@ module Rscons
     # @param vars [Hash]
     #   Construction variable overrides.
     def add_job(builder, target, sources, vars)
-      @jobs[target] = {
+      # We allow multiple jobs to be registered per target for cases like:
+      #   env.Directory("dest")
+      #   env.Install("dest", "bin")
+      #   env.Install("dest", "share")
+      @jobs[target] ||= []
+      @jobs[target] << {
         builder: builder,
         target: target,
         sources: sources,
@@ -39,17 +44,26 @@ module Rscons
         evaluated_targets = Set.new
         attempt = lambda do |target|
           evaluated_targets << target
-          @jobs[target][:sources].each do |src|
+          @jobs[target][0][:sources].each do |src|
             if @jobs.include?(src) and not evaluated_targets.include?(src)
               return attempt[src]
             end
           end
-          job = @jobs[target].merge(target: target)
-          @jobs.delete(target)
+          job = @jobs[target][0].merge(target: target)
+          if @jobs[target].size > 1
+            @jobs[target].slice!(0)
+          else
+            @jobs.delete(target)
+          end
           return job
         end
         attempt[@jobs.first.first]
       end
+    end
+
+    # Remove all jobs from the JobSet.
+    def clear!
+      @jobs.clear
     end
 
   end

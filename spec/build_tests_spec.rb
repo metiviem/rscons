@@ -966,4 +966,15 @@ EOF
     end
   end
 
+  context "Environment#clear_targets" do
+    it "clears registered targets" do
+      test_dir('header')
+      env = Rscons::Environment.new do |env|
+        env.Program('header', Dir['*.c'])
+        env.clear_targets
+      end
+      expect(lines).to eq []
+    end
+  end
+
 end

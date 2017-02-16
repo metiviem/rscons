@@ -169,7 +169,7 @@ module Rscons
 
         cache = "cache"
         expect(Cache).to receive(:instance).and_return(cache)
-        expect(cache).to receive(:clear_checksum_cache!)
+        allow(cache).to receive(:clear_checksum_cache!)
         expect(env).to receive(:run_builder).with(anything, "a.out", ["main.c"], cache, {}).and_return(true)
         expect(cache).to receive(:write)
 
@@ -183,7 +183,7 @@ module Rscons
 
         cache = "cache"
         expect(Cache).to receive(:instance).and_return(cache)
-        expect(cache).to receive(:clear_checksum_cache!)
+        allow(cache).to receive(:clear_checksum_cache!)
         expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}).and_return("main.o")
         expect(env).to receive(:run_builder).with(anything, "a.out", ["main.o"], cache, {}).and_return("a.out")
         expect(cache).to receive(:write)
@@ -198,7 +198,7 @@ module Rscons
 
         cache = "cache"
         expect(Cache).to receive(:instance).and_return(cache)
-        expect(cache).to receive(:clear_checksum_cache!)
+        allow(cache).to receive(:clear_checksum_cache!)
         expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}).and_return(false)
         expect(cache).to receive(:write)
 
@@ -218,18 +218,6 @@ module Rscons
         expect(cache).to receive(:write)
 
         expect { env.process }.to raise_error RuntimeError, /Ruby exception thrown by builder/
-      end
-    end
-
-    describe "#clear_targets" do
-      it "resets @targets to an empty hash" do
-        env = Environment.new
-        env.Program("a.out", "main.o")
-        expect(env.instance_variable_get(:@targets).keys).to eq(["a.out"])
-
-        env.clear_targets
-
-        expect(env.instance_variable_get(:@targets).keys).to eq([])
       end
     end
 
@@ -297,18 +285,6 @@ module Rscons
       it "calls the original method missing when the target method is not a known builder" do
         env = Environment.new
         expect {env.foobar}.to raise_error /undefined method .foobar./
-      end
-
-      it "records the target when the target method is a known builder" do
-        env = Environment.new
-        expect(env.instance_variable_get(:@targets)).to eq({})
-        env.Object("target.o", ["src1.c", "src2.c"], var: "val")
-        target = env.instance_variable_get(:@targets)["target.o"]
-        expect(target).to_not be_nil
-        expect(target[0][:builder].is_a?(Builder)).to be_truthy
-        expect(target[0][:sources]).to eq ["src1.c", "src2.c"]
-        expect(target[0][:vars]).to eq({var: "val"})
-        expect(target[0][:args]).to eq []
       end
 
       it "raises an error when vars is not a Hash" do

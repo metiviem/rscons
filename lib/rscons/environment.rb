@@ -38,7 +38,7 @@ module Rscons
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
       @varset = VarSet.new
-      @targets = {}
+      @job_set = JobSet.new
       @user_deps = {}
       @builders = {}
       @build_dirs = []
@@ -280,40 +280,24 @@ module Rscons
     #
     # @return [void]
     def process
-      while @targets.size > 0
-        expand_paths!
-        targets = @targets
-        @targets = {}
-        cache = Cache.instance
-        cache.clear_checksum_cache!
-        targets_processed = Set.new
-        process_target = proc do |target|
-          unless targets_processed.include?(target)
-            targets_processed << target
-            targets[target].each do |target_params|
-              target_params[:sources].each do |src|
-                if targets.include?(src) and not targets_processed.include?(src)
-                  process_target.call(src)
-                end
-              end
-              result = run_builder(target_params[:builder],
-                                   target,
-                                   target_params[:sources],
-                                   cache,
-                                   target_params[:vars] || {})
-              unless result
-                raise BuildError.new("Failed to build #{target}")
-              end
-            end
+      cache = Cache.instance
+      begin
+        while job = @job_set.get_next_job_to_run
+          expand_paths(job)
+          # TODO: have Cache determine when checksums may be invalid based on
+          # file size and/or timestamp.
+          cache.clear_checksum_cache!
+          result = run_builder(job[:builder],
+                               job[:target],
+                               job[:sources],
+                               cache,
+                               job[:vars])
+          unless result
+            raise BuildError.new("Failed to build #{job[:target]}")
           end
         end
-        begin
-          targets.each_key do |target|
-            process_target.call(target)
-          end
-        ensure
-          cache.write
-        end
+      ensure
+        cache.write
       end
     end
 
@@ -321,7 +305,7 @@ module Rscons
     #
     # @return [void]
     def clear_targets
-      @targets = {}
+      @job_set.clear!
     end
 
     # Expand a construction variable reference.
@@ -389,7 +373,7 @@ module Rscons
         sources = Array(sources)
         builder = @builders[method.to_s]
         build_target = builder.create_build_target(env: self, target: target, sources: sources)
-        add_target(build_target.to_s, builder, sources, vars, rest)
+        add_target(build_target.to_s, builder, sources, vars || {}, rest)
         build_target
       else
         super
@@ -402,17 +386,11 @@ module Rscons
     # @param builder [Builder] The {Builder} to use to build the target.
     # @param sources [Array<String>] Source file name(s).
     # @param vars [Hash] Construction variable overrides.
-    # @param args [Object] Any extra arguments passed to the {Builder}.
+    # @param args [Object] Deprecated; unused.
     #
     # @return [void]
     def add_target(target, builder, sources, vars, args)
-      @targets[target] ||= []
-      @targets[target] << {
-        builder: builder,
-        sources: sources,
-        vars: vars,
-        args: args,
-      }
+      @job_set.add_job(builder, target, sources, vars)
     end
 
     # Manually record a given target as depending on the specified files.
@@ -676,26 +654,20 @@ module Rscons
 
     private
 
-    # Expand target and source paths before invoking builders.
+    # Expand target and source paths of a job before invoking the builder.
     #
     # This method expand construction variable references in the target and
     # source file names before passing them to the builder. It also expands
     # "^/" prefixes to the Environment's build root if a build root is defined.
     #
     # @return [void]
-    def expand_paths!
-      @targets = @targets.reduce({}) do |result, (target, target_params_list)|
-        target = expand_path(target) if @build_root
-        target = expand_varref(target)
-        result[target] = target_params_list.map do |target_params|
-          sources = target_params[:sources].map do |source|
-            source = expand_path(source) if @build_root
-            expand_varref(source)
-          end.flatten
-          target_params.merge(sources: sources)
-        end
-        result
-      end
+    def expand_paths(job)
+      job[:target] = expand_path(job[:target]) if @build_root
+      job[:target] = expand_varref(job[:target])
+      job[:sources] = job[:sources].map do |source|
+        source = expand_path(source) if @build_root
+        expand_varref(source)
+      end.flatten
     end
 
     # Parse dependencies for a given target from a Makefile.
