@@ -54,6 +54,7 @@ describe Rscons do
   def test_dir(build_test_directory)
     FileUtils.cp_r("build_tests/#{build_test_directory}", BUILD_TEST_RUN_DIR)
     Dir.chdir(BUILD_TEST_RUN_DIR)
+    @saved_stderr.reopen(".stderr")
   end
 
   def file_sub(fname)
@@ -796,6 +797,38 @@ EOF
       "CC one.o",
       "CC two.o",
     ])
+  end
+
+  it "does not re-run previously successful builders if one fails" do
+    test_dir('simple')
+    File.open("two.c", "w") do |fh|
+      fh.puts("FOO")
+    end
+    expect do
+      Rscons::Environment.new do |env|
+        env.Program("simple", %w[simple.c two.c])
+      end
+    end.to raise_error /Failed to build simple/
+    result = lines
+    expect(result.size).to be > 2
+    expect(result[0, 2]).to eq [
+      "CC simple.o",
+      "CC two.o",
+    ]
+    expect(File.exists?("simple.o")).to be_truthy
+    expect(File.exists?("two.o")).to be_falsey
+    expect(File.exists?("two_sources#{Rscons::Environment.new["PROGSUFFIX"]}")).to be_falsey
+
+    Rscons::Cache.reset!
+
+    File.open("two.c", "w") {|fh|}
+    Rscons::Environment.new do |env|
+      env.Program("simple", %w[simple.c two.c])
+    end
+    expect(lines).to eq [
+      "CC two.o",
+      "LD simple",
+    ]
   end
 
   context "Directory builder" do
