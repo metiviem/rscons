@@ -49,7 +49,7 @@ module Rscons
               return attempt[src]
             end
           end
-          job = @jobs[target][0].merge(target: target)
+          job = @jobs[target][0]
           if @jobs[target].size > 1
             @jobs[target].slice!(0)
           else
