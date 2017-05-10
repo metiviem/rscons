@@ -283,7 +283,6 @@ module Rscons
       cache = Cache.instance
       begin
         while job = @job_set.get_next_job_to_run
-          expand_paths(job)
           # TODO: have Cache determine when checksums may be invalid based on
           # file size and/or timestamp.
           cache.clear_checksum_cache!
@@ -390,6 +389,12 @@ module Rscons
     #
     # @return [void]
     def add_target(target, builder, sources, vars, args)
+      target = expand_path(target) if @build_root
+      target = expand_varref(target)
+      sources = sources.map do |source|
+        source = expand_path(source) if @build_root
+        expand_varref(source)
+      end.flatten
       @job_set.add_job(builder, target, sources, vars)
     end
 
@@ -653,22 +658,6 @@ module Rscons
     end
 
     private
-
-    # Expand target and source paths of a job before invoking the builder.
-    #
-    # This method expand construction variable references in the target and
-    # source file names before passing them to the builder. It also expands
-    # "^/" prefixes to the Environment's build root if a build root is defined.
-    #
-    # @return [void]
-    def expand_paths(job)
-      job[:target] = expand_path(job[:target]) if @build_root
-      job[:target] = expand_varref(job[:target])
-      job[:sources] = job[:sources].map do |source|
-        source = expand_path(source) if @build_root
-        expand_varref(source)
-      end.flatten
-    end
 
     # Parse dependencies for a given target from a Makefile.
     #
