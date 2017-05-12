@@ -404,7 +404,8 @@ module Rscons
         builder: builder,
         target: target,
         sources: sources,
-        vars: vars)
+        vars: vars,
+        setup_info: setup_info)
     end
 
     # Manually record a given target as depending on the specified files.
