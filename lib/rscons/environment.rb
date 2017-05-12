@@ -400,7 +400,11 @@ module Rscons
         sources: sources,
         env: self,
         vars: vars)
-      @job_set.add_job(builder, target, sources, vars)
+      @job_set.add_job(
+        builder: builder,
+        target: target,
+        sources: sources,
+        vars: vars)
     end
 
     # Manually record a given target as depending on the specified files.
