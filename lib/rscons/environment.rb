@@ -395,6 +395,11 @@ module Rscons
         source = expand_path(source) if @build_root
         expand_varref(source)
       end.flatten
+      setup_info = builder.setup(
+        target: target,
+        sources: sources,
+        env: self,
+        vars: vars)
       @job_set.add_job(builder, target, sources, vars)
     end
 

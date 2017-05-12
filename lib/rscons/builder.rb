@@ -68,19 +68,21 @@ module Rscons
     # needed later in the build, it can be stored in the return value from this
     # method, which will be passed to the {#run} method.
     #
-    # @param target [String]
+    # @param options [Hash]
+    #   Options.
+    # @option options [String] :target
     #   Target file name.
-    # @param sources [Array<String>]
+    # @option options [Array<String>] :sources
     #   Source file name(s).
-    # @param env [Environment]
+    # @option options [Environment] :env
     #   The Environment executing the builder.
-    # @param vars [Hash,VarSet]
+    # @option options [Hash,VarSet] :vars
     #   Extra construction variables.
     #
     # @return [Object]
     #   Any object that the builder author wishes to be saved and passed back
     #   in to the {#run} method.
-    def setup(target, sources, env, vars)
+    def setup(options)
     end
 
     # Run the builder to produce a build target.
