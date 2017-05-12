@@ -56,13 +56,66 @@ module Rscons
       false
     end
 
+    # Set up a build operation using this builder.
+    #
+    # This method is called when a build target is registered using this
+    # builder. This method should not do any building, but should perform any
+    # setup needed and register any prerequisite build targets that need to be
+    # built before the target being requested here.
+    #
+    # If the builder needs no special setup, it does not need to override this
+    # method. If there is any information produced in this method that will be
+    # needed later in the build, it can be stored in the return value from this
+    # method, which will be passed to the {#run} method.
+    #
+    # @param target [String]
+    #   Target file name.
+    # @param sources [Array<String>]
+    #   Source file name(s).
+    # @param env [Environment]
+    #   The Environment executing the builder.
+    # @param vars [Hash,VarSet]
+    #   Extra construction variables.
+    #
+    # @return [Object]
+    #   Any object that the builder author wishes to be saved and passed back
+    #   in to the {#run} method.
+    def setup(target, sources, env, vars)
+    end
+
     # Run the builder to produce a build target.
     #
-    # @param target [String] Target file name.
-    # @param sources [Array<String>] Source file name(s).
-    # @param cache [Cache] The Cache object.
-    # @param env [Environment] The Environment executing the builder.
-    # @param vars [Hash,VarSet] Extra construction variables.
+    # The run method supports two different signatures - an older signature
+    # with five separate arguments, and a newer one with one Hash argument. A
+    # builder author can use either signature, and Rscons will automatically
+    # determine which arguments to pass when invoking the run method based on
+    # the method's arity.
+    #
+    # @overload run(target, sources, cache, env, vars)
+    #   @param target [String]
+    #     Target file name.
+    #   @param sources [Array<String>]
+    #     Source file name(s).
+    #   @param cache [Cache]
+    #     The Cache object.
+    #   @param env [Environment]
+    #     The Environment executing the builder.
+    #   @param vars [Hash,VarSet]
+    #     Extra construction variables.
+    # @overload run(options)
+    #   @param options [Hash] Run options.
+    #   @option options [String] :target
+    #     Target file name.
+    #   @option options [Array<String>] :sources
+    #     Source file name(s).
+    #   @option options [Cache] :cache
+    #     The Cache object.
+    #   @option options [Environment] :env
+    #     The Environment executing the builder.
+    #   @option options [Hash,VarSet] :vars
+    #     Extra construction variables.
+    #   @option options [Object] :setup_info
+    #     Whatever value was returned from this builder's {#setup} method call.
     #
     # @return [String,false]
     #   Name of the target file on success or false on failure.
