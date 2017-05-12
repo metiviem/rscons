@@ -427,6 +427,8 @@ module Rscons
     #
     # This method is used internally by Rscons builders.
     #
+    # @deprecated Use {#register_builds} instead.
+    #
     # @param sources [Array<String>] List of source files to build.
     # @param suffixes [Array<String>]
     #   List of suffixes to try to convert source files into.
@@ -450,6 +452,43 @@ module Rscons
             end
           end
           converted or raise "Could not find a builder to handle #{source.inspect}."
+        end
+      end
+    end
+
+    # Find and register builders to build source files into files containing
+    # one of the suffixes given by suffixes.
+    #
+    # This method is used internally by Rscons builders. It should be called
+    # from the builder's #setup method.
+    #
+    # @param sources [Array<String>]
+    #   List of source file(s) to build.
+    # @param suffixes [Array<String>]
+    #   List of suffixes to try to convert source files into.
+    # @param vars [Hash]
+    #   Extra variables to pass to the builders.
+    #
+    # @return [Array<String>]
+    #   List of the output file name(s).
+    def register_builds(sources, suffixes, vars)
+      sources.map do |source|
+        if source.end_with?(*suffixes)
+          source
+        else
+          output_fname = nil
+          suffixes.each do |suffix|
+            attempt_output_fname = get_build_fname(source, suffix)
+            builder = @builders.values.find do |builder|
+              builder.produces?(attempt_output_fname, source, self)
+            end
+            if builder
+              output_fname = attempt_output_fname
+              self.__send__(builder.name, output_fname, source, vars)
+              break
+            end
+          end
+          output_fname or raise "Could not find a builder for #{source.inspect}."
         end
       end
     end
