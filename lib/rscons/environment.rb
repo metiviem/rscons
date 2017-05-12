@@ -517,7 +517,22 @@ module Rscons
         end
       end
       call_build_hooks[:pre]
-      rv = builder.run(target, sources, cache, self, vars)
+      use_new_run_method_signature =
+        begin
+          builder.method(:run).arity == 1
+        rescue NameError
+          false
+        end
+      if use_new_run_method_signature
+        rv = builder.run(
+          target: target,
+          sources: sources,
+          cache: cache,
+          env: self,
+          vars: vars)
+      else
+        rv = builder.run(target, sources, cache, self, vars)
+      end
       call_build_hooks[:post] if rv
       rv
     end
