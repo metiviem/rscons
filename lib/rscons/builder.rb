@@ -68,6 +68,8 @@ module Rscons
     # needed later in the build, it can be stored in the return value from this
     # method, which will be passed to the {#run} method.
     #
+    # @since 1.10.0
+    #
     # @param options [Hash]
     #   Options.
     # @option options [String] :target
@@ -94,6 +96,7 @@ module Rscons
     # the method's arity.
     #
     # @overload run(target, sources, cache, env, vars)
+    #
     #   @param target [String]
     #     Target file name.
     #   @param sources [Array<String>]
@@ -104,7 +107,11 @@ module Rscons
     #     The Environment executing the builder.
     #   @param vars [Hash,VarSet]
     #     Extra construction variables.
+    #
     # @overload run(options)
+    #
+    #   @since 1.10.0
+    #
     #   @param options [Hash] Run options.
     #   @option options [String] :target
     #     Target file name.

@@ -472,6 +472,8 @@ module Rscons
     # This method is used internally by Rscons builders. It should be called
     # from the builder's #setup method.
     #
+    # @since 1.10.0
+    #
     # @param sources [Array<String>]
     #   List of source file(s) to build.
     # @param suffixes [Array<String>]
