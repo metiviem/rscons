@@ -128,7 +128,7 @@ module Rscons
     #
     # @return [String,false]
     #   Name of the target file on success or false on failure.
-    def run(target, sources, cache, env, vars)
+    def run(options)
       raise "This method must be overridden in a subclass"
     end
 
