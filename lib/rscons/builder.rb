@@ -112,7 +112,8 @@ module Rscons
     #
     #   @since 1.10.0
     #
-    #   @param options [Hash] Run options.
+    #   @param options [Hash]
+    #     Run options.
     #   @option options [String] :target
     #     Target file name.
     #   @option options [Array<String>] :sources
@@ -126,10 +127,41 @@ module Rscons
     #   @option options [Object] :setup_info
     #     Whatever value was returned from this builder's {#setup} method call.
     #
-    # @return [String,false]
+    # @return [ThreadedCommand,String,false]
     #   Name of the target file on success or false on failure.
+    #   Since 1.10.0, this method may return an instance of {ThreadedCommand}.
+    #   In that case, the build operation has not actually been completed yet
+    #   but the command to do so will be executed by Rscons in a separate
+    #   thread. This allows for build parallelization. If a {ThreadedCommand}
+    #   object is returned, the {#finalize} method will be called after the
+    #   command has completed. The {#finalize} method should then be used to
+    #   record cache info, if needed, and to return the true result of the
+    #   build operation. The builder can store information to be passed in to
+    #   the {#finalize} method by populating the :builder_info field of the
+    #   {ThreadedCommand} object returned here.
     def run(options)
       raise "This method must be overridden in a subclass"
+    end
+
+    # Finalize a build operation.
+    #
+    # This method is called after the {#run} method if the {#run} method does
+    # not return an error.
+    #
+    # @param options [Hash]
+    #   Options.
+    # @option options [true,false,nil] :command_status
+    #   If the {#run} method returns a {ThreadedCommand}, this field will
+    #   contain the return value from executing the command with
+    #   Kernel.system().
+    # @option options [Object] :builder_info
+    #   If the {#run} method returns a {ThreadedCommand}, this field will
+    #   contain the value passed in to the :builder_info field of the
+    #   {ThreadedCommand} object.
+    #
+    # @return [String,false]
+    #   Name of the target file on success or false on failure.
+    def finalize(options)
     end
 
     # Check if the cache is up to date for the target and if not execute the
