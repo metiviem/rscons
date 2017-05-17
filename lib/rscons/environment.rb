@@ -39,8 +39,9 @@ module Rscons
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
       @threaded_commands = Set.new
+      @registered_build_dependencies = {}
       @varset = VarSet.new
-      @job_set = JobSet.new
+      @job_set = JobSet.new(@registered_build_dependencies)
       @user_deps = {}
       @builders = {}
       @build_dirs = []
@@ -328,7 +329,7 @@ module Rscons
 
           # Process all completed {ThreadedCommand} objects.
           completed_tcs.each do |tc|
-            result = builder.finalize(
+            result = tc.build_operation[:builder].finalize(
               command_status: tc.thread.value,
               builder_info: tc.builder_info)
             if result
@@ -517,6 +518,8 @@ module Rscons
     #
     # @since 1.10.0
     #
+    # @param target [String]
+    #   The target that depends on these builds.
     # @param sources [Array<String>]
     #   List of source file(s) to build.
     # @param suffixes [Array<String>]
@@ -526,7 +529,8 @@ module Rscons
     #
     # @return [Array<String>]
     #   List of the output file name(s).
-    def register_builds(sources, suffixes, vars)
+    def register_builds(target, sources, suffixes, vars)
+      @registered_build_dependencies[target] ||= Set.new
       sources.map do |source|
         if source.end_with?(*suffixes)
           source
@@ -540,6 +544,7 @@ module Rscons
             if builder
               output_fname = attempt_output_fname
               self.__send__(builder.name, output_fname, source, vars)
+              @registered_build_dependencies[target] << output_fname
               break
             end
           end

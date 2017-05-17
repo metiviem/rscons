@@ -5,8 +5,13 @@ module Rscons
   class JobSet
 
     # Create a JobSet
-    def initialize
+    #
+    # @param build_dependencies [Hash]
+    #   Hash mapping targets to a set of build dependencies. A job will not be
+    #   returned as ready to run if any of its dependencies are still building.
+    def initialize(build_dependencies)
       @jobs = {}
+      @build_dependencies = build_dependencies
     end
 
     # Add a job to the JobSet.
@@ -42,13 +47,10 @@ module Rscons
     # @return [nil, Hash]
     #   The next job to run.
     def get_next_job_to_run(targets_still_building)
-      attempted_targets = Set.new
-
       @jobs.keys.each do |target|
-        attempted_targets << target
         skip = false
-        @jobs[target][0][:sources].each do |src|
-          if @jobs.include?(src) and not attempted_targets.include?(src)
+        (@jobs[target][0][:sources] + (@build_dependencies[target] || []).to_a).each do |src|
+          if @jobs.include?(src)
             # Skip this target because it depends on another target later in
             # the job set.
             skip = true
