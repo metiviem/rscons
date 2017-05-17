@@ -337,11 +337,8 @@ module Rscons
     #
     # @return [true,false,nil] Return value from Kernel.system().
     def execute(short_desc, command, options = {})
-      print_command = proc do
-        puts command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
-      end
       if @echo == :command
-        print_command.call
+        puts command_to_s(command)
       elsif @echo == :short
         puts short_desc
       end
@@ -350,7 +347,7 @@ module Rscons
       system(*env_args, *Rscons.command_executer, *command, *options_args).tap do |result|
         unless result or @echo == :command
           $stdout.write "Failed command was: "
-          print_command.call
+          puts command_to_s(command)
         end
       end
     end
@@ -750,6 +747,17 @@ module Rscons
     end
 
     private
+
+    # Return a string representation of a command.
+    #
+    # @param command [Array<String>]
+    #   The command.
+    #
+    # @return [String]
+    #   The string representation of the command.
+    def command_to_s(command)
+      command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
+    end
 
     # Parse dependencies for a given target from a Makefile.
     #
