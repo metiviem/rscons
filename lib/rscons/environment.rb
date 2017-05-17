@@ -285,7 +285,7 @@ module Rscons
     def process
       cache = Cache.instance
       begin
-        while @job_set.size > 0
+        while @job_set.size > 0 or @threaded_commands.size > 0
 
           targets_still_building = @threaded_commands.map do |tc|
             tc.build_operation[:target]
