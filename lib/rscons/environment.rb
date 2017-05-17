@@ -512,29 +512,39 @@ module Rscons
     # @param sources [Array<String>] List of source files.
     # @param cache [Cache] The Cache.
     # @param vars [Hash] Extra variables to pass to the builder.
+    # @param options [Hash] Options.
+    # @option options [Boolean] :allow_delayed_execution
+    #   @since 1.10.0
+    #   Allow a threaded command to be scheduled but not yet completed before
+    #   this method returns.
     #
     # @return [String,false] Return value from the {Builder}'s +run+ method.
-    def run_builder(builder, target, sources, cache, vars)
+    def run_builder(builder, target, sources, cache, vars, options = {})
       vars = @varset.merge(vars)
+      build_operation = {
+        builder: builder,
+        target: target,
+        sources: sources,
+        vars: vars,
+        env: self,
+      }
       call_build_hooks = lambda do |sec|
         @build_hooks[sec].each do |build_hook_block|
-          build_operation = {
-            builder: builder,
-            target: target,
-            sources: sources,
-            vars: vars,
-            env: self,
-          }
           build_hook_block.call(build_operation)
         end
       end
+
+      # Invoke pre-build hooks.
       call_build_hooks[:pre]
+
       use_new_run_method_signature =
         begin
           builder.method(:run).arity == 1
         rescue NameError
           false
         end
+
+      # Call the builder's #run method.
       if use_new_run_method_signature
         rv = builder.run(
           target: target,
@@ -545,7 +555,23 @@ module Rscons
       else
         rv = builder.run(target, sources, cache, self, vars)
       end
-      call_build_hooks[:post] if rv
+
+      if rv.is_a?(ThreadedCommand)
+        if options[:allow_delayed_execution]
+          # Store the build operation so the post-build hooks can be called
+          # with it when the threaded command completes.
+          rv.build_operation = build_operation
+        else
+          # Delayed command execution is not allowed, so we need to execute
+          # the command and finalize the builder now.
+          # TODO
+          #rv = builder.finalize()
+          call_build_hooks[:post] if rv
+        end
+      else
+        call_build_hooks[:post] if rv
+      end
+
       rv
     end
 

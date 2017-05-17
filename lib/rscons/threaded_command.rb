@@ -13,6 +13,11 @@ module Rscons
     #   be passed back into the builder's #finalize method.
     attr_reader :builder_info
 
+    # @return [Hash]
+    #   Field for Rscons to store the build operation while this threaded
+    #   command is executing.
+    attr_accessor :build_operation
+
     # Create a ThreadedCommand object.
     #
     # @param command [Array<String>]
