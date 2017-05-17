@@ -1,6 +1,7 @@
 require "fileutils"
 require "set"
 require "shellwords"
+require "thwait"
 
 module Rscons
   # The Environment class is the main programmatic interface to Rscons. It
@@ -563,8 +564,10 @@ module Rscons
         else
           # Delayed command execution is not allowed, so we need to execute
           # the command and finalize the builder now.
-          # TODO
-          #rv = builder.finalize()
+          tc = wait_for_threaded_commands(which: [rv])
+          rv = builder.finalize(
+            command_status: tc.thread.value,
+            builder_info: tc.builder_info)
           call_build_hooks[:post] if rv
         end
       else
@@ -773,6 +776,29 @@ module Rscons
         system(*system_args)
       end
       @threaded_commands << tc
+    end
+
+    # Wait for threaded commands to complete.
+    #
+    # @param options [Hash]
+    #   Options.
+    # @option options [Set<ThreadedCommand>, Array<ThreadedCommand>] :which
+    #   Which {ThreadedCommand} objects to wait for. If not specified, this
+    #   method will wait for any.
+    #
+    # @return [ThreadedCommand]
+    #   The {ThreadedCommand} object that is finished.
+    def wait_for_threaded_commands(options = {})
+      raise "No threaded commands to wait for" if @threaded_commands.empty?
+      options[:which] ||= @threaded_commands
+      threads = options[:which].map(&:thread)
+      tw = ThreadsWait.new(*threads)
+      finished_thread = tw.next_wait
+      threaded_command = @threaded_commands.find do |tc|
+        tc.thread == finished_thread
+      end
+      @threaded_commands.delete(threaded_command)
+      threaded_command
     end
 
     # Return a string representation of a command.
