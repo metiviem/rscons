@@ -37,6 +37,7 @@ module Rscons
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
+      @threaded_commands = Set.new
       @varset = VarSet.new
       @job_set = JobSet.new
       @user_deps = {}
@@ -554,6 +555,7 @@ module Rscons
       end
 
       if rv.is_a?(ThreadedCommand)
+        start_threaded_command(rv)
         if options[:allow_delayed_execution]
           # Store the build operation so the post-build hooks can be called
           # with it when the threaded command completes.
@@ -747,6 +749,31 @@ module Rscons
     end
 
     private
+
+    # Start a threaded command in a new thread.
+    #
+    # @param tc [ThreadedCommand]
+    #   The ThreadedCommand to start.
+    #
+    # @return [void]
+    def start_threaded_command(tc)
+      if @echo == :command
+        puts command_to_s(tc.command)
+      elsif @echo == :short
+        if tc.short_description
+          puts tc.short_description
+        end
+      end
+
+      env_args = tc.system_env ? [tc.system_env] : []
+      options_args = tc.system_options ? [tc.system_options] : []
+      system_args = [*env_args, *Rscons.command_executer, *tc.command, *options_args]
+
+      tc.thread = Thread.new do
+        system(*system_args)
+      end
+      @threaded_commands << tc
+    end
 
     # Return a string representation of a command.
     #
