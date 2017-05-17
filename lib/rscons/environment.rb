@@ -284,18 +284,60 @@ module Rscons
     def process
       cache = Cache.instance
       begin
-        while job = @job_set.get_next_job_to_run
+        while @job_set.size > 0
+
+          # TODO: get_next_job_to_run needs to take into account targets still
+          # being processed.
+          job = @job_set.get_next_job_to_run
+
           # TODO: have Cache determine when checksums may be invalid based on
           # file size and/or timestamp.
           cache.clear_checksum_cache!
-          result = run_builder(job[:builder],
-                               job[:target],
-                               job[:sources],
-                               cache,
-                               job[:vars])
-          unless result
-            raise BuildError.new("Failed to build #{job[:target]}")
+
+          if job
+            result = run_builder(job[:builder],
+                                 job[:target],
+                                 job[:sources],
+                                 cache,
+                                 job[:vars],
+                                 allow_delayed_execution: true)
+            unless result.is_a?(ThreadedCommand)
+              unless result
+                raise BuildError.new("Failed to build #{job[:target]}")
+              end
+            end
           end
+
+          completed_tcs = Set.new
+          # First do a non-blocking wait to pick up any threads that have
+          # completed since last time.
+          loop do
+            if tc = wait_for_threaded_commands(nonblock: true)
+              completed_tcs << tc
+            else
+              break
+            end
+          end
+
+          # If needed, do a blocking wait.
+          if job.nil? or @threaded_commands.size >= Rscons.n_threads
+            completed_tcs << wait_for_threaded_commands
+          end
+
+          # Process all completed {ThreadedCommand} objects.
+          completed_tcs.each do |tc|
+            result = builder.finalize(
+              command_status: tc.thread.value,
+              builder_info: tc.builder_info)
+            if result
+              @build_hooks[:post].each do |build_hook_block|
+                build_hook_block.call(tc.build_operation)
+              end
+            else
+              raise BuildError.new("Failed to build #{tc.build_operation[:target]}")
+            end
+          end
+
         end
       ensure
         cache.write
@@ -785,20 +827,35 @@ module Rscons
     # @option options [Set<ThreadedCommand>, Array<ThreadedCommand>] :which
     #   Which {ThreadedCommand} objects to wait for. If not specified, this
     #   method will wait for any.
+    # @option options [Boolean] :nonblock
+    #   Set to true to not block.
     #
-    # @return [ThreadedCommand]
+    # @return [ThreadedCommand, nil]
     #   The {ThreadedCommand} object that is finished.
     def wait_for_threaded_commands(options = {})
-      raise "No threaded commands to wait for" if @threaded_commands.empty?
+      if @threaded_commands.empty?
+        if options[:nonblock]
+          return nil
+        else
+          raise "No threaded commands to wait for"
+        end
+      end
       options[:which] ||= @threaded_commands
       threads = options[:which].map(&:thread)
       tw = ThreadsWait.new(*threads)
-      finished_thread = tw.next_wait
-      threaded_command = @threaded_commands.find do |tc|
-        tc.thread == finished_thread
+      finished_thread =
+        begin
+          tw.next_wait(options[:nonblock])
+        rescue ThreadsWait::ErrNoFinishedThread
+          nil
+        end
+      if finished_thread
+        threaded_command = @threaded_commands.find do |tc|
+          tc.thread == finished_thread
+        end
+        @threaded_commands.delete(threaded_command)
+        threaded_command
       end
-      @threaded_commands.delete(threaded_command)
-      threaded_command
     end
 
     # Return a string representation of a command.
