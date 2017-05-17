@@ -301,7 +301,8 @@ module Rscons
                                  job[:sources],
                                  cache,
                                  job[:vars],
-                                 allow_delayed_execution: true)
+                                 allow_delayed_execution: true,
+                                 setup_info: job[:setup_info])
             unless result.is_a?(ThreadedCommand)
               unless result
                 raise BuildError.new("Failed to build #{job[:target]}")
@@ -554,11 +555,15 @@ module Rscons
     # @param sources [Array<String>] List of source files.
     # @param cache [Cache] The Cache.
     # @param vars [Hash] Extra variables to pass to the builder.
-    # @param options [Hash] Options.
+    # @param options [Hash]
+    #   @since 1.10.0
+    #   Options.
     # @option options [Boolean] :allow_delayed_execution
     #   @since 1.10.0
     #   Allow a threaded command to be scheduled but not yet completed before
     #   this method returns.
+    # @option options [Object] :setup_info
+    #   Arbitrary builder info returned by Builder#setup.
     #
     # @return [String,false] Return value from the {Builder}'s +run+ method.
     def run_builder(builder, target, sources, cache, vars, options = {})
@@ -593,7 +598,8 @@ module Rscons
           sources: sources,
           cache: cache,
           env: self,
-          vars: vars)
+          vars: vars,
+          setup_info: options[:setup_info])
       else
         rv = builder.run(target, sources, cache, self, vars)
       end

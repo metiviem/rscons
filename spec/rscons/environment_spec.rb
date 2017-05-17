@@ -170,7 +170,7 @@ module Rscons
         cache = "cache"
         expect(Cache).to receive(:instance).and_return(cache)
         allow(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "a.out", ["main.c"], cache, {}, allow_delayed_execution: true).and_return(true)
+        expect(env).to receive(:run_builder).with(anything, "a.out", ["main.c"], cache, {}, allow_delayed_execution: true, setup_info: nil).and_return(true)
         expect(cache).to receive(:write)
 
         env.process
@@ -184,8 +184,8 @@ module Rscons
         cache = "cache"
         expect(Cache).to receive(:instance).and_return(cache)
         allow(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}, allow_delayed_execution: true).and_return("main.o")
-        expect(env).to receive(:run_builder).with(anything, "a.out", ["main.o"], cache, {}, allow_delayed_execution: true).and_return("a.out")
+        expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}, allow_delayed_execution: true, setup_info: nil).and_return("main.o")
+        expect(env).to receive(:run_builder).with(anything, "a.out", ["main.o"], cache, {}, allow_delayed_execution: true, setup_info: nil).and_return("a.out")
         expect(cache).to receive(:write)
 
         env.process
@@ -199,7 +199,7 @@ module Rscons
         cache = "cache"
         expect(Cache).to receive(:instance).and_return(cache)
         allow(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}, allow_delayed_execution: true).and_return(false)
+        expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}, allow_delayed_execution: true, setup_info: nil).and_return(false)
         expect(cache).to receive(:write)
 
         expect { env.process }.to raise_error BuildError, /Failed.to.build.main.o/
