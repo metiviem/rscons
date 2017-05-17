@@ -34,28 +34,44 @@ module Rscons
     #
     # This method will remove the job from the JobSet.
     #
+    # @param targets_still_building [Array<String>]
+    #   Targets that are not finished building. This is used to avoid returning
+    #   a job as available to run if it depends on one of the targets that are
+    #   still building as a source.
+    #
     # @return [nil, Hash]
     #   The next job to run.
-    def get_next_job_to_run
-      if @jobs.size > 0
-        evaluated_targets = Set.new
-        attempt = lambda do |target|
-          evaluated_targets << target
-          @jobs[target][0][:sources].each do |src|
-            if @jobs.include?(src) and not evaluated_targets.include?(src)
-              return attempt[src]
-            end
+    def get_next_job_to_run(targets_still_building)
+      attempted_targets = Set.new
+
+      @jobs.keys.each do |target|
+        attempted_targets << target
+        skip = false
+        @jobs[target][0][:sources].each do |src|
+          if @jobs.include?(src) and not attempted_targets.include?(src)
+            # Skip this target because it depends on another target later in
+            # the job set.
+            skip = true
+            break
           end
-          job = @jobs[target][0]
-          if @jobs[target].size > 1
-            @jobs[target].slice!(0)
-          else
-            @jobs.delete(target)
+          if targets_still_building.include?(src)
+            # Skip this target because it depends on another target that is
+            # still being built.
+            skip = true
+            break
           end
-          return job
         end
-        attempt[@jobs.first.first]
+        next if skip
+        job = @jobs[target][0]
+        if @jobs[target].size > 1
+          @jobs[target].slice!(0)
+        else
+          @jobs.delete(target)
+        end
+        return job
       end
+
+      nil
     end
 
     # Remove all jobs from the JobSet.

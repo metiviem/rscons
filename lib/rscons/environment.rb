@@ -286,9 +286,10 @@ module Rscons
       begin
         while @job_set.size > 0
 
-          # TODO: get_next_job_to_run needs to take into account targets still
-          # being processed.
-          job = @job_set.get_next_job_to_run
+          targets_still_building = @threaded_commands.map do |tc|
+            tc.build_operation[:target]
+          end
+          job = @job_set.get_next_job_to_run(targets_still_building)
 
           # TODO: have Cache determine when checksums may be invalid based on
           # file size and/or timestamp.
