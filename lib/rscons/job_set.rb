@@ -63,5 +63,13 @@ module Rscons
       @jobs.clear
     end
 
+    # Get the JobSet size.
+    #
+    # @return [Integer]
+    #   JobSet size.
+    def size
+      @jobs.size
+    end
+
   end
 end
