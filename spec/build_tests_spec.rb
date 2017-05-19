@@ -806,28 +806,27 @@ EOF
     end
     expect do
       Rscons::Environment.new do |env|
-        env.Program("simple", %w[simple.c two.c])
+        env.Program("simple.exe", %w[simple.c two.c])
       end
-    end.to raise_error /Failed to build simple/
+    end.to raise_error /Failed to build two\.o/
     result = lines
-    expect(result.size).to be > 2
-    expect(result[0, 2]).to eq [
+    expect(Set[*result]).to eq Set[
       "CC simple.o",
       "CC two.o",
     ]
     expect(File.exists?("simple.o")).to be_truthy
     expect(File.exists?("two.o")).to be_falsey
-    expect(File.exists?("two_sources#{Rscons::Environment.new["PROGSUFFIX"]}")).to be_falsey
+    expect(File.exists?("simple.exe")).to be_falsey
 
     Rscons::Cache.reset!
 
     File.open("two.c", "w") {|fh|}
     Rscons::Environment.new do |env|
-      env.Program("simple", %w[simple.c two.c])
+      env.Program("simple.exe", %w[simple.c two.c])
     end
     expect(lines).to eq [
       "CC two.o",
-      "LD simple",
+      "LD simple.exe",
     ]
   end
 
