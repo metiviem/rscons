@@ -304,10 +304,8 @@ module Rscons
                                  job[:vars],
                                  allow_delayed_execution: true,
                                  setup_info: job[:setup_info])
-            unless result.is_a?(ThreadedCommand)
-              unless result
-                raise BuildError.new("Failed to build #{job[:target]}")
-              end
+            unless result
+              raise BuildError.new("Failed to build #{job[:target]}")
             end
           end
 
@@ -337,6 +335,9 @@ module Rscons
                 build_hook_block.call(tc.build_operation)
               end
             else
+              unless @echo == :command
+                $stdout.write "Failed command was: #{command_to_s(tc.command)}"
+              end
               raise BuildError.new("Failed to build #{tc.build_operation[:target]}")
             end
           end
@@ -393,8 +394,7 @@ module Rscons
       options_args = options[:options] ? [options[:options]] : []
       system(*env_args, *Rscons.command_executer, *command, *options_args).tap do |result|
         unless result or @echo == :command
-          $stdout.write "Failed command was: "
-          puts command_to_s(command)
+          $stdout.write "Failed command was: #{command_to_s(command)}"
         end
       end
     end
@@ -622,7 +622,13 @@ module Rscons
           rv = builder.finalize(
             command_status: tc.thread.value,
             builder_info: tc.builder_info)
-          call_build_hooks[:post] if rv
+          if rv
+            call_build_hooks[:post]
+          else
+            unless @echo == :command
+              $stdout.write "Failed command was: #{command_to_s(tc.command)}"
+            end
+          end
         end
       else
         call_build_hooks[:post] if rv
