@@ -336,7 +336,7 @@ module Rscons
               end
             else
               unless @echo == :command
-                $stdout.write "Failed command was: #{command_to_s(tc.command)}"
+                $stdout.puts "Failed command was: #{command_to_s(tc.command)}"
               end
               raise BuildError.new("Failed to build #{tc.build_operation[:target]}")
             end
@@ -394,7 +394,7 @@ module Rscons
       options_args = options[:options] ? [options[:options]] : []
       system(*env_args, *Rscons.command_executer, *command, *options_args).tap do |result|
         unless result or @echo == :command
-          $stdout.write "Failed command was: #{command_to_s(command)}"
+          $stdout.puts "Failed command was: #{command_to_s(command)}"
         end
       end
     end
@@ -626,7 +626,7 @@ module Rscons
             call_build_hooks[:post]
           else
             unless @echo == :command
-              $stdout.write "Failed command was: #{command_to_s(tc.command)}"
+              $stdout.puts "Failed command was: #{command_to_s(tc.command)}"
             end
           end
         end
