@@ -935,4 +935,29 @@ EOF
     end
   end
 
+  context "Object builder" do
+    it "allows overriding CCCMD construction variable" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "override_cccmd.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "gcc -c -o simple.o -Dfoobar simple.c",
+      ]
+    end
+
+    it "allows overriding DEPFILESUFFIX construction variable" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "override_depfilesuffix.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "gcc -c -o simple.o -MMD -MF simple.deppy simple.c",
+      ]
+    end
+
+    it "raises an error when given a source file with an unknown suffix" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "error_unknown_suffix.rb")
+      expect(result.stderr).to match /unknown input file type: "foo.xyz"/
+    end
+  end
 end
