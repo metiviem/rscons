@@ -57,12 +57,11 @@ describe Rscons do
   def run_test(options = {})
     rsconsfile = options[:rsconsfile] || "Rsconsfile"
     rscons_args = options[:rscons_args] || []
-    command = %w[rscons -f _build_test.rb] + rscons_args
+    command = %W[ruby -I. -r _simplecov_setup #{@owd}/bin/rscons -f #{rsconsfile}] + rscons_args
     @statics[:build_test_id] ||= 0
     @statics[:build_test_id] += 1
     command_name = "b#{@statics[:build_test_id]}"
-    rsconsfile_contents = File.read(rsconsfile)
-    File.open("_build_test.rb", "w") do |fh|
+    File.open("_simplecov_setup.rb", "w") do |fh|
       fh.puts <<EOF
 require "simplecov"
 class MyFormatter
@@ -72,15 +71,21 @@ end
 SimpleCov.start do
   root(#{@owd.inspect})
   command_name(#{command_name.inspect})
+  filters.clear
+  add_filter do |src|
+    !(src.filename[SimpleCov.root])
+  end
   formatter(MyFormatter)
 end
 $LOAD_PATH.unshift(#{@owd.inspect} + "/lib")
 # force color off
 ENV["TERM"] = nil
 EOF
-      fh.puts rsconsfile_contents
     end
-    stdout, stderr, status = Open3.capture3(*command)
+    stdout, stderr, status = nil, nil, nil
+    Bundler.with_clean_env do
+      stdout, stderr, status = Open3.capture3(*command)
+    end
     # Remove output lines generated as a result of the test environment
     stderr = stderr.lines.find_all do |line|
       not (line =~ /Warning: coverage data provided by Coverage.*exceeds number of lines/)
