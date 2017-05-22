@@ -106,7 +106,7 @@ EOF
     result = run_test
     expect(result.stderr).to eq ""
     expect(File.exists?('simple.o')).to be_truthy
-    expect(`./simple`).to eq "This is a simple C program\n"
+    expect(`./simple.exe`).to eq "This is a simple C program\n"
   end
 
   it 'prints commands as they are executed' do
@@ -763,6 +763,175 @@ EOF
       result = run_test(rsconsfile: "clear_targets.rb")
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
+    end
+  end
+
+  context "Cache management" do
+    it "prints a warning when the cache is corrupt" do
+      test_dir("simple")
+      File.open(Rscons::Cache::CACHE_FILE, "w") do |fh|
+        fh.puts("[1]")
+      end
+      result = run_test
+      expect(result.stderr).to match /Warning.*was corrupt. Contents:/
+    end
+
+    it "removes the cache file on a clean operation" do
+      test_dir("simple")
+      result = run_test
+      expect(result.stderr).to eq ""
+      expect(File.exists?(Rscons::Cache::CACHE_FILE)).to be_truthy
+      result = run_test(rscons_args: %w[-c])
+      expect(result.stderr).to eq ""
+      expect(File.exists?(Rscons::Cache::CACHE_FILE)).to be_falsey
+    end
+
+    it "forces a build when the target file does not exist and is not in the cache" do
+      test_dir("simple")
+      expect(File.exists?("simple.exe")).to be_falsey
+      result = run_test
+      expect(result.stderr).to eq ""
+      expect(File.exists?("simple.exe")).to be_truthy
+    end
+
+    it "forces a build when the target file does exist but is not in the cache" do
+      test_dir("simple")
+      File.open("simple.exe", "wb") do |fh|
+        fh.write("hi")
+      end
+      result = run_test
+      expect(result.stderr).to eq ""
+      expect(File.exists?("simple.exe")).to be_truthy
+      expect(File.read("simple.exe", mode: "rb")).to_not eq "hi"
+    end
+
+    it "forces a build when the target file exists and is in the cache but has changed since cached" do
+      test_dir("simple")
+      result = run_test
+      expect(result.stderr).to eq ""
+      File.open("simple.exe", "wb") do |fh|
+        fh.write("hi")
+      end
+      test_dir("simple")
+      result = run_test
+      expect(result.stderr).to eq ""
+      expect(File.exists?("simple.exe")).to be_truthy
+      expect(File.read("simple.exe", mode: "rb")).to_not eq "hi"
+    end
+
+    it "forces a build when the command changes" do
+      test_dir("simple")
+
+      result = run_test
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "CC simple.o",
+        "LD simple.exe",
+      ]
+
+      result = run_test(rsconsfile: "cache_command_change.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "LD simple.exe",
+      ]
+    end
+
+    it "forces a build when there is a new dependency" do
+      test_dir("simple")
+
+      result = run_test(rsconsfile: "cache_new_dep1.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "CC simple.o",
+        "LD simple.exe",
+      ]
+
+      result = run_test(rsconsfile: "cache_new_dep2.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "LD simple.exe",
+      ]
+    end
+
+    it "forces a build when a dependency's checksum has changed" do
+      test_dir("simple")
+
+      result = run_test(rsconsfile: "cache_dep_checksum_change.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq ["Copy simple.copy"]
+      File.open("simple.c", "wb") do |fh|
+        fh.write("hi")
+      end
+
+      result = run_test(rsconsfile: "cache_dep_checksum_change.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq ["Copy simple.copy"]
+    end
+
+    it "forces a rebuild with strict_deps=true when dependency order changes" do
+      test_dir("two_sources")
+
+      File.open("sources", "wb") do |fh|
+        fh.write("one.o two.o")
+      end
+      result = run_test(rsconsfile: "cache_strict_deps.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include "gcc -o program.exe one.o two.o"
+
+      result = run_test(rsconsfile: "cache_strict_deps.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+
+      File.open("sources", "wb") do |fh|
+        fh.write("two.o one.o")
+      end
+      result = run_test(rsconsfile: "cache_strict_deps.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include "gcc -o program.exe one.o two.o"
+    end
+
+    it "forces a rebuild when there is a new user dependency" do
+      test_dir("simple")
+
+      File.open("foo", "wb") {|fh| fh.write("hi")}
+      File.open("user_deps", "wb") {|fh| fh.write("")}
+      result = run_test(rsconsfile: "cache_user_dep.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "CC simple.o",
+        "LD simple.exe",
+      ]
+
+      File.open("user_deps", "wb") {|fh| fh.write("foo")}
+      result = run_test(rsconsfile: "cache_user_dep.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "LD simple.exe",
+      ]
+    end
+
+    it "forces a rebuild when a user dependency file checksum has changed" do
+      test_dir("simple")
+
+      File.open("foo", "wb") {|fh| fh.write("hi")}
+      File.open("user_deps", "wb") {|fh| fh.write("foo")}
+      result = run_test(rsconsfile: "cache_user_dep.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "CC simple.o",
+        "LD simple.exe",
+      ]
+
+      result = run_test(rsconsfile: "cache_user_dep.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+
+      File.open("foo", "wb") {|fh| fh.write("hi2")}
+      result = run_test(rsconsfile: "cache_user_dep.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "LD simple.exe",
+      ]
     end
   end
 
