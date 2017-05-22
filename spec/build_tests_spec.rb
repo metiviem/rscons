@@ -960,4 +960,13 @@ EOF
       expect(result.stderr).to match /unknown input file type: "foo.xyz"/
     end
   end
+
+  context "Library builder" do
+    it "allows overriding ARCMD construction variable" do
+      test_dir("library")
+      result = run_test(rsconsfile: "override_arcmd.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include "ar rcf lib.a one.o three.o two.o"
+    end
+  end
 end
