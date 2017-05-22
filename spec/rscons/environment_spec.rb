@@ -162,65 +162,6 @@ module Rscons
       end
     end
 
-    describe "#process" do
-      it "runs builders for all of the targets specified" do
-        env = Environment.new
-        env.Program("a.out", "main.c")
-
-        cache = "cache"
-        expect(Cache).to receive(:instance).and_return(cache)
-        allow(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "a.out", ["main.c"], cache, {}, allow_delayed_execution: true, setup_info: nil).and_return(true)
-        expect(cache).to receive(:write)
-
-        env.process
-      end
-
-      it "builds dependent targets first" do
-        env = Environment.new
-        env.Program("a.out", "main.o")
-        env.Object("main.o", "other.cc")
-
-        cache = "cache"
-        expect(Cache).to receive(:instance).and_return(cache)
-        allow(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}, allow_delayed_execution: true, setup_info: nil).and_return("main.o")
-        expect(env).to receive(:run_builder).with(anything, "a.out", ["main.o"], cache, {}, allow_delayed_execution: true, setup_info: nil).and_return("a.out")
-        expect(cache).to receive(:write)
-
-        env.process
-      end
-
-      it "raises a BuildError when building fails" do
-        env = Environment.new
-        env.Program("a.out", "main.o")
-        env.Object("main.o", "other.cc")
-
-        cache = "cache"
-        expect(Cache).to receive(:instance).and_return(cache)
-        allow(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}, allow_delayed_execution: true, setup_info: nil).and_return(false)
-        expect(cache).to receive(:write)
-
-        expect { env.process }.to raise_error BuildError, /Failed.to.build.main.o/
-      end
-
-      it "writes the cache when the Builder raises an exception" do
-        env = Environment.new
-        env.Object("module.o", "module.c")
-
-        cache = "cache"
-        expect(Cache).to receive(:instance).and_return(cache)
-        expect(cache).to receive(:clear_checksum_cache!)
-        allow(env).to receive(:run_builder) do |builder, target, sources, cache, vars|
-          raise "Ruby exception thrown by builder"
-        end
-        expect(cache).to receive(:write)
-
-        expect { env.process }.to raise_error RuntimeError, /Ruby exception thrown by builder/
-      end
-    end
-
     describe "#build_command" do
       it "returns a command based on the variables in the Environment" do
         env = Environment.new
@@ -264,8 +205,7 @@ module Rscons
             env = Environment.new(echo: :short)
             expect(env).to receive(:puts).with("short desc")
             expect(env).to receive(:system).with(*Rscons.command_executer, "a", "command").and_return(false)
-            expect($stdout).to receive(:write).with("Failed command was: ")
-            expect(env).to receive(:puts).with("a command")
+            expect($stdout).to receive(:puts).with("Failed command was: a command")
             env.execute("short desc", ["a", "command"])
           end
         end

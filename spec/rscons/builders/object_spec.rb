@@ -13,7 +13,12 @@ module Rscons
         expect(File).to receive(:exists?).and_return(false)
         expect(cache).to receive(:register_build)
 
-        subject.run("mod.o", ["mod.c"], cache, env, "CCCMD" => ["llc", "${_SOURCES}"])
+        subject.run(
+          target: "mod.o",
+          sources: ["mod.c"],
+          cache: cache,
+          env: env,
+          vars: {"CCCMD" => ["llc", "${_SOURCES}"]})
       end
 
       it "supports overriding DEPFILESUFFIX construction variable" do
@@ -24,11 +29,23 @@ module Rscons
         expect(File).to receive(:exists?).with("f.d").and_return(false)
         expect(cache).to receive(:register_build)
 
-        subject.run("f.o", ["in.c"], cache, env, "DEPFILESUFFIX" => ".d")
+        subject.run(
+          target: "f.o",
+          sources: ["in.c"],
+          cache: cache,
+          env: env,
+          vars: {"DEPFILESUFFIX" => ".d"})
       end
 
       it "raises an error when given a source file with an unknown suffix" do
-        expect { subject.run("mod.o", ["mod.xyz"], :cache, env, {}) }.to raise_error /unknown input file type: "mod.xyz"/
+        expect do
+          subject.run(
+            target: "mod.o",
+            sources: ["mod.xyz"],
+            cache: :cache,
+            env: env,
+            vars: {})
+        end.to raise_error /unknown input file type: "mod.xyz"/
       end
     end
   end
