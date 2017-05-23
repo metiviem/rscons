@@ -616,6 +616,16 @@ EOF
     ]
   end
 
+  it "allows overriding progsuffix" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "progsuffix.rb")
+    expect(result.stderr).to eq ""
+    expect(lines(result.stdout)).to eq [
+      "CC simple.o",
+      "LD simple.out",
+    ]
+  end
+
   context "Directory builder" do
     it "creates the requested directory" do
       test_dir("simple")
