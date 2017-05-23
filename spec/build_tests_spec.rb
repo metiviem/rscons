@@ -969,4 +969,21 @@ EOF
       expect(lines(result.stdout)).to include "ar rcf lib.a one.o three.o two.o"
     end
   end
+
+  context "multi-threading" do
+    it "waits for subcommands in threads for builders that support threaded commands" do
+      test_dir("simple")
+      start_time = Time.new
+      result = run_test(rsconsfile: "threading.rb", rscons_args: %w[-j 4])
+      expect(result.stderr).to eq ""
+      expect(Set[*lines(result.stdout)]).to eq Set[
+        "ThreadedTestBuilder a",
+        "ThreadedTestBuilder b",
+        "ThreadedTestBuilder c",
+        "NonThreadedTestBuilder d",
+      ]
+      elapsed = Time.new - start_time
+      expect(elapsed).to be < 3
+    end
+  end
 end
