@@ -326,6 +326,13 @@ module Rscons
       end
     end
 
+    describe "#find_finished_thread" do
+      it "raises an error if called with nonblock=false and no threads to wait for" do
+        env = Environment.new
+        expect {env.__send__(:find_finished_thread, [], false)}.to raise_error /No threads to wait for/
+      end
+    end
+
     describe ".parse_makefile_deps" do
       it 'handles dependencies on one line' do
         expect(File).to receive(:read).with('makefile').and_return(<<EOS)
