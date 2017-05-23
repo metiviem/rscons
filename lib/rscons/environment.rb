@@ -584,15 +584,10 @@ module Rscons
       # Invoke pre-build hooks.
       call_build_hooks[:pre]
 
-      use_new_run_method_signature =
-        begin
-          builder.method(:run).arity == 1
-        rescue NameError
-          false
-        end
-
       # Call the builder's #run method.
-      if use_new_run_method_signature
+      if builder.method(:run).arity == 5
+        rv = builder.run(target, sources, cache, self, vars)
+      else
         rv = builder.run(
           target: target,
           sources: sources,
@@ -600,8 +595,6 @@ module Rscons
           env: self,
           vars: vars,
           setup_info: options[:setup_info])
-      else
-        rv = builder.run(target, sources, cache, self, vars)
       end
 
       if rv.is_a?(ThreadedCommand)
