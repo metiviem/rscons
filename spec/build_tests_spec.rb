@@ -1001,4 +1001,37 @@ EOF
       expect(elapsed).to be < 3
     end
   end
+
+  context "CLI" do
+    it "shows the version number and exits with --version argument" do
+      test_dir("simple")
+      result = run_test(rscons_args: %w[--version])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /version #{Rscons::VERSION}/
+    end
+
+    it "shows CLI help and exits with --help argument" do
+      test_dir("simple")
+      result = run_test(rscons_args: %w[--help])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /Usage:/
+    end
+
+    it "prints an error and exits with an error status when a default Rsconsfile cannot be found" do
+      test_dir("simple")
+      FileUtils.rm_f("Rsconsfile")
+      result = run_test
+      expect(result.stderr).to match /Could not find the Rsconsfile to execute/
+      expect(result.status).to_not eq 0
+    end
+
+    it "prints an error and exits with an error status when the given Rsconsfile cannot be read" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "nonexistent")
+      expect(result.stderr).to match /Cannot read nonexistent/
+      expect(result.status).to_not eq 0
+    end
+  end
 end
