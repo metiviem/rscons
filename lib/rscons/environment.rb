@@ -1,7 +1,6 @@
 require "fileutils"
 require "set"
 require "shellwords"
-require "thwait"
 
 module Rscons
   # The Environment class is the main programmatic interface to Rscons. It
@@ -847,28 +846,42 @@ module Rscons
     # @return [ThreadedCommand, nil]
     #   The {ThreadedCommand} object that is finished.
     def wait_for_threaded_commands(options = {})
-      if @threaded_commands.empty?
-        if options[:nonblock]
-          return nil
-        else
-          raise "No threaded commands to wait for"
-        end
-      end
       options[:which] ||= @threaded_commands
       threads = options[:which].map(&:thread)
-      tw = ThreadsWait.new(*threads)
-      finished_thread =
-        begin
-          tw.next_wait(options[:nonblock])
-        rescue ThreadsWait::ErrNoFinishedThread
-          nil
-        end
-      if finished_thread
+      if finished_thread = find_finished_thread(threads, options[:nonblock])
         threaded_command = @threaded_commands.find do |tc|
           tc.thread == finished_thread
         end
         @threaded_commands.delete(threaded_command)
         threaded_command
+      end
+    end
+
+    # Check if any of the requested threads are finished.
+    #
+    # @param threads [Array<Thread>]
+    #   The threads to check.
+    # @param nonblock [Boolean]
+    #   Whether to be non-blocking. If true, nil will be returned if no thread
+    #   is finished. If false, the method will wait until one of the threads
+    #   is finished.
+    #
+    # @return [Thread, nil]
+    #   The finished thread, if any.
+    def find_finished_thread(threads, nonblock)
+      if nonblock
+        threads.find do |thread|
+          !thread.alive?
+        end
+      else
+        if threads.empty?
+          raise "No threads to wait for"
+        end
+        loop do
+          thread = find_finished_thread(threads, true)
+          return thread if thread
+          sleep 0.1
+        end
       end
     end
 
