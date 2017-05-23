@@ -254,42 +254,6 @@ module Rscons
       end
     end
 
-    describe "#build_sources" do
-      class ABuilder < Builder
-        def produces?(target, source, env)
-          target =~ /\.ab_out$/ and source =~ /\.ab_in$/
-        end
-      end
-
-      it "finds and invokes a builder to produce output files with the requested suffixes" do
-        cache = "cache"
-        env = Environment.new
-        env.add_builder(ABuilder.new)
-        expect(env.builders["Object"]).to receive(:run).with("mod.o", ["mod.c"], cache, env, anything).and_return("mod.o")
-        expect(env.builders["ABuilder"]).to receive(:run).with("mod2.ab_out", ["mod2.ab_in"], cache, env, anything).and_return("mod2.ab_out")
-        expect(env.build_sources(["precompiled.o", "mod.c", "mod2.ab_in"], [".o", ".ab_out"], cache, {})).to eq ["precompiled.o", "mod.o", "mod2.ab_out"]
-      end
-    end
-
-    describe "#run_builder" do
-      it "modifies the construction variables using given build hooks and invokes the builder" do
-        env = Environment.new
-        env.add_build_hook do |build_op|
-          if build_op[:sources].first =~ %r{src/special}
-            build_op[:vars]["CFLAGS"] += ["-O3", "-DSPECIAL"]
-          end
-        end
-        allow(env.builders["Object"]).to receive(:run) do |target, sources, cache, env, vars|
-          expect(vars["CFLAGS"]).to eq []
-        end
-        env.run_builder(env.builders["Object"], "build/normal/module.o", ["src/normal/module.c"], "cache", {})
-        allow(env.builders["Object"]).to receive(:run) do |target, sources, cache, env, vars|
-          expect(vars["CFLAGS"]).to eq ["-O3", "-DSPECIAL"]
-        end
-        env.run_builder(env.builders["Object"], "build/special/module.o", ["src/special/module.c"], "cache", {})
-      end
-    end
-
     describe "#shell" do
       it "executes the given shell command and returns the results" do
         env = Environment.new
