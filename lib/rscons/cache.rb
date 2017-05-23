@@ -62,11 +62,6 @@ module Rscons
       def instance
         @instance ||= Cache.new
       end
-
-      # Reset the cache (for unit/integration test purposes)
-      def reset!
-        @instance = nil
-      end
     end
 
     # Create a Cache object and load in the previous contents from the cache
