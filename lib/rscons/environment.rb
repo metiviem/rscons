@@ -312,12 +312,8 @@ module Rscons
           completed_tcs = Set.new
           # First do a non-blocking wait to pick up any threads that have
           # completed since last time.
-          loop do
-            if tc = wait_for_threaded_commands(nonblock: true)
-              completed_tcs << tc
-            else
-              break
-            end
+          while tc = wait_for_threaded_commands(nonblock: true)
+            completed_tcs << tc
           end
 
           # If needed, do a blocking wait.
