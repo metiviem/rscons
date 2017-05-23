@@ -55,9 +55,14 @@ describe Rscons do
   end
 
   def run_test(options = {})
-    rsconsfile = options[:rsconsfile] || "Rsconsfile"
+    rsconsfile_args =
+      if options[:rsconsfile]
+        %W[-f #{options[:rsconsfile]}]
+      else
+        []
+      end
     rscons_args = options[:rscons_args] || []
-    command = %W[ruby -I. -r _simplecov_setup #{@owd}/bin/rscons -f #{rsconsfile}] + rscons_args
+    command = %W[ruby -I. -r _simplecov_setup #{@owd}/bin/rscons] + rsconsfile_args + rscons_args
     @statics[:build_test_id] ||= 0
     @statics[:build_test_id] += 1
     command_name = "b#{@statics[:build_test_id]}"
