@@ -641,6 +641,16 @@ EOF
     ]
   end
 
+  it "allows a builder to call Environment#build_sources in a non-threaded manner" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "build_sources.rb")
+    expect(result.stderr).to eq ""
+    expect(lines(result.stdout)).to eq [
+      "CC simple.o",
+      "MyProgram simple.exe",
+    ]
+  end
+
   context "Directory builder" do
     it "creates the requested directory" do
       test_dir("simple")
