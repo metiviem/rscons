@@ -1,6 +1,7 @@
 require "fileutils"
 require "set"
 require "shellwords"
+require "thwait"
 
 module Rscons
   # The Environment class is the main programmatic interface to Rscons. It
@@ -861,11 +862,7 @@ module Rscons
         if threads.empty?
           raise "No threads to wait for"
         end
-        loop do
-          thread = find_finished_thread(threads, true)
-          return thread if thread
-          sleep 0.1
-        end
+        ThreadsWait.new(*threads).next_wait
       end
     end
 
