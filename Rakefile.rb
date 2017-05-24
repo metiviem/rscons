@@ -15,6 +15,7 @@ CLOBBER.include %w[pkg]
 
 RSpec::Core::RakeTask.new(:spec, :example_string) do |task, args|
   if args.example_string
+    ENV["partial_specs"] = "1"
     task.rspec_opts = %W[-e "#{args.example_string}" -f documentation]
   end
 end

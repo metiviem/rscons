@@ -65,7 +65,13 @@ describe Rscons do
     command = %W[ruby -I. -r _simplecov_setup #{@owd}/bin/rscons] + rsconsfile_args + rscons_args
     @statics[:build_test_id] ||= 0
     @statics[:build_test_id] += 1
-    command_name = "b#{@statics[:build_test_id]}"
+    command_prefix =
+      if ENV["partial_specs"]
+        "p"
+      else
+        "b"
+      end
+    command_name = "#{command_prefix}#{@statics[:build_test_id]}"
     File.open("_simplecov_setup.rb", "w") do |fh|
       fh.puts <<EOF
 require "simplecov"
