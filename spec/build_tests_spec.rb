@@ -1029,7 +1029,7 @@ EOF
         "NonThreadedTestBuilder d",
       ]
       elapsed = Time.new - start_time
-      expect(elapsed).to be < 3
+      expect(elapsed).to be < 4
     end
   end
 
