@@ -322,9 +322,7 @@ module Rscons
 
           # Process all completed {ThreadedCommand} objects.
           completed_tcs.each do |tc|
-            result = tc.build_operation[:builder].finalize(
-              command_status: tc.thread.value,
-              builder_info: tc.builder_info)
+            result = finalize_builder(tc)
             if result
               @build_hooks[:post].each do |build_hook_block|
                 build_hook_block.call(tc.build_operation)
@@ -594,18 +592,15 @@ module Rscons
       end
 
       if rv.is_a?(ThreadedCommand)
+        # Store the build operation so the post-build hooks can be called
+        # with it when the threaded command completes.
+        rv.build_operation = build_operation
         start_threaded_command(rv)
-        if options[:allow_delayed_execution]
-          # Store the build operation so the post-build hooks can be called
-          # with it when the threaded command completes.
-          rv.build_operation = build_operation
-        else
+        unless options[:allow_delayed_execution]
           # Delayed command execution is not allowed, so we need to execute
           # the command and finalize the builder now.
           tc = wait_for_threaded_commands(which: [rv])
-          rv = builder.finalize(
-            command_status: tc.thread.value,
-            builder_info: tc.builder_info)
+          rv = finalize_builder(tc)
           if rv
             call_build_hooks[:post]
           else
@@ -883,6 +878,20 @@ module Rscons
     #   The string representation of the command.
     def command_to_s(command)
       command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
+    end
+
+    # Call a builder's #finalize method after a ThreadedCommand terminates.
+    #
+    # @param tc [ThreadedCommand]
+    #   The ThreadedCommand returned from the builder's #run method.
+    #
+    # @return [String, false]
+    #   Result of Builder#finalize.
+    def finalize_builder(tc)
+      tc.build_operation[:builder].finalize(
+        tc.build_operation.merge(
+          command_status: tc.thread.value,
+          tc: tc))
     end
 
     # Parse dependencies for a given target from a Makefile.

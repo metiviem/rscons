@@ -88,6 +88,8 @@ module Rscons
           '_SOURCES' => sources,
           '_DEPFILE' => Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars)),
         })
+        # Store vars back into options so new keys are accessible in #finalize.
+        options[:vars] = vars
         com_prefix = KNOWN_SUFFIXES.find do |compiler, suffix_var|
           sources.first.end_with?(*env.expand_varref("${#{suffix_var}}"))
         end.tap do |v|
@@ -101,8 +103,7 @@ module Rscons
           FileUtils.rm_f(target)
           ThreadedCommand.new(
             command,
-            short_description: "#{com_prefix} #{target}",
-            builder_info: options.merge(vars: vars, command: command))
+            short_description: "#{com_prefix} #{target}")
         end
       end
 
@@ -114,12 +115,12 @@ module Rscons
       #   Name of the target file on success or nil on failure.
       def finalize(options)
         if options[:command_status]
-          target, deps, cache, env, vars, command = options[:builder_info].values_at(:target, :sources, :cache, :env, :vars, :command)
+          target, deps, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
           if File.exists?(vars['_DEPFILE'])
             deps += Environment.parse_makefile_deps(vars['_DEPFILE'], target)
             FileUtils.rm_f(vars['_DEPFILE'])
           end
-          cache.register_build(target, command, deps.uniq, env)
+          cache.register_build(target, options[:tc].command, deps.uniq, env)
           target
         end
       end

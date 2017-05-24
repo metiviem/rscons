@@ -145,19 +145,29 @@ module Rscons
 
     # Finalize a build operation.
     #
-    # This method is called after the {#run} method if the {#run} method does
-    # not return an error.
+    # This method is called after the {#run} method if the {#run} method
+    # returns a {ThreadedCommand} object.
     #
     # @param options [Hash]
     #   Options.
+    # @option options [String] :target
+    #   Target file name.
+    # @option options [Array<String>] :sources
+    #   Source file name(s).
+    # @option options [Cache] :cache
+    #   The Cache object.
+    # @option options [Environment] :env
+    #   The Environment executing the builder.
+    # @option options [Hash,VarSet] :vars
+    #   Extra construction variables.
+    # @option options [Object] :setup_info
+    #   Whatever value was returned from this builder's {#setup} method call.
     # @option options [true,false,nil] :command_status
     #   If the {#run} method returns a {ThreadedCommand}, this field will
     #   contain the return value from executing the command with
     #   Kernel.system().
-    # @option options [Object] :builder_info
-    #   If the {#run} method returns a {ThreadedCommand}, this field will
-    #   contain the value passed in to the :builder_info field of the
-    #   {ThreadedCommand} object.
+    # @option options [ThreadedCommand] :tc
+    #   The {ThreadedCommand} object that was returned by the #run method.
     #
     # @return [String,false]
     #   Name of the target file on success or false on failure.
