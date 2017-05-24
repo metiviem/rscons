@@ -631,35 +631,44 @@ EOF
     ]
   end
 
-  it "allows a builder to call Environment#run_builder in a non-threaded manner" do
-    test_dir("simple")
-    result = run_test(rsconsfile: "run_builder.rb")
-    expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to eq [
-      "CC simple.o",
-      "LD simple.exe",
-    ]
-  end
-
-  it "allows a builder to call Environment#build_sources in a non-threaded manner" do
-    test_dir("simple")
-    result = run_test(rsconsfile: "build_sources.rb")
-    expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to eq [
-      "CC simple.o",
-      "CC two.o",
-      "MyProgram simple.exe",
-    ]
-  end
-
-  it "prints the failed build command for a threaded builder when called via Environment#run_builder without delayed execution" do
-    test_dir("simple")
-    File.open("simple.c", "wb") do |fh|
-      fh.write("FOOBAR")
+  context "backward compatibility" do
+    it "allows a builder to call Environment#run_builder in a non-threaded manner" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "run_builder.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "CC simple.o",
+        "LD simple.exe",
+      ]
     end
-    result = run_test(rsconsfile: "run_builder.rb")
-    expect(result.stderr).to match /Failed to build/
-    expect(result.stdout).to match /Failed command was: gcc/
+
+    it "allows a builder to call Environment#build_sources in a non-threaded manner" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "build_sources.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "CC simple.o",
+        "CC two.o",
+        "MyProgram simple.exe",
+      ]
+    end
+
+    it "prints the failed build command for a threaded builder when called via Environment#run_builder without delayed execution" do
+      test_dir("simple")
+      File.open("simple.c", "wb") do |fh|
+        fh.write("FOOBAR")
+      end
+      result = run_test(rsconsfile: "run_builder.rb")
+      expect(result.stderr).to match /Failed to build/
+      expect(result.stdout).to match /Failed command was: gcc/
+    end
+
+    it "supports builders that call Builder#standard_build" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "standard_build.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq ["MyCommand simple.o"]
+    end
   end
 
   context "Directory builder" do
