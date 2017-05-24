@@ -43,8 +43,20 @@ module Rscons
           '_TARGET' => target,
           '_SOURCES' => objects,
         })
+        options[:sources] = objects
         command = env.build_command("${ARCMD}", vars)
-        standard_build("AR #{target}", target, command, objects, env, cache)
+        standard_threaded_build("AR #{target}", target, command, objects, env, cache)
+      end
+
+      # Finalize a build.
+      #
+      # @param options [Hash]
+      #   Finalize options.
+      #
+      # @return [String, nil]
+      #   The target name on success or nil on failure.
+      def finalize(options)
+        standard_finalize(options)
       end
 
     end
