@@ -572,8 +572,10 @@ module Rscons
         builder: builder,
         target: target,
         sources: sources,
-        vars: vars,
+        cache: cache,
         env: self,
+        vars: vars,
+        setup_info: options[:setup_info]
       }
       call_build_hooks = lambda do |sec|
         @build_hooks[sec].each do |build_hook_block|
@@ -588,13 +590,7 @@ module Rscons
       if builder.method(:run).arity == 5
         rv = builder.run(target, sources, cache, self, vars)
       else
-        rv = builder.run(
-          target: target,
-          sources: sources,
-          cache: cache,
-          env: self,
-          vars: vars,
-          setup_info: options[:setup_info])
+        rv = builder.run(build_operation)
       end
 
       if rv.is_a?(ThreadedCommand)
