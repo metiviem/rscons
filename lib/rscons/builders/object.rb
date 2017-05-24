@@ -96,15 +96,7 @@ module Rscons
           v.nil? and raise "Error: unknown input file type: #{sources.first.inspect}"
         end.first
         command = env.build_command("${#{com_prefix}CMD}", vars)
-        if cache.up_to_date?(target, command, sources, env)
-          target
-        else
-          cache.mkdir_p(File.dirname(target))
-          FileUtils.rm_f(target)
-          ThreadedCommand.new(
-            command,
-            short_description: "#{com_prefix} #{target}")
-        end
+        standard_threaded_build("#{com_prefix} #{target}", target, command, sources, env, cache)
       end
 
       # Finalize the build operation.

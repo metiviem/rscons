@@ -148,6 +148,8 @@ module Rscons
     # This method is called after the {#run} method if the {#run} method
     # returns a {ThreadedCommand} object.
     #
+    # @since 1.10.0
+    #
     # @param options [Hash]
     #   Options.
     # @option options [String] :target
@@ -175,7 +177,7 @@ module Rscons
     end
 
     # Check if the cache is up to date for the target and if not execute the
-    # build command.
+    # build command. This method does not support parallelization.
     #
     # @param short_cmd_string [String]
     #   Short description of build action to be printed when env.echo ==
@@ -199,6 +201,55 @@ module Rscons
         cache.register_build(target, command, sources, env)
       end
       target
+    end
+
+    # Check if the cache is up to date for the target and if not create a
+    # {ThreadedCommand} object to execute the build command in a thread.
+    #
+    # @since 1.10.0
+    #
+    # @param short_cmd_string [String]
+    #   Short description of build action to be printed when env.echo ==
+    #   :short.
+    # @param target [String] Name of the target file.
+    # @param command [Array<String>]
+    #   The command to execute to build the target.
+    # @param sources [Array<String>] Source file name(s).
+    # @param env [Environment] The Environment executing the builder.
+    # @param cache [Cache] The Cache object.
+    #
+    # @return [String,ThreadedCommand]
+    #   The name of the target if it is already up to date or the
+    #   {ThreadedCommand} object created to update it.
+    def standard_threaded_build(short_cmd_string, target, command, sources, env, cache)
+      if cache.up_to_date?(target, command, sources, env)
+        target
+      else
+        unless Rscons.phony_target?(target)
+          cache.mkdir_p(File.dirname(target))
+          FileUtils.rm_f(target)
+        end
+        ThreadedCommand.new(
+          command,
+          short_description: short_cmd_string)
+      end
+    end
+
+    # Register build results from a {ThreadedCommand} with the cache.
+    #
+    # @since 1.10.0
+    #
+    # @param options [Hash]
+    #   Builder finalize options.
+    #
+    # @return [String, nil]
+    #   The target name on success or nil on failure.
+    def standard_finalize(options)
+      if options[:command_status]
+        target, sources, cache, env = options.values_at(:target, :sources, :cache, :env)
+        cache.register_build(target, options[:tc].command, sources, env)
+        target
+      end
     end
   end
 end
