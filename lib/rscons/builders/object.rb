@@ -79,8 +79,9 @@ module Rscons
       #
       # @param options [Hash] Builder run options.
       #
-      # @return [ThreadedCommand]
-      #   Threaded command to execute.
+      # @return [String, ThreadedCommand]
+      #   Target file name if target is up to date or a {ThreadedCommand}
+      #   to execute to build the target.
       def run(options)
         target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
         vars = vars.merge({
@@ -88,14 +89,14 @@ module Rscons
           '_SOURCES' => sources,
           '_DEPFILE' => Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars)),
         })
-        # Store vars back into options so new keys are accessible in #finalize.
-        options[:vars] = vars
         com_prefix = KNOWN_SUFFIXES.find do |compiler, suffix_var|
           sources.first.end_with?(*env.expand_varref("${#{suffix_var}}"))
         end.tap do |v|
           v.nil? and raise "Error: unknown input file type: #{sources.first.inspect}"
         end.first
         command = env.build_command("${#{com_prefix}CMD}", vars)
+        # Store vars back into options so new keys are accessible in #finalize.
+        options[:vars] = vars
         standard_threaded_build("#{com_prefix} #{target}", target, command, sources, env, cache)
       end
 
@@ -103,7 +104,7 @@ module Rscons
       #
       # @param options [Hash] Builder finalize options.
       #
-      # @return [String,nil]
+      # @return [String, nil]
       #   Name of the target file on success or nil on failure.
       def finalize(options)
         if options[:command_status]
