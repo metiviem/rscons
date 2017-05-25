@@ -459,6 +459,42 @@ module Rscons
       @user_deps[target] = (@user_deps[target] + user_deps).uniq
     end
 
+    # Manually record the given target(s) as needing to be built after the
+    # given prerequisite(s).
+    #
+    # For example, consider a builder registered to generate gen.c which also
+    # generates gen.h as a side-effect. If program.c includes gen.h, then it
+    # should not be compiled before gen.h has been generated. When using
+    # multiple threads to build, Rscons may attempt to compile program.c before
+    # gen.h has been generated because it does not know that gen.h will be
+    # generated along with gen.c. One way to prevent that situation would be
+    # to first process the Environment with just the code-generation builders
+    # in place and then register the compilation builders. Another way is to
+    # use this method to record that a certain target should not be built until
+    # another has completed. For example, for the situation previously
+    # described:
+    #   env.build_after("program.o", "gen.c")
+    #
+    # @since 1.10.0
+    #
+    # @param targets [String, Array<String>]
+    #   Target files to wait to build until the prerequisites are finished
+    #   building.
+    # @param prerequisites [String, Array<String>]
+    #   Files that must be built before building the specified targets.
+    #
+    # @return [void]
+    def build_after(targets, prerequisites)
+      targets = Array(targets)
+      prerequisites = Array(prerequisites)
+      targets.each do |target|
+        @registered_build_dependencies[target] ||= Set.new
+        prerequisites.each do |prerequisite|
+          @registered_build_dependencies[target] << prerequisite
+        end
+      end
+    end
+
     # Return the list of user dependencies for a given target.
     #
     # @param target [String] Target file name.

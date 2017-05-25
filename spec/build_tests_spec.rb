@@ -1090,6 +1090,12 @@ EOF
       elapsed = Time.new - start_time
       expect(elapsed).to be < 4
     end
+
+    it "allows the user to specify that a target be built after another" do
+      test_dir("custom_builder")
+      result = run_test(rsconsfile: "build_after.rb", rscons_args: %w[-j 4])
+      expect(result.stderr).to eq ""
+    end
   end
 
   context "CLI" do
