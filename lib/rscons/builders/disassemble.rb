@@ -2,6 +2,7 @@ module Rscons
   module Builders
     # The Disassemble builder produces a disassembly listing of a source file.
     class Disassemble < Builder
+
       # Return default construction variables for the builder.
       #
       # @param env [Environment] The Environment using the builder.
@@ -28,13 +29,28 @@ module Rscons
       def run(target, sources, cache, env, vars)
         vars = vars.merge("_SOURCES" => sources)
         command = env.build_command("${DISASM_CMD}", vars)
-        unless cache.up_to_date?(target, command, sources, env)
+        if cache.up_to_date?(target, command, sources, env)
+          target
+        else
           cache.mkdir_p(File.dirname(target))
-          return false unless env.execute("Disassemble #{target}", command, options: {out: target})
-          cache.register_build(target, command, sources, env)
+          ThreadedCommand.new(
+            command,
+            short_description: "Disassemble #{target}",
+            system_options: {out: target})
         end
-        target
       end
+
+      # Finalize a build.
+      #
+      # @param options [Hash]
+      #   Finalize options.
+      #
+      # @return [String, nil]
+      #   The target name on success or nil on failure.
+      def finalize(options)
+        standard_finalize(options)
+      end
+
     end
   end
 end

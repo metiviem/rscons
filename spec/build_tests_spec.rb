@@ -439,10 +439,15 @@ EOF
 
   it "supports disassembling object files" do
     test_dir("simple")
+
     result = run_test(rsconsfile: "disassemble.rb")
     expect(result.stderr).to eq ""
     expect(File.exists?("simple.txt")).to be_truthy
     expect(File.read("simple.txt")).to match /Disassembly of section .text:/
+
+    result = run_test(rsconsfile: "disassemble.rb")
+    expect(result.stderr).to eq ""
+    expect(result.stdout).to eq ""
   end
 
   it "supports preprocessing C sources" do
