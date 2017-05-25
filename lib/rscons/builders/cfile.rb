@@ -7,6 +7,7 @@ module Rscons
     #   env.CFile("parser.tab.cc", "parser.yy")
     #   env.CFile("lex.yy.cc", "parser.ll")
     class CFile < Builder
+
       # Return default construction variables for the builder.
       #
       # @param env [Environment] The Environment using the builder.
@@ -48,8 +49,20 @@ module Rscons
             raise "Unknown source file #{sources.first.inspect} for CFile builder"
           end
         command = env.build_command("${#{cmd}_CMD}", vars)
-        standard_build("#{cmd} #{target}", target, command, sources, env, cache)
+        standard_threaded_build("#{cmd} #{target}", target, command, sources, env, cache)
       end
+
+      # Finalize a build.
+      #
+      # @param options [Hash]
+      #   Finalize options.
+      #
+      # @return [String, nil]
+      #   The target name on success or nil on failure.
+      def finalize(options)
+        standard_finalize(options)
+      end
+
     end
   end
 end

@@ -682,6 +682,30 @@ EOF
     end
   end
 
+  context "CFile builder" do
+    it "builds a .c file using flex and bison" do
+      test_dir("cfile")
+
+      result = run_test
+      expect(result.stderr).to eq ""
+      expect(Set[*lines(result.stdout)]).to eq Set[
+        "LEX lexer.c",
+        "YACC parser.c",
+      ]
+
+      result = run_test
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+    end
+
+    it "raises an error when an unknown source file is specified" do
+      test_dir("cfile")
+      result = run_test(rsconsfile: "error_unknown_extension.rb")
+      expect(result.stderr).to match /Unknown source file .foo.bar. for CFile builder/
+      expect(result.status).to_not eq 0
+    end
+  end
+
   context "Directory builder" do
     it "creates the requested directory" do
       test_dir("simple")
