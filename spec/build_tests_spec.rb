@@ -706,6 +706,21 @@ EOF
     end
   end
 
+  context "Command builder" do
+    it "allows executing an arbitrary command" do
+      test_dir('simple')
+
+      result = run_test(rsconsfile: "command_builder.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq ["BuildIt simple.exe"]
+      expect(`./simple.exe`).to eq "This is a simple C program\n"
+
+      result = run_test(rsconsfile: "command_builder.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+    end
+  end
+
   context "Directory builder" do
     it "creates the requested directory" do
       test_dir("simple")
