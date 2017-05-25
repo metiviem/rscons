@@ -17,7 +17,8 @@ module Rscons
       # @return [String, ThreadedCommand]
       #   Target file name if target is up to date or a {ThreadedCommand}
       #   to execute to build the target.
-      def run(target, sources, cache, env, vars)
+      def run(options)
+        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
         vars = vars.merge({
           "_TARGET" => target,
           "_SOURCES" => sources,
