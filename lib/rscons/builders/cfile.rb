@@ -18,9 +18,11 @@ module Rscons
           "YACC" => "bison",
           "YACC_FLAGS" => ["-d"],
           "YACC_CMD" => ["${YACC}", "${YACC_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"],
+          "YACCSUFFIX" => [".y", ".yy"],
           "LEX" => "flex",
           "LEX_FLAGS" => [],
           "LEX_CMD" => ["${LEX}", "${LEX_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"],
+          "LEXSUFFIX" => [".l", ".ll"],
         }
       end
 
@@ -41,9 +43,9 @@ module Rscons
         })
         cmd =
           case
-          when sources.first.end_with?(".l", ".ll")
+          when sources.first.end_with?(*env.expand_varref("${LEXSUFFIX}"))
             "LEX"
-          when sources.first.end_with?(".y", ".yy")
+          when sources.first.end_with?(*env.expand_varref("${YACCSUFFIX}"))
             "YACC"
           else
             raise "Unknown source file #{sources.first.inspect} for CFile builder"
