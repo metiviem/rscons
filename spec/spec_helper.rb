@@ -2,6 +2,7 @@ require "simplecov"
 
 SimpleCov.start do
   add_filter "/spec/"
+  add_filter "/.bundle/"
   if ENV["partial_specs"]
     command_name "RSpec-partial"
   else
