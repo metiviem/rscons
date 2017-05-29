@@ -245,12 +245,17 @@ module Rscons
         end
       end
       if @build_root and not found_match
-        unless Rscons.absolute_path?(source_fname) or build_fname.start_with?("#{@build_root}/")
+        if Rscons.absolute_path?(build_fname)
+          if build_fname =~ %r{^(\w):(.*)$}
+            build_fname = "#{@build_root}/_#{$1}#{$2}"
+          else
+            build_fname = "#{@build_root}/_#{build_fname}"
+          end
+        elsif !build_fname.start_with?("#{@build_root}/")
           build_fname = "#{@build_root}/#{build_fname}"
         end
       end
-      build_fname.gsub!('\\', '/')
-      build_fname
+      build_fname.gsub('\\', '/')
     end
 
     # Get a construction variable's value.

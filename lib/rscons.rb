@@ -71,7 +71,11 @@ module Rscons
     #
     # @return [Boolean] Whether the given path is an absolute filesystem path.
     def absolute_path?(path)
-      path =~ %r{^(/|\w:[\\/])}
+      if RUBY_PLATFORM =~ /mingw/
+        path =~ %r{^(?:\w:)?[\\/]}
+      else
+        path.start_with?("/")
+      end
     end
 
     # Return whether the given target is a phony target.

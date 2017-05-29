@@ -662,6 +662,15 @@ EOF
     ]
   end
 
+  it "creates object files under the build root for absolute source paths" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "absolute_source_path.rb")
+    expect(result.stderr).to eq ""
+    slines = lines(result.stdout)
+    expect(slines[0]).to match(%r{^CC build/.*/abs\.o$})
+    expect(slines[1]).to eq "LD abs.exe"
+  end
+
   context "backward compatibility" do
     it "allows a builder to call Environment#run_builder in a non-threaded manner" do
       test_dir("simple")

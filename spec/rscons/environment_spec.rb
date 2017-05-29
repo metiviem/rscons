@@ -91,12 +91,13 @@ module Rscons
         end
 
         context "with a build_root" do
-          it "uses the build_root unless the path is absolute" do
+          it "uses the build_root" do
+            stub_const("RUBY_PLATFORM", "mingw")
             env = Environment.new
             env.build_root = "build/proj"
             expect(env.get_build_fname("src/dir/file.c", ".o")).to eq "build/proj/src/dir/file.o"
-            expect(env.get_build_fname("/some/lib.c", ".a")).to eq "/some/lib.a"
-            expect(env.get_build_fname("C:\\abspath\\mod.cc", ".o")).to eq "C:/abspath/mod.o"
+            expect(env.get_build_fname("/some/lib.c", ".a")).to eq "build/proj/_/some/lib.a"
+            expect(env.get_build_fname("C:\\abspath\\mod.cc", ".o")).to eq "build/proj/_C/abspath/mod.o"
             expect(env.get_build_fname("build\\proj\\generated.c", ".o")).to eq "build/proj/generated.o"
             expect(env.get_build_fname("build/proj.XX", ".yy")).to eq "build/proj/build/proj.yy"
           end
