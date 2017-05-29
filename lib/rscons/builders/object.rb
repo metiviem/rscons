@@ -3,6 +3,7 @@ module Rscons
     # A default Rscons builder which knows how to produce an object file from
     # various types of source files.
     class Object < Builder
+
       # Mapping of known sources from which to build object files.
       KNOWN_SUFFIXES = {
         "AS" => "ASSUFFIX",
@@ -76,15 +77,13 @@ module Rscons
 
       # Run the builder to produce a build target.
       #
-      # @param target [String] Target file name.
-      # @param sources [Array<String>] Source file name(s).
-      # @param cache [Cache] The Cache object.
-      # @param env [Environment] The Environment executing the builder.
-      # @param vars [Hash,VarSet] Extra construction variables.
+      # @param options [Hash] Builder run options.
       #
-      # @return [String,false]
-      #   Name of the target file on success or false on failure.
-      def run(target, sources, cache, env, vars)
+      # @return [String, ThreadedCommand]
+      #   Target file name if target is up to date or a {ThreadedCommand}
+      #   to execute to build the target.
+      def run(options)
+        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
         vars = vars.merge({
           '_TARGET' => target,
           '_SOURCES' => sources,
@@ -96,19 +95,29 @@ module Rscons
           v.nil? and raise "Error: unknown input file type: #{sources.first.inspect}"
         end.first
         command = env.build_command("${#{com_prefix}CMD}", vars)
-        unless cache.up_to_date?(target, command, sources, env)
-          cache.mkdir_p(File.dirname(target))
-          FileUtils.rm_f(target)
-          return false unless env.execute("#{com_prefix} #{target}", command)
-          deps = sources
+        # Store vars back into options so new keys are accessible in #finalize.
+        options[:vars] = vars
+        standard_threaded_build("#{com_prefix} #{target}", target, command, sources, env, cache)
+      end
+
+      # Finalize the build operation.
+      #
+      # @param options [Hash] Builder finalize options.
+      #
+      # @return [String, nil]
+      #   Name of the target file on success or nil on failure.
+      def finalize(options)
+        if options[:command_status]
+          target, deps, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
           if File.exists?(vars['_DEPFILE'])
             deps += Environment.parse_makefile_deps(vars['_DEPFILE'], target)
             FileUtils.rm_f(vars['_DEPFILE'])
           end
-          cache.register_build(target, command, deps.uniq, env)
+          cache.register_build(target, options[:tc].command, deps.uniq, env)
+          target
         end
-        target
       end
+
     end
   end
 end

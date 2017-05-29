@@ -9,25 +9,36 @@ module Rscons
     #   env.Command("docs.html", "docs.md",
     #               CMD => %w[pandoc -fmarkdown -thtml -o${_TARGET} ${_SOURCES}])
     class Command < Builder
+
       # Run the builder to produce a build target.
       #
-      # @param target [String] Target file name.
-      # @param sources [Array<String>] Source file name(s).
-      # @param cache [Cache] The Cache object.
-      # @param env [Environment] The Environment executing the builder.
-      # @param vars [Hash,VarSet] Extra construction variables.
+      # @param options [Hash] Builder run options.
       #
-      # @return [String,false]
-      #   Name of the target file on success or false on failure.
-      def run(target, sources, cache, env, vars)
+      # @return [String, ThreadedCommand]
+      #   Target file name if target is up to date or a {ThreadedCommand}
+      #   to execute to build the target.
+      def run(options)
+        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
         vars = vars.merge({
           "_TARGET" => target,
           "_SOURCES" => sources,
         })
         command = env.build_command("${CMD}", vars)
         cmd_desc = vars["CMD_DESC"] || "Command"
-        standard_build("#{cmd_desc} #{target}", target, command, sources, env, cache)
+        standard_threaded_build("#{cmd_desc} #{target}", target, command, sources, env, cache)
       end
+
+      # Finalize a build.
+      #
+      # @param options [Hash]
+      #   Finalize options.
+      #
+      # @return [String, nil]
+      #   The target name on success or nil on failure.
+      def finalize(options)
+        standard_finalize(options)
+      end
+
     end
   end
 end

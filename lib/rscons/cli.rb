@@ -35,6 +35,10 @@ module Rscons
             rsconsfile = f
           end
 
+          opts.on("-j NTHREADS", "Use NTHREADS parallel jobs (local default #{Rscons.n_threads})") do |n_threads|
+            Rscons.n_threads = n_threads.to_i
+          end
+
           opts.on_tail("--version", "Show version") do
             puts "Rscons version #{Rscons::VERSION}"
             exit 0

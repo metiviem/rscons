@@ -1,0 +1,9 @@
+%{
+%}
+
+%token ONE
+
+%%
+
+one: ONE
+   ;

@@ -20,15 +20,13 @@ module Rscons
 
       # Run the builder to produce a build target.
       #
-      # @param target [String] Target file name.
-      # @param sources [Array<String>] Source file name(s).
-      # @param cache [Cache] The Cache object.
-      # @param env [Environment] The Environment executing the builder.
-      # @param vars [Hash,VarSet] Extra construction variables.
+      # @param options [Hash] Builder run options.
       #
-      # @return [String,false]
-      #   Name of the target file on success or false on failure.
-      def run(target, sources, cache, env, vars)
+      # @return [String, ThreadedCommand]
+      #   Target file name if target is up to date or a {ThreadedCommand}
+      #   to execute to build the target.
+      def run(options)
+        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
         if sources.find {|s| s.end_with?(*env.expand_varref("${CXXSUFFIX}", vars))}
           pp_cc = "${CXX}"
           depgen = "${CXXDEPGEN}"
@@ -42,17 +40,27 @@ module Rscons
                           "_SOURCES" => sources,
                           "_DEPFILE" => Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars)))
         command = env.build_command("${CPP_CMD}", vars)
-        unless cache.up_to_date?(target, command, sources, env)
-          cache.mkdir_p(File.dirname(target))
-          return false unless env.execute("Preprocess #{target}", command)
-          deps = sources
-          if File.exists?(vars["_DEPFILE"])
-            deps += Environment.parse_makefile_deps(vars["_DEPFILE"], nil)
-            FileUtils.rm_f(vars["_DEPFILE"])
+        # Store vars back into options so new keys are accessible in #finalize.
+        options[:vars] = vars
+        standard_threaded_build("#{name} #{target}", target, command, sources, env, cache)
+      end
+
+      # Finalize the build operation.
+      #
+      # @param options [Hash] Builder finalize options.
+      #
+      # @return [String, nil]
+      #   Name of the target file on success or nil on failure.
+      def finalize(options)
+        if options[:command_status]
+          target, deps, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
+          if File.exists?(vars['_DEPFILE'])
+            deps += Environment.parse_makefile_deps(vars['_DEPFILE'], nil)
+            FileUtils.rm_f(vars['_DEPFILE'])
           end
-          cache.register_build(target, command, deps.uniq, env)
+          cache.register_build(target, options[:tc].command, deps.uniq, env)
+          target
         end
-        target
       end
 
     end

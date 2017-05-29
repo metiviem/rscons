@@ -162,77 +162,6 @@ module Rscons
       end
     end
 
-    describe "#process" do
-      it "runs builders for all of the targets specified" do
-        env = Environment.new
-        env.Program("a.out", "main.c")
-
-        cache = "cache"
-        expect(Cache).to receive(:instance).and_return(cache)
-        expect(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "a.out", ["main.c"], cache, {}).and_return(true)
-        expect(cache).to receive(:write)
-
-        env.process
-      end
-
-      it "builds dependent targets first" do
-        env = Environment.new
-        env.Program("a.out", "main.o")
-        env.Object("main.o", "other.cc")
-
-        cache = "cache"
-        expect(Cache).to receive(:instance).and_return(cache)
-        expect(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}).and_return("main.o")
-        expect(env).to receive(:run_builder).with(anything, "a.out", ["main.o"], cache, {}).and_return("a.out")
-        expect(cache).to receive(:write)
-
-        env.process
-      end
-
-      it "raises a BuildError when building fails" do
-        env = Environment.new
-        env.Program("a.out", "main.o")
-        env.Object("main.o", "other.cc")
-
-        cache = "cache"
-        expect(Cache).to receive(:instance).and_return(cache)
-        expect(cache).to receive(:clear_checksum_cache!)
-        expect(env).to receive(:run_builder).with(anything, "main.o", ["other.cc"], cache, {}).and_return(false)
-        expect(cache).to receive(:write)
-
-        expect { env.process }.to raise_error BuildError, /Failed.to.build.main.o/
-      end
-
-      it "writes the cache when the Builder raises an exception" do
-        env = Environment.new
-        env.Object("module.o", "module.c")
-
-        cache = "cache"
-        expect(Cache).to receive(:instance).and_return(cache)
-        expect(cache).to receive(:clear_checksum_cache!)
-        allow(env).to receive(:run_builder) do |builder, target, sources, cache, vars|
-          raise "Ruby exception thrown by builder"
-        end
-        expect(cache).to receive(:write)
-
-        expect { env.process }.to raise_error RuntimeError, /Ruby exception thrown by builder/
-      end
-    end
-
-    describe "#clear_targets" do
-      it "resets @targets to an empty hash" do
-        env = Environment.new
-        env.Program("a.out", "main.o")
-        expect(env.instance_variable_get(:@targets).keys).to eq(["a.out"])
-
-        env.clear_targets
-
-        expect(env.instance_variable_get(:@targets).keys).to eq([])
-      end
-    end
-
     describe "#build_command" do
       it "returns a command based on the variables in the Environment" do
         env = Environment.new
@@ -276,8 +205,7 @@ module Rscons
             env = Environment.new(echo: :short)
             expect(env).to receive(:puts).with("short desc")
             expect(env).to receive(:system).with(*Rscons.command_executer, "a", "command").and_return(false)
-            expect($stdout).to receive(:write).with("Failed command was: ")
-            expect(env).to receive(:puts).with("a command")
+            expect($stdout).to receive(:puts).with("Failed command was: a command")
             env.execute("short desc", ["a", "command"])
           end
         end
@@ -297,18 +225,6 @@ module Rscons
       it "calls the original method missing when the target method is not a known builder" do
         env = Environment.new
         expect {env.foobar}.to raise_error /undefined method .foobar./
-      end
-
-      it "records the target when the target method is a known builder" do
-        env = Environment.new
-        expect(env.instance_variable_get(:@targets)).to eq({})
-        env.Object("target.o", ["src1.c", "src2.c"], var: "val")
-        target = env.instance_variable_get(:@targets)["target.o"]
-        expect(target).to_not be_nil
-        expect(target[0][:builder].is_a?(Builder)).to be_truthy
-        expect(target[0][:sources]).to eq ["src1.c", "src2.c"]
-        expect(target[0][:vars]).to eq({var: "val"})
-        expect(target[0][:args]).to eq []
       end
 
       it "raises an error when vars is not a Hash" do
@@ -335,42 +251,6 @@ module Rscons
         env["bar"] = "bar.c"
         env.depends("${foo}", "${bar}", "a.h")
         expect(env.instance_variable_get(:@user_deps)).to eq({"foo.exe" => ["bar.c", "a.h"]})
-      end
-    end
-
-    describe "#build_sources" do
-      class ABuilder < Builder
-        def produces?(target, source, env)
-          target =~ /\.ab_out$/ and source =~ /\.ab_in$/
-        end
-      end
-
-      it "finds and invokes a builder to produce output files with the requested suffixes" do
-        cache = "cache"
-        env = Environment.new
-        env.add_builder(ABuilder.new)
-        expect(env.builders["Object"]).to receive(:run).with("mod.o", ["mod.c"], cache, env, anything).and_return("mod.o")
-        expect(env.builders["ABuilder"]).to receive(:run).with("mod2.ab_out", ["mod2.ab_in"], cache, env, anything).and_return("mod2.ab_out")
-        expect(env.build_sources(["precompiled.o", "mod.c", "mod2.ab_in"], [".o", ".ab_out"], cache, {})).to eq ["precompiled.o", "mod.o", "mod2.ab_out"]
-      end
-    end
-
-    describe "#run_builder" do
-      it "modifies the construction variables using given build hooks and invokes the builder" do
-        env = Environment.new
-        env.add_build_hook do |build_op|
-          if build_op[:sources].first =~ %r{src/special}
-            build_op[:vars]["CFLAGS"] += ["-O3", "-DSPECIAL"]
-          end
-        end
-        allow(env.builders["Object"]).to receive(:run) do |target, sources, cache, env, vars|
-          expect(vars["CFLAGS"]).to eq []
-        end
-        env.run_builder(env.builders["Object"], "build/normal/module.o", ["src/normal/module.c"], "cache", {})
-        allow(env.builders["Object"]).to receive(:run) do |target, sources, cache, env, vars|
-          expect(vars["CFLAGS"]).to eq ["-O3", "-DSPECIAL"]
-        end
-        env.run_builder(env.builders["Object"], "build/special/module.o", ["src/special/module.c"], "cache", {})
       end
     end
 
@@ -443,6 +323,13 @@ module Rscons
         env.merge_flags("CPPPATH" => ["a"], "CSUFFIX" => ".c")
         expect(env["CPPPATH"]).to eq(%w[incdir a])
         expect(env["CSUFFIX"]).to eq(".c")
+      end
+    end
+
+    describe "#find_finished_thread" do
+      it "raises an error if called with nonblock=false and no threads to wait for" do
+        env = Environment.new
+        expect {env.__send__(:find_finished_thread, [], false)}.to raise_error /No threads to wait for/
       end
     end
 

@@ -1,6 +1,7 @@
+/.bundle/
 /.yardoc/
 /_yardoc/
+/build_test_run/
 /coverage/
 /doc/
 /pkg/
-/build_test_run/

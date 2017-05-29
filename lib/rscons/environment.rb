@@ -1,6 +1,7 @@
 require "fileutils"
 require "set"
 require "shellwords"
+require "thwait"
 
 module Rscons
   # The Environment class is the main programmatic interface to Rscons. It
@@ -37,8 +38,10 @@ module Rscons
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
+      @threaded_commands = Set.new
+      @registered_build_dependencies = {}
       @varset = VarSet.new
-      @targets = {}
+      @job_set = JobSet.new(@registered_build_dependencies)
       @user_deps = {}
       @builders = {}
       @build_dirs = []
@@ -280,40 +283,62 @@ module Rscons
     #
     # @return [void]
     def process
-      while @targets.size > 0
-        expand_paths!
-        targets = @targets
-        @targets = {}
-        cache = Cache.instance
-        cache.clear_checksum_cache!
-        targets_processed = Set.new
-        process_target = proc do |target|
-          unless targets_processed.include?(target)
-            targets_processed << target
-            targets[target].each do |target_params|
-              target_params[:sources].each do |src|
-                if targets.include?(src) and not targets_processed.include?(src)
-                  process_target.call(src)
-                end
-              end
-              result = run_builder(target_params[:builder],
-                                   target,
-                                   target_params[:sources],
-                                   cache,
-                                   target_params[:vars] || {})
-              unless result
-                raise BuildError.new("Failed to build #{target}")
-              end
+      cache = Cache.instance
+      begin
+        while @job_set.size > 0 or @threaded_commands.size > 0
+
+          targets_still_building = @threaded_commands.map do |tc|
+            tc.build_operation[:target]
+          end
+          job = @job_set.get_next_job_to_run(targets_still_building)
+
+          # TODO: have Cache determine when checksums may be invalid based on
+          # file size and/or timestamp.
+          cache.clear_checksum_cache!
+
+          if job
+            result = run_builder(job[:builder],
+                                 job[:target],
+                                 job[:sources],
+                                 cache,
+                                 job[:vars],
+                                 allow_delayed_execution: true,
+                                 setup_info: job[:setup_info])
+            unless result
+              raise BuildError.new("Failed to build #{job[:target]}")
             end
           end
-        end
-        begin
-          targets.each_key do |target|
-            process_target.call(target)
+
+          completed_tcs = Set.new
+          # First do a non-blocking wait to pick up any threads that have
+          # completed since last time.
+          while tc = wait_for_threaded_commands(nonblock: true)
+            completed_tcs << tc
           end
-        ensure
-          cache.write
+
+          # If needed, do a blocking wait.
+          if (completed_tcs.empty? and job.nil?) or @threaded_commands.size >= Rscons.n_threads
+            completed_tcs << wait_for_threaded_commands
+          end
+
+          # Process all completed {ThreadedCommand} objects.
+          completed_tcs.each do |tc|
+            result = finalize_builder(tc)
+            if result
+              @build_hooks[:post].each do |build_hook_block|
+                build_hook_block.call(tc.build_operation)
+              end
+            else
+              unless @echo == :command
+                $stdout.puts "Failed command was: #{command_to_s(tc.command)}"
+              end
+              raise BuildError.new("Failed to build #{tc.build_operation[:target]}")
+            end
+          end
+
         end
+      ensure
+        cache.write
       end
     end
 
@@ -321,7 +346,7 @@ module Rscons
     #
     # @return [void]
     def clear_targets
-      @targets = {}
+      @job_set.clear!
     end
 
     # Expand a construction variable reference.
@@ -354,11 +379,8 @@ module Rscons
     #
     # @return [true,false,nil] Return value from Kernel.system().
     def execute(short_desc, command, options = {})
-      print_command = proc do
-        puts command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
-      end
       if @echo == :command
-        print_command.call
+        puts command_to_s(command)
       elsif @echo == :short
         puts short_desc
       end
@@ -366,8 +388,7 @@ module Rscons
       options_args = options[:options] ? [options[:options]] : []
       system(*env_args, *Rscons.command_executer, *command, *options_args).tap do |result|
         unless result or @echo == :command
-          $stdout.write "Failed command was: "
-          print_command.call
+          $stdout.puts "Failed command was: #{command_to_s(command)}"
         end
       end
     end
@@ -389,7 +410,7 @@ module Rscons
         sources = Array(sources)
         builder = @builders[method.to_s]
         build_target = builder.create_build_target(env: self, target: target, sources: sources)
-        add_target(build_target.to_s, builder, sources, vars, rest)
+        add_target(build_target.to_s, builder, sources, vars || {}, rest)
         build_target
       else
         super
@@ -402,17 +423,27 @@ module Rscons
     # @param builder [Builder] The {Builder} to use to build the target.
     # @param sources [Array<String>] Source file name(s).
     # @param vars [Hash] Construction variable overrides.
-    # @param args [Object] Any extra arguments passed to the {Builder}.
+    # @param args [Object] Deprecated; unused.
     #
     # @return [void]
     def add_target(target, builder, sources, vars, args)
-      @targets[target] ||= []
-      @targets[target] << {
+      target = expand_path(target) if @build_root
+      target = expand_varref(target)
+      sources = sources.map do |source|
+        source = expand_path(source) if @build_root
+        expand_varref(source)
+      end.flatten
+      setup_info = builder.setup(
+        target: target,
+        sources: sources,
+        env: self,
+        vars: vars)
+      @job_set.add_job(
         builder: builder,
+        target: target,
         sources: sources,
         vars: vars,
-        args: args,
-      }
+        setup_info: setup_info)
     end
 
     # Manually record a given target as depending on the specified files.
@@ -426,6 +457,42 @@ module Rscons
       user_deps = user_deps.map {|ud| expand_varref(ud)}
       @user_deps[target] ||= []
       @user_deps[target] = (@user_deps[target] + user_deps).uniq
+    end
+
+    # Manually record the given target(s) as needing to be built after the
+    # given prerequisite(s).
+    #
+    # For example, consider a builder registered to generate gen.c which also
+    # generates gen.h as a side-effect. If program.c includes gen.h, then it
+    # should not be compiled before gen.h has been generated. When using
+    # multiple threads to build, Rscons may attempt to compile program.c before
+    # gen.h has been generated because it does not know that gen.h will be
+    # generated along with gen.c. One way to prevent that situation would be
+    # to first process the Environment with just the code-generation builders
+    # in place and then register the compilation builders. Another way is to
+    # use this method to record that a certain target should not be built until
+    # another has completed. For example, for the situation previously
+    # described:
+    #   env.build_after("program.o", "gen.c")
+    #
+    # @since 1.10.0
+    #
+    # @param targets [String, Array<String>]
+    #   Target files to wait to build until the prerequisites are finished
+    #   building.
+    # @param prerequisites [String, Array<String>]
+    #   Files that must be built before building the specified targets.
+    #
+    # @return [void]
+    def build_after(targets, prerequisites)
+      targets = Array(targets)
+      prerequisites = Array(prerequisites)
+      targets.each do |target|
+        @registered_build_dependencies[target] ||= Set.new
+        prerequisites.each do |prerequisite|
+          @registered_build_dependencies[target] << prerequisite
+        end
+      end
     end
 
     # Return the list of user dependencies for a given target.
@@ -443,6 +510,8 @@ module Rscons
     # given by suffixes.
     #
     # This method is used internally by Rscons builders.
+    #
+    # @deprecated Use {#register_builds} instead.
     #
     # @param sources [Array<String>] List of source files to build.
     # @param suffixes [Array<String>]
@@ -471,6 +540,49 @@ module Rscons
       end
     end
 
+    # Find and register builders to build source files into files containing
+    # one of the suffixes given by suffixes.
+    #
+    # This method is used internally by Rscons builders. It should be called
+    # from the builder's #setup method.
+    #
+    # @since 1.10.0
+    #
+    # @param target [String]
+    #   The target that depends on these builds.
+    # @param sources [Array<String>]
+    #   List of source file(s) to build.
+    # @param suffixes [Array<String>]
+    #   List of suffixes to try to convert source files into.
+    # @param vars [Hash]
+    #   Extra variables to pass to the builders.
+    #
+    # @return [Array<String>]
+    #   List of the output file name(s).
+    def register_builds(target, sources, suffixes, vars)
+      @registered_build_dependencies[target] ||= Set.new
+      sources.map do |source|
+        if source.end_with?(*suffixes)
+          source
+        else
+          output_fname = nil
+          suffixes.each do |suffix|
+            attempt_output_fname = get_build_fname(source, suffix)
+            builder = @builders.values.find do |builder|
+              builder.produces?(attempt_output_fname, source, self)
+            end
+            if builder
+              output_fname = attempt_output_fname
+              self.__send__(builder.name, output_fname, source, vars)
+              @registered_build_dependencies[target] << output_fname
+              break
+            end
+          end
+          output_fname or raise "Could not find a builder for #{source.inspect}."
+        end
+      end
+    end
+
     # Invoke a builder to build the given target based on the given sources.
     #
     # @param builder [Builder] The Builder to use.
@@ -478,25 +590,66 @@ module Rscons
     # @param sources [Array<String>] List of source files.
     # @param cache [Cache] The Cache.
     # @param vars [Hash] Extra variables to pass to the builder.
+    # @param options [Hash]
+    #   @since 1.10.0
+    #   Options.
+    # @option options [Boolean] :allow_delayed_execution
+    #   @since 1.10.0
+    #   Allow a threaded command to be scheduled but not yet completed before
+    #   this method returns.
+    # @option options [Object] :setup_info
+    #   Arbitrary builder info returned by Builder#setup.
     #
     # @return [String,false] Return value from the {Builder}'s +run+ method.
-    def run_builder(builder, target, sources, cache, vars)
+    def run_builder(builder, target, sources, cache, vars, options = {})
       vars = @varset.merge(vars)
+      build_operation = {
+        builder: builder,
+        target: target,
+        sources: sources,
+        cache: cache,
+        env: self,
+        vars: vars,
+        setup_info: options[:setup_info]
+      }
       call_build_hooks = lambda do |sec|
         @build_hooks[sec].each do |build_hook_block|
-          build_operation = {
-            builder: builder,
-            target: target,
-            sources: sources,
-            vars: vars,
-            env: self,
-          }
           build_hook_block.call(build_operation)
         end
       end
+
+      # Invoke pre-build hooks.
       call_build_hooks[:pre]
-      rv = builder.run(target, sources, cache, self, vars)
-      call_build_hooks[:post] if rv
+
+      # Call the builder's #run method.
+      if builder.method(:run).arity == 5
+        rv = builder.run(target, sources, cache, self, vars)
+      else
+        rv = builder.run(build_operation)
+      end
+
+      if rv.is_a?(ThreadedCommand)
+        # Store the build operation so the post-build hooks can be called
+        # with it when the threaded command completes.
+        rv.build_operation = build_operation
+        start_threaded_command(rv)
+        unless options[:allow_delayed_execution]
+          # Delayed command execution is not allowed, so we need to execute
+          # the command and finalize the builder now.
+          tc = wait_for_threaded_commands(which: [rv])
+          rv = finalize_builder(tc)
+          if rv
+            call_build_hooks[:post]
+          else
+            unless @echo == :command
+              $stdout.puts "Failed command was: #{command_to_s(tc.command)}"
+            end
+          end
+        end
+      else
+        call_build_hooks[:post] if rv
+      end
+
       rv
     end
 
@@ -676,26 +829,102 @@ module Rscons
 
     private
 
-    # Expand target and source paths before invoking builders.
+    # Start a threaded command in a new thread.
     #
-    # This method expand construction variable references in the target and
-    # source file names before passing them to the builder. It also expands
-    # "^/" prefixes to the Environment's build root if a build root is defined.
+    # @param tc [ThreadedCommand]
+    #   The ThreadedCommand to start.
     #
     # @return [void]
-    def expand_paths!
-      @targets = @targets.reduce({}) do |result, (target, target_params_list)|
-        target = expand_path(target) if @build_root
-        target = expand_varref(target)
-        result[target] = target_params_list.map do |target_params|
-          sources = target_params[:sources].map do |source|
-            source = expand_path(source) if @build_root
-            expand_varref(source)
-          end.flatten
-          target_params.merge(sources: sources)
+    def start_threaded_command(tc)
+      if @echo == :command
+        puts command_to_s(tc.command)
+      elsif @echo == :short
+        if tc.short_description
+          puts tc.short_description
         end
-        result
       end
+
+      env_args = tc.system_env ? [tc.system_env] : []
+      options_args = tc.system_options ? [tc.system_options] : []
+      system_args = [*env_args, *Rscons.command_executer, *tc.command, *options_args]
+
+      tc.thread = Thread.new do
+        system(*system_args)
+      end
+      @threaded_commands << tc
+    end
+
+    # Wait for threaded commands to complete.
+    #
+    # @param options [Hash]
+    #   Options.
+    # @option options [Set<ThreadedCommand>, Array<ThreadedCommand>] :which
+    #   Which {ThreadedCommand} objects to wait for. If not specified, this
+    #   method will wait for any.
+    # @option options [Boolean] :nonblock
+    #   Set to true to not block.
+    #
+    # @return [ThreadedCommand, nil]
+    #   The {ThreadedCommand} object that is finished.
+    def wait_for_threaded_commands(options = {})
+      options[:which] ||= @threaded_commands
+      threads = options[:which].map(&:thread)
+      if finished_thread = find_finished_thread(threads, options[:nonblock])
+        threaded_command = @threaded_commands.find do |tc|
+          tc.thread == finished_thread
+        end
+        @threaded_commands.delete(threaded_command)
+        threaded_command
+      end
+    end
+
+    # Check if any of the requested threads are finished.
+    #
+    # @param threads [Array<Thread>]
+    #   The threads to check.
+    # @param nonblock [Boolean]
+    #   Whether to be non-blocking. If true, nil will be returned if no thread
+    #   is finished. If false, the method will wait until one of the threads
+    #   is finished.
+    #
+    # @return [Thread, nil]
+    #   The finished thread, if any.
+    def find_finished_thread(threads, nonblock)
+      if nonblock
+        threads.find do |thread|
+          !thread.alive?
+        end
+      else
+        if threads.empty?
+          raise "No threads to wait for"
+        end
+        ThreadsWait.new(*threads).next_wait
+      end
+    end
+
+    # Return a string representation of a command.
+    #
+    # @param command [Array<String>]
+    #   The command.
+    #
+    # @return [String]
+    #   The string representation of the command.
+    def command_to_s(command)
+      command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
+    end
+
+    # Call a builder's #finalize method after a ThreadedCommand terminates.
+    #
+    # @param tc [ThreadedCommand]
+    #   The ThreadedCommand returned from the builder's #run method.
+    #
+    # @return [String, false]
+    #   Result of Builder#finalize.
+    def finalize_builder(tc)
+      tc.build_operation[:builder].finalize(
+        tc.build_operation.merge(
+          command_status: tc.thread.value,
+          tc: tc))
     end
 
     # Parse dependencies for a given target from a Makefile.
