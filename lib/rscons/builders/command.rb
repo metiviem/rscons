@@ -25,7 +25,11 @@ module Rscons
         })
         command = env.build_command("${CMD}", vars)
         cmd_desc = vars["CMD_DESC"] || "Command"
-        standard_threaded_build("#{cmd_desc} #{target}", target, command, sources, env, cache)
+        options = {}
+        if vars["CMD_STDOUT"]
+          options[:stdout] = env.expand_varref("${CMD_STDOUT}", vars)
+        end
+        standard_threaded_build("#{cmd_desc} #{target}", target, command, sources, env, cache, options)
       end
 
       # Finalize a build.

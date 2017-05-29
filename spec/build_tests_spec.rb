@@ -748,6 +748,18 @@ EOF
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
     end
+
+    it "allows redirecting standard output to a file" do
+      test_dir("simple")
+
+      result = run_test(rsconsfile: "command_redirect.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "CC simple.o",
+        "My Disassemble simple.txt",
+      ]
+      expect(File.read("simple.txt")).to match /Disassembly of section .text:/
+    end
   end
 
   context "Directory builder" do

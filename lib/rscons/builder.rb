@@ -219,11 +219,14 @@ module Rscons
     # @param sources [Array<String>] Source file name(s).
     # @param env [Environment] The Environment executing the builder.
     # @param cache [Cache] The Cache object.
+    # @param options [Hash] Options.
+    # @options options [String] :stdout
+    #   File name to redirect standard output to.
     #
     # @return [String,ThreadedCommand]
     #   The name of the target if it is already up to date or the
     #   {ThreadedCommand} object created to update it.
-    def standard_threaded_build(short_cmd_string, target, command, sources, env, cache)
+    def standard_threaded_build(short_cmd_string, target, command, sources, env, cache, options = {})
       if cache.up_to_date?(target, command, sources, env)
         target
       else
@@ -231,9 +234,11 @@ module Rscons
           cache.mkdir_p(File.dirname(target))
           FileUtils.rm_f(target)
         end
-        ThreadedCommand.new(
-          command,
-          short_description: short_cmd_string)
+        tc_options = {short_description: short_cmd_string}
+        if options[:stdout]
+          tc_options[:system_options] = {out: options[:stdout]}
+        end
+        ThreadedCommand.new(command, tc_options)
       end
     end
 
