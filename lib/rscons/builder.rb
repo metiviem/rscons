@@ -36,6 +36,8 @@ module Rscons
     #   The user-supplied target name.
     # @option options [Array<String>] :sources
     #   The user-supplied source file name(s).
+    # @option options [Hash,VarSet] :vars
+    #   Extra construction variables.
     #
     # @return [BuildTarget]
     def create_build_target(options)

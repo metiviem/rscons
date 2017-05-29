@@ -39,9 +39,10 @@ module Rscons
       #
       # @return [BuildTarget]
       def create_build_target(options)
+        env, target, vars = options.values_at(:env, :target, :vars)
         my_options = options.dup
-        unless my_options[:target] =~ /\./
-          my_options[:target] += options[:env].expand_varref("${PROGSUFFIX}")
+        unless env.expand_varref(target, vars) =~ /\./
+          my_options[:target] += env.expand_varref("${PROGSUFFIX}", vars)
         end
         super(my_options)
       end

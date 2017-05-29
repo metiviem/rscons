@@ -632,13 +632,33 @@ EOF
     ]
   end
 
-  it "allows overriding progsuffix" do
+  it "allows overriding PROGSUFFIX" do
     test_dir("simple")
     result = run_test(rsconsfile: "progsuffix.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
       "CC simple.o",
       "LD simple.out",
+    ]
+  end
+
+  it "does not use PROGSUFFIX when the Program target name expands to a value already containing an extension" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "progsuffix2.rb")
+    expect(result.stderr).to eq ""
+    expect(lines(result.stdout)).to eq [
+      "CC simple.o",
+      "LD simple.out",
+    ]
+  end
+
+  it "allows overriding PROGSUFFIX from extra vars passed in to the builder" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "progsuffix3.rb")
+    expect(result.stderr).to eq ""
+    expect(lines(result.stdout)).to eq [
+      "CC simple.o",
+      "LD simple.xyz",
     ]
   end
 
