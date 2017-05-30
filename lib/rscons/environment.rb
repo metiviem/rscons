@@ -14,15 +14,15 @@ module Rscons
     # @return [Symbol] :command, :short, or :off
     attr_accessor :echo
 
-    # @return [String, nil] The build root.
+    # @return [String] The build root.
     attr_reader :build_root
 
     # Set the build root.
     #
     # @param build_root [String] The build root.
     def build_root=(build_root)
-      @build_root = build_root
-      @build_root.gsub!('\\', '/') if @build_root
+      raise "build_root must be non-nil" unless build_root
+      @build_root = build_root.gsub("\\", "/")
     end
 
     # Create an Environment object.
@@ -31,7 +31,7 @@ module Rscons
     # @option options [Symbol] :echo
     #   :command, :short, or :off (default :short)
     # @option options [String] :build_root
-    #   Build root directory (default nil)
+    #   Build root directory (default "build")
     # @option options [Boolean] :exclude_builders
     #   Whether to omit adding default builders (default false)
     #
@@ -54,7 +54,7 @@ module Rscons
         end
       end
       @echo = options[:echo] || :short
-      @build_root = options[:build_root]
+      @build_root = options[:build_root] || "build"
 
       if block_given?
         yield self
@@ -244,7 +244,7 @@ module Rscons
           build_fname.sub!(%r{^#{src_dir}/}, "#{obj_dir}/")
         end
       end
-      if @build_root and not found_match
+      unless found_match
         if Rscons.absolute_path?(build_fname)
           if build_fname =~ %r{^(\w):(.*)$}
             build_fname = "#{@build_root}/_#{$1}#{$2}"
@@ -432,10 +432,10 @@ module Rscons
     #
     # @return [void]
     def add_target(target, builder, sources, vars, args)
-      target = expand_path(target) if @build_root
+      target = expand_path(target)
       target = expand_varref(target)
       sources = sources.map do |source|
-        source = expand_path(source) if @build_root
+        source = expand_path(source)
         expand_varref(source)
       end.flatten
       setup_info = builder.setup(

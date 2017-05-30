@@ -116,7 +116,7 @@ EOF
     test_dir('simple')
     result = run_test
     expect(result.stderr).to eq ""
-    expect(File.exists?('simple.o')).to be_truthy
+    expect(File.exists?('build/simple.o')).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
   end
 
@@ -125,8 +125,8 @@ EOF
     result = run_test(rsconsfile: "command.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      'gcc -c -o simple.o -MMD -MF simple.mf simple.c',
-      "gcc -o simple.exe simple.o",
+      'gcc -c -o build/simple.o -MMD -MF build/simple.mf simple.c',
+      "gcc -o simple.exe build/simple.o",
     ]
   end
 
@@ -135,7 +135,7 @@ EOF
     result = run_test
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      'CC header.o',
+      'CC build/header.o',
       "LD header.exe",
     ]
   end
@@ -144,7 +144,7 @@ EOF
     test_dir('header')
     result = run_test
     expect(result.stderr).to eq ""
-    expect(File.exists?('header.o')).to be_truthy
+    expect(File.exists?('build/header.o')).to be_truthy
     expect(`./header.exe`).to eq "The value is 2\n"
   end
 
@@ -164,7 +164,7 @@ EOF
     result = run_test
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      'CC header.o',
+      'CC build/header.o',
       "LD header.exe",
     ]
     expect(`./header.exe`).to eq "The value is 2\n"
@@ -178,7 +178,7 @@ EOF
     result = run_test
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      'CC header.o',
+      'CC build/header.o',
       "LD header.exe",
     ]
     expect(`./header.exe`).to eq "The value is 2\n"
@@ -194,13 +194,13 @@ EOF
     result = run_test(rsconsfile: "command.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      'gcc -c -o simple.o -MMD -MF simple.mf simple.c',
-      "gcc -o simple.exe simple.o",
+      'gcc -c -o build/simple.o -MMD -MF build/simple.mf simple.c',
+      "gcc -o simple.exe build/simple.o",
     ]
     result = run_test(rsconsfile: "link_flag_change.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      "gcc -o simple.exe simple.o -Llibdir",
+      "gcc -o simple.exe build/simple.o -Llibdir",
     ]
   end
 
@@ -300,7 +300,7 @@ EOF
     test_dir('custom_builder')
     result = run_test
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to eq ["CC program.o", "LD program.exe"]
+    expect(lines(result.stdout)).to eq ["CC build/program.o", "LD program.exe"]
     expect(File.exists?('inc.h')).to be_truthy
     expect(`./program.exe`).to eq "The value is 5678\n"
   end
@@ -311,7 +311,7 @@ EOF
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     expect(slines[0]).to eq("CHGen inc.c")
-    expect(Set[*slines[1..2]]).to eq(Set["CC program.o", "CC inc.o"])
+    expect(Set[*slines[1..2]]).to eq(Set["CC build/program.o", "CC build/inc.o"])
     expect(slines[3]).to eq("LD program.exe")
     expect(File.exists?("inc.c")).to be_truthy
     expect(File.exists?("inc.h")).to be_truthy
@@ -355,7 +355,7 @@ EOF
     test_dir('simple_cc')
     result = run_test
     expect(result.stderr).to eq ""
-    expect(File.exists?('simple.o')).to be_truthy
+    expect(File.exists?('build/simple.o')).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C++ program\n"
   end
 
@@ -365,8 +365,8 @@ EOF
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
       'gcc -c -o one.o -MMD -MF one.mf -DONE one.c',
-      'gcc -c -o two.o -MMD -MF two.mf two.c',
-      "gcc -o two_sources.exe one.o two.o",
+      'gcc -c -o build/two.o -MMD -MF build/two.mf two.c',
+      "gcc -o two_sources.exe one.o build/two.o",
     ]
     expect(File.exists?("two_sources.exe")).to be_truthy
     expect(`./two_sources.exe`).to eq "This is a C program with two sources.\n"
@@ -377,11 +377,11 @@ EOF
     result = run_test
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
-      'gcc -c -o one.o -MMD -MF one.mf -Dmake_lib one.c',
-      'gcc -c -o two.o -MMD -MF two.mf -Dmake_lib two.c',
-      'ar rcs lib.a one.o two.o',
-      'gcc -c -o three.o -MMD -MF three.mf three.c',
-      "gcc -o library.exe lib.a three.o",
+      'gcc -c -o build/one.o -MMD -MF build/one.mf -Dmake_lib one.c',
+      'gcc -c -o build/two.o -MMD -MF build/two.mf -Dmake_lib two.c',
+      'ar rcs lib.a build/one.o build/two.o',
+      'gcc -c -o build/three.o -MMD -MF build/three.mf three.c',
+      "gcc -o library.exe lib.a build/three.o",
     ]
     expect(File.exists?("library.exe")).to be_truthy
     expect(`ar t lib.a`).to eq "one.o\ntwo.o\n"
@@ -405,8 +405,8 @@ EOF
     File.open("program.ld", "w") {|fh| fh.puts("1")}
     result = run_test(rsconsfile: "user_dependencies.rb")
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to eq ["CC simple.o", "LD simple.exe"]
-    expect(File.exists?('simple.o')).to be_truthy
+    expect(lines(result.stdout)).to eq ["CC build/simple.o", "LD simple.exe"]
+    expect(File.exists?('build/simple.o')).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
 
     File.open("program.ld", "w") {|fh| fh.puts("2")}
@@ -430,8 +430,8 @@ EOF
       result = run_test
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to eq [
-        "gdc -c -o main.o main.d",
-        "gdc -o hello-d.exe main.o",
+        "gdc -c -o build/main.o main.d",
+        "gdc -o hello-d.exe build/main.o",
       ]
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D!"
     end
@@ -476,7 +476,7 @@ EOF
     test_dir('custom_builder')
     result = run_test(rsconsfile: "cvar_expansion.rb")
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to eq ["CC program.o", "LD program.exe"]
+    expect(lines(result.stdout)).to eq ["CC build/program.o", "LD program.exe"]
     expect(File.exists?('inc.h')).to be_truthy
     expect(`./program.exe`).to eq "The value is 678\n"
   end
@@ -492,8 +492,8 @@ EOF
     test_dir("simple")
     result = run_test(rsconsfile: "register_target_in_build_hook.rb")
     expect(result.stderr).to eq ""
-    expect(File.exists?("simple.o")).to be_truthy
-    expect(File.exists?("simple.o.txt")).to be_truthy
+    expect(File.exists?("build/simple.o")).to be_truthy
+    expect(File.exists?("build/simple.o.txt")).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
   end
 
@@ -502,8 +502,8 @@ EOF
     File.open("other.cccc", "w") {|fh| fh.puts}
     result = run_test(rsconsfile: "cxxsuffix.rb")
     expect(result.stderr).to eq ""
-    expect(File.exists?("simple.o")).to be_truthy
-    expect(File.exists?("other.o")).to be_truthy
+    expect(File.exists?("build/simple.o")).to be_truthy
+    expect(File.exists?("build/other.o")).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C++ program\n"
   end
 
@@ -512,8 +512,8 @@ EOF
     FileUtils.mv("src/one/one.c", "src/one/one.yargh")
     result = run_test(rsconsfile: "csuffix.rb")
     expect(result.stderr).to eq ""
-    expect(File.exists?("src/one/one.o")).to be_truthy
-    expect(File.exists?("src/two/two.o")).to be_truthy
+    expect(File.exists?("build/src/one/one.o")).to be_truthy
+    expect(File.exists?("build/src/two/two.o")).to be_truthy
     expect(`./build_dir.exe`).to eq "Hello from two()\n"
   end
 
@@ -542,8 +542,8 @@ EOF
     expect(Set[*lines(result.stdout)]).to eq Set[
       "CC one.ssss",
       "CC two.sss",
-      "AS one.o",
-      "AS two.o",
+      "AS build/one.o",
+      "AS build/two.o",
       "LD two_sources.exe",
     ]
     expect(File.exists?("two_sources.exe")).to be_truthy
@@ -585,7 +585,7 @@ EOF
     test_dir("simple")
     result = run_test(rsconsfile: "cvar_array.rb")
     expect(result.stderr).to eq ""
-    expect(File.exists?("simple.o")).to be_truthy
+    expect(File.exists?("build/simple.o")).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
   end
 
@@ -637,7 +637,7 @@ EOF
     result = run_test(rsconsfile: "progsuffix.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      "CC simple.o",
+      "CC build/simple.o",
       "LD simple.out",
     ]
   end
@@ -647,7 +647,7 @@ EOF
     result = run_test(rsconsfile: "progsuffix2.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      "CC simple.o",
+      "CC build/simple.o",
       "LD simple.out",
     ]
   end
@@ -657,7 +657,7 @@ EOF
     result = run_test(rsconsfile: "progsuffix3.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      "CC simple.o",
+      "CC build/simple.o",
       "LD simple.xyz",
     ]
   end
@@ -688,7 +688,7 @@ EOF
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to eq [
         "CC simple.o",
-        "CC two.o",
+        "CC build/two.o",
         "MyProgram simple.exe",
       ]
     end
@@ -867,39 +867,31 @@ EOF
   end
 
   context "phony targets" do
-    [false, true].each do |with_build_root|
-      context "with#{with_build_root ? "" : "out"} build root" do
-        it "allows specifying a Symbol as a target name and reruns the builder if the sources or command have changed" do
-          test_dir("simple")
+    it "allows specifying a Symbol as a target name and reruns the builder if the sources or command have changed" do
+      test_dir("simple")
 
-          FileUtils.cp("phony_target.rb", "phony_target2.rb")
-          unless with_build_root
-            file_sub("phony_target2.rb") {|line| line.sub(/.*build_root.*/, "")}
-          end
-          result = run_test(rsconsfile: "phony_target2.rb")
-          expect(result.stderr).to eq ""
-          expect(lines(result.stdout)).to eq([
-            "CC #{with_build_root ? "build/" : ""}simple.o",
-            "LD simple.exe",
-            "Checker simple.exe",
-          ])
+      result = run_test(rsconsfile: "phony_target.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq([
+        "CC build/simple.o",
+        "LD simple.exe",
+        "Checker simple.exe",
+      ])
 
-          result = run_test(rsconsfile: "phony_target2.rb")
-          expect(result.stderr).to eq ""
-          expect(result.stdout).to eq ""
+      result = run_test(rsconsfile: "phony_target.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
 
-          FileUtils.cp("phony_target.rb", "phony_target2.rb")
-          file_sub("phony_target2.rb") {|line| line.sub(/.*Program.*/, "")}
-          File.open("simple.exe", "w") do |fh|
-            fh.puts "Changed simple.exe"
-          end
-          result = run_test(rsconsfile: "phony_target2.rb")
-          expect(result.stderr).to eq ""
-          expect(lines(result.stdout)).to eq([
-            "Checker simple.exe",
-          ])
-        end
+      FileUtils.cp("phony_target.rb", "phony_target2.rb")
+      file_sub("phony_target2.rb") {|line| line.sub(/.*Program.*/, "")}
+      File.open("simple.exe", "w") do |fh|
+        fh.puts "Changed simple.exe"
       end
+      result = run_test(rsconsfile: "phony_target2.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq([
+        "Checker simple.exe",
+      ])
     end
   end
 
@@ -971,7 +963,7 @@ EOF
       result = run_test
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to eq [
-        "CC simple.o",
+        "CC build/simple.o",
         "LD simple.exe",
       ]
 
@@ -1044,7 +1036,7 @@ EOF
       result = run_test(rsconsfile: "cache_user_dep.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to eq [
-        "CC simple.o",
+        "CC build/simple.o",
         "LD simple.exe",
       ]
 
@@ -1064,7 +1056,7 @@ EOF
       result = run_test(rsconsfile: "cache_user_dep.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to eq [
-        "CC simple.o",
+        "CC build/simple.o",
         "LD simple.exe",
       ]
 
@@ -1112,7 +1104,7 @@ EOF
       test_dir("library")
       result = run_test(rsconsfile: "override_arcmd.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include "ar rcf lib.a one.o three.o two.o"
+      expect(lines(result.stdout)).to include "ar rcf lib.a build/one.o build/three.o build/two.o"
     end
   end
 

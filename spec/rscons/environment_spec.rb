@@ -85,9 +85,9 @@ module Rscons
       context "with no build directories" do
         it "returns the name of the source file with suffix changed" do
           env = Environment.new
-          expect(env.get_build_fname("src/dir/file.c", ".o")).to eq "src/dir/file.o"
-          expect(env.get_build_fname("src\\dir\\other.d", ".a")).to eq "src/dir/other.a"
-          expect(env.get_build_fname("source.cc", ".o")).to eq "source.o"
+          expect(env.get_build_fname("src/dir/file.c", ".o")).to eq "build/src/dir/file.o"
+          expect(env.get_build_fname("src\\dir\\other.d", ".a")).to eq "build/src/dir/other.a"
+          expect(env.get_build_fname("source.cc", ".o")).to eq "build/source.o"
         end
 
         context "with a build_root" do
@@ -112,7 +112,7 @@ module Rscons
           expect(env.get_build_fname("src/input.cc", ".o")).to eq "bld/input.o"
           expect(env.get_build_fname("libs/lib1/some/file.c", ".o")).to eq "build/libs/lib1/some/file.o"
           expect(env.get_build_fname("libs/otherlib/otherlib.cc", ".o")).to eq "build/libs/otherlib/otherlib.o"
-          expect(env.get_build_fname("other_directory/o.d", ".a")).to eq "other_directory/o.a"
+          expect(env.get_build_fname("other_directory/o.d", ".a")).to eq "build/other_directory/o.a"
         end
 
         context "with a build_root" do
