@@ -47,14 +47,35 @@ module Rscons
     # Return whether this builder object is capable of producing a given target
     # file name from a given source file name.
     #
-    # @param target [String] The target file name.
-    # @param source [String] The source file name.
-    # @param env [Environment] The Environment.
+    # @overload produces?(target, source, env)
+    #
+    #   @param target [String]
+    #     The target file name.
+    #   @param source [String]
+    #     The source file name.
+    #   @param env [Environment]
+    #     The Environment.
+    #
+    # @overload produces?(options)
+    #
+    #   @since 1.10.0
+    #
+    #   @param options [Hash]
+    #     Options.
+    #   @option options [String] :target
+    #     Target file name.
+    #   @option options [String] :source
+    #     Source file name.
+    #   @option options [Environment] :env
+    #     The Environment.
+    #   @option options [Hash] :features
+    #     Features that this builder must satisfy.
+    #     See {Environment#register_builds}.
     #
     # @return [Boolean]
     #   Whether this builder object is capable of producing a given target
     #   file name from a given source file name.
-    def produces?(target, source, env)
+    def produces?(options)
       false
     end
 

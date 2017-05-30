@@ -230,29 +230,37 @@ module Rscons
     #
     # This method takes into account the Environment's build directories.
     #
-    # @param source_fname [String] Source file name.
-    # @param suffix [String] Suffix, including "." if desired.
+    # @param source_fname [String]
+    #   Source file name.
+    # @param suffix [String]
+    #   Suffix, including "." if desired.
+    # @param options [Hash]
+    #   Extra options.
+    # @option options [Hash] :features
+    #   Builder features to be used for this build. See {#register_builds}.
     #
     # @return [String]
     #   The file name to be built from +source_fname+ with suffix +suffix+.
-    def get_build_fname(source_fname, suffix)
+    def get_build_fname(source_fname, suffix, options = {})
       build_fname = Rscons.set_suffix(source_fname, suffix).gsub('\\', '/')
+      options[:features] ||= {}
+      extra_path = options[:features][:shared] ? "/_shared" : ""
       found_match = @build_dirs.find do |src_dir, obj_dir|
         if src_dir.is_a?(Regexp)
-          build_fname.sub!(src_dir, obj_dir)
+          build_fname.sub!(src_dir, "#{obj_dir}#{extra_path}")
         else
-          build_fname.sub!(%r{^#{src_dir}/}, "#{obj_dir}/")
+          build_fname.sub!(%r{^#{src_dir}/}, "#{obj_dir}#{extra_path}/")
         end
       end
       unless found_match
         if Rscons.absolute_path?(build_fname)
           if build_fname =~ %r{^(\w):(.*)$}
-            build_fname = "#{@build_root}/_#{$1}#{$2}"
+            build_fname = "#{@build_root}#{extra_path}/_#{$1}#{$2}"
           else
-            build_fname = "#{@build_root}/_#{build_fname}"
+            build_fname = "#{@build_root}#{extra_path}/_#{build_fname}"
           end
         elsif !build_fname.start_with?("#{@build_root}/")
-          build_fname = "#{@build_root}/#{build_fname}"
+          build_fname = "#{@build_root}#{extra_path}/#{build_fname}"
         end
       end
       build_fname.gsub('\\', '/')
@@ -533,7 +541,9 @@ module Rscons
           converted = nil
           suffixes.each do |suffix|
             converted_fname = get_build_fname(source, suffix)
-            builder = @builders.values.find { |b| b.produces?(converted_fname, source, self) }
+            builder = @builders.values.find do |builder|
+              builder_produces?(builder, target: converted_fname, source: source)
+            end
             if builder
               converted = run_builder(builder, converted_fname, [source], cache, vars)
               return nil unless converted
@@ -561,10 +571,15 @@ module Rscons
     #   List of suffixes to try to convert source files into.
     # @param vars [Hash]
     #   Extra variables to pass to the builders.
+    # @param options [Hash]
+    #   Extra options.
+    # @option options [Hash] :features
+    #   Set of features the builder must provide.
+    #   * :shared - builder builds a shared object/library
     #
     # @return [Array<String>]
     #   List of the output file name(s).
-    def register_builds(target, sources, suffixes, vars)
+    def register_builds(target, sources, suffixes, vars, options = {})
       @registered_build_dependencies[target] ||= Set.new
       sources.map do |source|
         if source.end_with?(*suffixes)
@@ -572,9 +587,13 @@ module Rscons
         else
           output_fname = nil
           suffixes.each do |suffix|
-            attempt_output_fname = get_build_fname(source, suffix)
+            attempt_output_fname = get_build_fname(source, suffix, features: options[:features])
             builder = @builders.values.find do |builder|
-              builder.produces?(attempt_output_fname, source, self)
+              builder_produces?(
+                builder,
+                target: attempt_output_fname,
+                source: source,
+                features: options[:features])
             end
             if builder
               output_fname = attempt_output_fname
@@ -930,6 +949,31 @@ module Rscons
         tc.build_operation.merge(
           command_status: tc.thread.value,
           tc: tc))
+    end
+
+    # Determine if a builder produces an output file of a given name with
+    # requested features.
+    #
+    # @param builder [Builder]
+    #   The builder.
+    # @param options [Hash]
+    #   Options for {Builder#produces?}.
+    # @option options [String] :target
+    #   Target file name.
+    # @option options [String] :source
+    #   Source file name.
+    # @option options [Hash] :features
+    #   Builder features. See {#register_builds}.
+    #
+    # @return [Boolean]
+    #   Whether the builder produces a file of the given name from the source
+    #   given with the features given.
+    def builder_produces?(builder, options)
+      if builder.method(:produces?).arity == 3
+        builder.produces?(options[:target], options[:source], self)
+      else
+        builder.produces?(options.merge(env: self))
+      end
     end
 
     # Parse dependencies for a given target from a Makefile.
