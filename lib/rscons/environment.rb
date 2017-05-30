@@ -972,7 +972,10 @@ module Rscons
       if builder.method(:produces?).arity == 3
         builder.produces?(options[:target], options[:source], self)
       else
-        builder.produces?(options.merge(env: self))
+        options = options.dup
+        options[:features] ||= {}
+        options[:env] = self
+        builder.produces?(options)
       end
     end
 
