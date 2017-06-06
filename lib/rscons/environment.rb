@@ -417,46 +417,23 @@ module Rscons
     def method_missing(method, *args)
       if @builders.has_key?(method.to_s)
         target, sources, vars, *rest = args
-        unless vars.nil? or vars.is_a?(Hash) or vars.is_a?(VarSet)
+        vars ||= {}
+        unless vars.is_a?(Hash) or vars.is_a?(VarSet)
           raise "Unexpected construction variable set: #{vars.inspect}"
         end
-        sources = Array(sources)
         builder = @builders[method.to_s]
+        target = expand_path(target)
+        target = expand_varref(target)
+        sources = Array(sources).map do |source|
+          source = expand_path(source)
+          expand_varref(source)
+        end.flatten
         build_target = builder.create_build_target(env: self, target: target, sources: sources, vars: vars)
-        add_target(build_target.to_s, builder, sources, vars || {}, rest)
+        add_target(build_target.to_s, builder, sources, vars, rest)
         build_target
       else
         super
       end
-    end
-
-    # Add a build target.
-    #
-    # @param target [String] Build target file name.
-    # @param builder [Builder] The {Builder} to use to build the target.
-    # @param sources [Array<String>] Source file name(s).
-    # @param vars [Hash] Construction variable overrides.
-    # @param args [Object] Deprecated; unused.
-    #
-    # @return [void]
-    def add_target(target, builder, sources, vars, args)
-      target = expand_path(target)
-      target = expand_varref(target)
-      sources = sources.map do |source|
-        source = expand_path(source)
-        expand_varref(source)
-      end.flatten
-      setup_info = builder.setup(
-        target: target,
-        sources: sources,
-        env: self,
-        vars: vars)
-      @job_set.add_job(
-        builder: builder,
-        target: target,
-        sources: sources,
-        vars: vars,
-        setup_info: setup_info)
     end
 
     # Manually record a given target as depending on the specified files.
@@ -852,6 +829,29 @@ module Rscons
     end
 
     private
+
+    # Add a build target.
+    #
+    # @param target [String] Build target file name.
+    # @param builder [Builder] The {Builder} to use to build the target.
+    # @param sources [Array<String>] Source file name(s).
+    # @param vars [Hash] Construction variable overrides.
+    # @param args [Object] Deprecated; unused.
+    #
+    # @return [void]
+    def add_target(target, builder, sources, vars, args)
+      setup_info = builder.setup(
+        target: target,
+        sources: sources,
+        env: self,
+        vars: vars)
+      @job_set.add_job(
+        builder: builder,
+        target: target,
+        sources: sources,
+        vars: vars,
+        setup_info: setup_info)
+    end
 
     # Start a threaded command in a new thread.
     #
