@@ -671,6 +671,22 @@ EOF
     expect(slines[1]).to eq "LD abs.exe"
   end
 
+  it "creates shared libraries" do
+    test_dir("shared_library")
+
+    result = run_test
+    expect(result.stderr).to eq ""
+    slines = lines(result.stdout)
+    expect(slines).to include("SHLD libmine.so")
+
+    result = run_test
+    expect(result.stderr).to eq ""
+    expect(result.stdout).to eq ""
+
+    expect(`LD_LIBRARY_PATH=. ./test-shared.exe`).to match /Hi from one/
+    expect(`./test-static.exe`).to match /Hi from one/
+  end
+
   context "backward compatibility" do
     it "allows a builder to call Environment#run_builder in a non-threaded manner" do
       test_dir("simple")

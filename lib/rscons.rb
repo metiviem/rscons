@@ -17,6 +17,8 @@ require_relative "rscons/builders/library"
 require_relative "rscons/builders/object"
 require_relative "rscons/builders/preprocess"
 require_relative "rscons/builders/program"
+require_relative "rscons/builders/shared_library"
+require_relative "rscons/builders/shared_object"
 require_relative "rscons/builders/simple_builder"
 
 # Namespace module for rscons classes
@@ -35,6 +37,8 @@ module Rscons
     :Object,
     :Preprocess,
     :Program,
+    :SharedLibrary,
+    :SharedObject,
   ]
 
   # Class to represent a fatal error while building a target.
