@@ -70,7 +70,7 @@ module Rscons
           '_DEPFILE' => Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars)),
         })
         com_prefix = KNOWN_SUFFIXES.find do |compiler, suffix_var|
-          sources.first.end_with?(*env.expand_varref("${#{suffix_var}}"))
+          sources.first.end_with?(*env.expand_varref("${#{suffix_var}}", vars))
         end.tap do |v|
           v.nil? and raise "Error: unknown input file type: #{sources.first.inspect}"
         end.first
