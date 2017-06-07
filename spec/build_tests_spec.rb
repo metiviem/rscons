@@ -687,6 +687,22 @@ EOF
     expect(`./test-static.exe`).to match /Hi from one/
   end
 
+  it "creates shared libraries using C++" do
+    test_dir("shared_library")
+
+    result = run_test(rsconsfile: "shared_library_cxx.rb")
+    expect(result.stderr).to eq ""
+    slines = lines(result.stdout)
+    expect(slines).to include("SHLD libmine.so")
+
+    result = run_test(rsconsfile: "shared_library_cxx.rb")
+    expect(result.stderr).to eq ""
+    expect(result.stdout).to eq ""
+
+    expect(`LD_LIBRARY_PATH=. ./test-shared.exe`).to match /Hi from one/
+    expect(`./test-static.exe`).to match /Hi from one/
+  end
+
   context "backward compatibility" do
     it "allows a builder to call Environment#run_builder in a non-threaded manner" do
       test_dir("simple")
@@ -724,6 +740,12 @@ EOF
       result = run_test(rsconsfile: "standard_build.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to eq ["MyCommand simple.o"]
+    end
+
+    it "supports the old 3-parameter signature to Builder#produces?" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "bc_produces.rb")
+      expect(result.stderr).to eq ""
     end
   end
 
@@ -1115,12 +1137,31 @@ EOF
     end
   end
 
+  context "SharedObject builder" do
+    it "raises an error when given a source file with an unknown suffix" do
+      test_dir("shared_library")
+      result = run_test(rsconsfile: "error_unknown_suffix.rb")
+      expect(result.stderr).to match /unknown input file type: "foo.xyz"/
+    end
+  end
+
   context "Library builder" do
     it "allows overriding ARCMD construction variable" do
       test_dir("library")
       result = run_test(rsconsfile: "override_arcmd.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include "ar rcf lib.a build/one.o build/three.o build/two.o"
+    end
+  end
+
+  context "SharedLibrary builder" do
+    it "allows explicitly specifying SHLD construction variable value" do
+      test_dir("shared_library")
+
+      result = run_test(rsconsfile: "shared_library_set_shld.rb")
+      expect(result.stderr).to eq ""
+      slines = lines(result.stdout)
+      expect(slines).to include("SHLD libmine.so")
     end
   end
 
