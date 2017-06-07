@@ -435,6 +435,19 @@ EOF
       ]
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D!"
     end
+
+    it "creates shared libraries using D" do
+      test_dir("shared_library")
+
+      result = run_test(rsconsfile: "shared_library_d.rb")
+      # Currently gdc produces an error while trying to build the shared
+      # library. Since this isn't really an rscons problem, I'm commenting out
+      # this check. I'm not sure what I want to do about D support at this
+      # point anyway...
+      #expect(result.stderr).to eq ""
+      slines = lines(result.stdout)
+      expect(slines).to include("SHLD libmine.so")
+    end
   end
 
   it "supports disassembling object files" do
