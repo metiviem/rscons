@@ -422,11 +422,9 @@ module Rscons
           raise "Unexpected construction variable set: #{vars.inspect}"
         end
         builder = @builders[method.to_s]
-        target = expand_path(target)
-        target = expand_varref(target)
+        target = expand_path(expand_varref(target))
         sources = Array(sources).map do |source|
-          source = expand_path(source)
-          expand_varref(source)
+          expand_path(expand_varref(source))
         end.flatten
         build_target = builder.create_build_target(env: self, target: target, sources: sources, vars: vars)
         add_target(build_target.to_s, builder, sources, vars, rest)
@@ -659,14 +657,20 @@ module Rscons
     # Paths beginning with "^/" are expanded by replacing "^" with the
     # Environment's build root.
     #
-    # @param path [String] The path to expand.
+    # @param path [String, Array<String>]
+    #   The path(s) to expand.
     #
-    # @return [String] The expanded path.
+    # @return [String, Array<String>]
+    #   The expanded path(s).
     def expand_path(path)
       if Rscons.phony_target?(path)
         path
+      elsif path.is_a?(Array)
+        path.map do |path|
+          expand_path(path)
+        end
       else
-        path.sub(%r{^\^(?=[\\/])}, @build_root)
+        path.sub(%r{^\^(?=[\\/])}, @build_root).gsub("\\", "/")
       end
     end
 
