@@ -446,7 +446,11 @@ EOF
       # point anyway...
       #expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      expect(slines).to include("SHLD libmine.so")
+      if RUBY_PLATFORM =~ /mingw/
+        expect(slines).to include("SHLD mine.dll")
+      else
+        expect(slines).to include("SHLD libmine.so")
+      end
     end
   end
 
@@ -690,13 +694,20 @@ EOF
     result = run_test
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    expect(slines).to include("SHLD libmine.so")
+    if RUBY_PLATFORM =~ /mingw/
+      expect(slines).to include("SHLD mine.dll")
+      expect(File.exists?("mine.dll")).to be_truthy
+    else
+      expect(slines).to include("SHLD libmine.so")
+      expect(File.exists?("libmine.so")).to be_truthy
+    end
 
     result = run_test
     expect(result.stderr).to eq ""
     expect(result.stdout).to eq ""
 
-    expect(`LD_LIBRARY_PATH=. ./test-shared.exe`).to match /Hi from one/
+    ld_library_path_prefix = (RUBY_PLATFORM =~ /mingw/ ? "" : "LD_LIBRARY_PATH=. ")
+    expect(`#{ld_library_path_prefix}./test-shared.exe`).to match /Hi from one/
     expect(`./test-static.exe`).to match /Hi from one/
   end
 
@@ -706,13 +717,18 @@ EOF
     result = run_test(rsconsfile: "shared_library_cxx.rb")
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    expect(slines).to include("SHLD libmine.so")
+    if RUBY_PLATFORM =~ /mingw/
+      expect(slines).to include("SHLD mine.dll")
+    else
+      expect(slines).to include("SHLD libmine.so")
+    end
 
     result = run_test(rsconsfile: "shared_library_cxx.rb")
     expect(result.stderr).to eq ""
     expect(result.stdout).to eq ""
 
-    expect(`LD_LIBRARY_PATH=. ./test-shared.exe`).to match /Hi from one/
+    ld_library_path_prefix = (RUBY_PLATFORM =~ /mingw/ ? "" : "LD_LIBRARY_PATH=. ")
+    expect(`#{ld_library_path_prefix}./test-shared.exe`).to match /Hi from one/
     expect(`./test-static.exe`).to match /Hi from one/
   end
 

@@ -11,6 +11,7 @@ module Rscons
       # @return [Hash] Default construction variables for the builder.
       def default_variables(env)
         {
+          'SHLIBPREFIX' => (RUBY_PLATFORM =~ /mingw/ ? '' : 'lib'),
           'SHLIBSUFFIX' => (RUBY_PLATFORM =~ /mingw/ ? '.dll' : '.so'),
           'SHLDFLAGS' => ['${LDFLAGS}', '-shared'],
           'SHLD' => nil,
@@ -38,7 +39,11 @@ module Rscons
       def create_build_target(options)
         env, target, vars = options.values_at(:env, :target, :vars)
         my_options = options.dup
-        unless env.expand_varref(target, vars) =~ /\./
+        libprefix = env.expand_varref("${SHLIBPREFIX}", vars)
+        unless File.basename(target).start_with?(libprefix)
+          my_options[:target].sub!(%r{^(.*/)?([^/]+)$}, "\\1#{libprefix}\\2")
+        end
+        unless File.basename(target)["."]
           my_options[:target] += env.expand_varref("${SHLIBSUFFIX}", vars)
         end
         super(my_options)
