@@ -29,7 +29,7 @@ module Rscons
 
           'SHCXX' => '${CXX}',
           'SHCXXFLAGS' => [],
-          'SHCXXCMD' =>['${SHCXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCXXFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
+          'SHCXXCMD' => ['${SHCXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCXXFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
 
           'SHDC' => 'gdc',
           'SHDFLAGS' => ['${DFLAGS}'] + pic_flags,
