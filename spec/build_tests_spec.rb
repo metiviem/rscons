@@ -1190,7 +1190,11 @@ EOF
       result = run_test(rsconsfile: "shared_library_set_shld.rb")
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      expect(slines).to include("SHLD libmine.so")
+      if RUBY_PLATFORM =~ /mingw/
+        expect(slines).to include("SHLD mine.dll")
+      else
+        expect(slines).to include("SHLD libmine.so")
+      end
     end
   end
 
