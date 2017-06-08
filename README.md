@@ -7,31 +7,30 @@ in Ruby.
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-    gem "rscons"
-
-And then execute:
-
-    $ bundle install
-
-Or install it yourself as:
-
     $ gem install rscons
 
 ## Usage
 
-Rscons is implemented as a Ruby library and distributed as a gem.
-It also provides a "rscons" executable which can evaluate a build script (by
-default named Rsconsfile or Rsconsfile.rb).
-It can also be used from rake or from a standalone Ruby script.
+### Standalone
+
+Rscons provides a standalone executable ("rscons") with a command-line
+interface. The rscons executable will read a build script (by default named
+Rsconsfile or Rsconsfile.rb) and execute its contents.
+
+### With Rake
+
+Rscons can be used with rake as well. The same content that would be written
+in Rsconsfile can be placed in a Rakefile. It could be placed within a rake
+task block or split among multiple tasks.
+
+## Example Build Scripts
 
 ### Example: Building a C Program
 
 ```ruby
 Rscons::Environment.new do |env|
   env["CFLAGS"] << "-Wall"
-  env.Program("program", Dir["**/*.c"])
+  env.Program("program", Dir["src/**/*.c"])
 end
 ```
 
@@ -40,7 +39,7 @@ end
 ```ruby
 Rscons::Environment.new do |env|
   env["DFLAGS"] << "-Wall"
-  env.Program("program", Dir["**/*.d"])
+  env.Program("program", Dir["src/**/*.d"])
 end
 ```
 
@@ -196,25 +195,6 @@ Rscons::Environment.new do |env|
 end
 ```
 
-Each build hook block will be invoked for every build operation, so the block
-should test the target or sources if its action should only apply to some
-subset of build targets or source files.
-
-Build hooks can alter construction variable values for a particular build
-operation. Build hooks can also register new build targets.
-
-The `build_op` parameter to the build hook block is a Hash describing the
-build operation with the following keys:
-* `:builder` - `Builder` instance in use
-* `:env` - `Environment` calling the build hook; note that this may be
-  different from the Environment that the build hook was added to in the case
-  that the original Environment was cloned with build hooks!
-* `:target` - `String` name of the target file
-* `:sources` - `Array` of the source files
-* `:vars` - `Rscons::VarSet` containing the construction variables to use.
-  The build hook can overwrite entries in `build_op[:vars]` to alter the
-  construction variables in use for this specific build operation.
-
 ### Example: Creating a static library
 
 ```ruby
@@ -233,7 +213,50 @@ end
 
 ## Details
 
+### Environments
+
+The Environment is the main top-level object that Rscons operates with. An
+Environment must be created by the user in order to build anything. All build
+targets are registered within an Environment. In many cases only a single
+Environment will be needed, but more than one can be created (either from
+scratch or by cloning another existing Environment) if needed.
+
+An Environment consists of:
+
+* a collection of builders
+* a collection of construction variables used by those builders
+* a mapping of build directories from source directories
+* a default build root to apply if no specific build directories are matched
+* a collection of user-defined build targets
+* a collection of user-defined build hooks
+
+When cloning an environment, by default the construction variables and builders
+are cloned, but the new environment does not inherit any of the targets, build
+hooks, build directories, or the build root from the source environment.
+
+The set of environment attributes that are cloned is controllable via the
+`:clone` option to the `#clone` method.
+For example, `env.clone(clone: :all)` will include construction variables,
+builders, build hooks, build directories, and the build root.
+
+The set of pending targets is never cloned.
+
+Cloned environments contain "deep copies" of construction variables.
+For example, in:
+
+```ruby
+base_env = Rscons::Environment.new
+base_env["CPPPATH"] = ["one", "two"]
+cloned_env = base_env.clone
+cloned_env["CPPPATH"] << "three"
+```
+
+`base_env["CPPPATH"]` will not include "three".
+
 ### Builders
+
+Builders are the workhorses that Rscons uses to execute build operations.
+Each builder is specialized to perform a particular operation.
 
 Rscons ships with a number of builders:
 
@@ -246,9 +269,13 @@ Rscons ships with a number of builders:
 * Object, which compiles source files to produce an object file.
 * Preprocess, which invokes the C/C++ preprocessor on a source file.
 * Program, which links object files to produce an executable.
+* SharedLibrary, which links object files to produce a dynamically loadable
+  library.
+* SharedObject, which compiles source files to produce an object file, in a way
+  that is able to be used to create a shared library.
 
 If you want to create an Environment that does not contain any builders,
-you can use the `exclude_builders` key to the Environment constructor.
+you can use the `:exclude_builders` key to the Environment constructor.
 
 #### Command
 
@@ -313,7 +340,9 @@ env.Object(target, sources)
 env.Object("module.o", "module.c")
 ```
 
-The Object builder compiles the given sources to an object file.
+The Object builder compiles the given sources to an object file. Although it
+can be called explicitly, it is more commonly implicitly called by the Program
+builder.
 
 #### Preprocess
 
@@ -336,43 +365,38 @@ env.Program("myprog", Dir["src/**/*.cc"])
 ```
 
 The Program builder compiles and links the given sources to an executable file.
-Object files or source files can be given as `sources`.
+Object files or source files can be given as `sources`. A platform-dependent
+program suffix will be appended to the target name if one is not specified.
+This can be controlled with the `PROGSUFFIX` construction variable.
 
-### Managing Environments
-
-An Rscons::Environment consists of:
-
-* a collection of construction variables
-* a collection of builders
-* a mapping of build directories from source directories
-* a default build root to apply if no build directories are matched
-* a collection of targets to build
-* a collection of build hooks
-
-When cloning an environment, by default the construction variables and builders
-are cloned, but the new environment does not inherit any of the targets, build
-hooks, build directories, or the build root from the source environment.
-
-The set of environment attributes that are cloned is controllable via the
-`:clone` option to the `#clone` method.
-For example, `env.clone(clone: :all)` will include construction variables,
-builders, build hooks, build directories, and the build root.
-
-The set of pending targets is never cloned.
-
-Cloned environments contain "deep copies" of construction variables.
-For example, in:
+#### SharedLibrary
 
 ```ruby
-base_env = Rscons::Environment.new
-base_env["CPPPATH"] = ["one", "two"]
-cloned_env = base_env.clone
-cloned_env["CPPPATH"] << "three"
+env.SharedLibrary(target, sources)
+# Example
+env.SharedLibrary("mydll", Dir["src/**/*.cc"])
 ```
 
-`base_env["CPPPATH"]` will not include "three".
+The SharedLibrary builder compiles and links the given sources to a dynamically
+loadable library. Object files or source files can be given as `sources`.
+A platform-dependent prefix and suffix will be appended to the target name if
+they are not specified by the user. These values can be controlled by
+overriding the `SHLIBPREFIX` and `SHLIBSUFFIX` construction variables.
 
-#### Build Hooks
+#### SharedObject
+
+```ruby
+env.SharedObject(target, sources)
+# Example
+env.SharedObject("lib_module.o", "lib_module.c")
+```
+
+The SharedObject builder compiles the given sources to an object file. Any
+compilation flags necessary to build the object file in a manner that allows it
+to be used to create a shared library are added. Although it can be called
+explicitly, it is more commonly implicitly called by the SharedLibrary builder.
+
+### Build Hooks
 
 Environments can have build hooks which are added with `env.add_build_hook()`.
 Build hooks are invoked immediately before a builder executes.
@@ -384,6 +408,36 @@ Environments can also have post-build hooks added with `env.add_post_build_hook(
 Post-build hooks are only invoked if the build operation was a success.
 Post-build hooks can invoke commands using the newly-built files, or register
 new build targets.
+
+Each build hook block will be invoked for every build operation, so the block
+should test the target or sources if its action should only apply to some
+subset of build targets or source files.
+
+Example build hook:
+
+```ruby
+Rscons::Environment.new do |env|
+  # Build third party sources without -Wall
+  env.add_build_hook do |build_op|
+    if build_op[:builder].name == "Object" and
+      build_op[:sources].first =~ %r{src/third-party}
+      build_op[:vars]["CFLAGS"] -= ["-Wall"]
+    end
+  end
+end
+```
+
+The `build_op` parameter to the build hook block is a Hash describing the
+build operation with the following keys:
+* `:builder` - `Builder` instance in use
+* `:env` - `Environment` calling the build hook; note that this may be
+  different from the Environment that the build hook was added to in the case
+  that the original Environment was cloned with build hooks!
+* `:target` - `String` name of the target file
+* `:sources` - `Array` of the source files
+* `:vars` - `Rscons::VarSet` containing the construction variables to use.
+  The build hook can overwrite entries in `build_op[:vars]` to alter the
+  construction variables in use for this specific build operation.
 
 ### Phony Targets
 
@@ -416,6 +470,7 @@ env.depends("my_app", "config/link.ld", "README.txt", *Dir.glob("assets/**/*"))
 ### Construction Variable Naming
 
 * uppercase strings - the default construction variables that Rscons uses
+* strings beginning with "_" - set and used internally by builders
 * symbols, lowercase strings - reserved as user-defined construction variables
 
 ### API documentation
