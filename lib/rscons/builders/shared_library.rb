@@ -21,6 +21,14 @@ module Rscons
         }
       end
 
+      # Return a set of build features that this builder provides.
+      #
+      # @return [Array<String>]
+      #   Set of build features that this builder provides.
+      def features
+        %w[shared]
+      end
+
       # Create a BuildTarget object for this build target.
       #
       # The build target filename is given a platform-dependent suffix if no
@@ -61,7 +69,7 @@ module Rscons
         suffixes = env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], vars)
         # Register builders to build each source to an object file or library.
         env.register_builds(target, sources, suffixes, vars,
-                            features: {shared: true})
+                            features: %w[shared])
       end
 
       # Run the builder to produce a build target.

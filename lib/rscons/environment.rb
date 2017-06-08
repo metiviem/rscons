@@ -236,15 +236,15 @@ module Rscons
     #   Suffix, including "." if desired.
     # @param options [Hash]
     #   Extra options.
-    # @option options [Hash] :features
+    # @option options [Array<String>] :features
     #   Builder features to be used for this build. See {#register_builds}.
     #
     # @return [String]
     #   The file name to be built from +source_fname+ with suffix +suffix+.
     def get_build_fname(source_fname, suffix, options = {})
       build_fname = Rscons.set_suffix(source_fname, suffix).gsub('\\', '/')
-      options[:features] ||= {}
-      extra_path = options[:features][:shared] ? "/_shared" : ""
+      options[:features] ||= []
+      extra_path = options[:features].include?("shared") ? "/_shared" : ""
       found_match = @build_dirs.find do |src_dir, obj_dir|
         if src_dir.is_a?(Regexp)
           build_fname.sub!(src_dir, "#{obj_dir}#{extra_path}")
@@ -516,10 +516,7 @@ module Rscons
           converted = nil
           suffixes.each do |suffix|
             converted_fname = get_build_fname(source, suffix)
-            builder = @builders.values.find do |builder|
-              builder_produces?(builder, target: converted_fname, source: source)
-            end
-            if builder
+            if builder = find_builder_for(converted_fname, source, [])
               converted = run_builder(builder, converted_fname, [source], cache, vars)
               return nil unless converted
               break
@@ -548,13 +545,16 @@ module Rscons
     #   Extra variables to pass to the builders.
     # @param options [Hash]
     #   Extra options.
-    # @option options [Hash] :features
-    #   Set of features the builder must provide.
-    #   * :shared - builder builds a shared object/library
+    # @option options [Array<String>] :features
+    #   Set of features the builder must provide. Each feature can be proceeded
+    #   by a "-" character to indicate that the builder must /not/ provide the
+    #   given feature.
+    #   * shared - builder builds a shared object/library
     #
     # @return [Array<String>]
     #   List of the output file name(s).
     def register_builds(target, sources, suffixes, vars, options = {})
+      options[:features] ||= []
       @registered_build_dependencies[target] ||= Set.new
       sources.map do |source|
         if source.end_with?(*suffixes)
@@ -563,14 +563,7 @@ module Rscons
           output_fname = nil
           suffixes.each do |suffix|
             attempt_output_fname = get_build_fname(source, suffix, features: options[:features])
-            builder = @builders.values.find do |builder|
-              builder_produces?(
-                builder,
-                target: attempt_output_fname,
-                source: source,
-                features: options[:features])
-            end
-            if builder
+            if builder = find_builder_for(attempt_output_fname, source, options[:features])
               output_fname = attempt_output_fname
               self.__send__(builder.name, output_fname, source, vars)
               @registered_build_dependencies[target] << output_fname
@@ -955,31 +948,43 @@ module Rscons
           tc: tc))
     end
 
-    # Determine if a builder produces an output file of a given name with
-    # requested features.
+    # Find a builder that meets the requested features and produces a target
+    # of the requested name.
+    #
+    # @param target [String]
+    #   Target file name.
+    # @param source [String]
+    #   Source file name.
+    # @param features [Array<String>]
+    #   See {#register_builds}.
+    #
+    # @return [Builder, nil]
+    #   The builder found, if any.
+    def find_builder_for(target, source, features)
+      @builders.values.find do |builder|
+        features_met?(builder, features) and builder.produces?(target, source, self)
+      end
+    end
+
+    # Determine if a builder meets the requested features.
     #
     # @param builder [Builder]
     #   The builder.
-    # @param options [Hash]
-    #   Options for {Builder#produces?}.
-    # @option options [String] :target
-    #   Target file name.
-    # @option options [String] :source
-    #   Source file name.
-    # @option options [Hash] :features
-    #   Builder features. See {#register_builds}.
+    # @param features [Array<String>]
+    #   See {#register_builds}.
     #
     # @return [Boolean]
-    #   Whether the builder produces a file of the given name from the source
-    #   given with the features given.
-    def builder_produces?(builder, options)
-      if builder.method(:produces?).arity == 3
-        builder.produces?(options[:target], options[:source], self)
-      else
-        options = options.dup
-        options[:features] ||= {}
-        options[:env] = self
-        builder.produces?(options)
+    #   Whether the builder meets the requested features.
+    def features_met?(builder, features)
+      builder_features = builder.features
+      features.all? do |feature|
+        want_feature = true
+        if feature =~ /^-(.*)$/
+          want_feature = false
+          feature = $1
+        end
+        builder_has_feature = builder_features.include?(feature)
+        want_feature ? builder_has_feature : !builder_has_feature
       end
     end
 

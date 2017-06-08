@@ -62,16 +62,18 @@ module Rscons
       # Return whether this builder object is capable of producing a given target
       # file name from a given source file name.
       #
-      # @param options [Hash]
-      #   Options.
+      # @param target [String]
+      #   The target file name.
+      # @param source [String]
+      #   The source file name.
+      # @param env [Environment]
+      #   The Environment.
       #
       # @return [Boolean]
       #   Whether this builder object is capable of producing a given target
       #   file name from a given source file name.
-      def produces?(options)
-        target, source, env, features = options.values_at(:target, :source, :env, :features)
-        (not features[:shared]) and
-          target.end_with?(*env['OBJSUFFIX']) and
+      def produces?(target, source, env)
+        target.end_with?(*env['OBJSUFFIX']) and
           KNOWN_SUFFIXES.find do |compiler, suffix_var|
             source.end_with?(*env[suffix_var])
           end

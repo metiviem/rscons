@@ -334,6 +334,28 @@ module Rscons
       end
     end
 
+    describe "#features_met?" do
+      it "returns true when the builder provides all requested features" do
+        builder = Struct.new(:features).new(%w[shared other])
+        expect(subject.__send__(:features_met?, builder, %w[shared])).to be_truthy
+      end
+
+      it "returns true when no features are requested" do
+        builder = Struct.new(:features).new([])
+        expect(subject.__send__(:features_met?, builder, [])).to be_truthy
+      end
+
+      it "returns false when a builder does not provide a requested feature" do
+        builder = Struct.new(:features).new(%w[shared other])
+        expect(subject.__send__(:features_met?, builder, %w[other2])).to be_falsey
+      end
+
+      it "returns false when a builder provides a feature that is not desired" do
+        builder = Struct.new(:features).new(%w[shared other])
+        expect(subject.__send__(:features_met?, builder, %w[-shared])).to be_falsey
+      end
+    end
+
     describe ".parse_makefile_deps" do
       it 'handles dependencies on one line' do
         expect(File).to receive(:read).with('makefile').and_return(<<EOS)
