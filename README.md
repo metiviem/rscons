@@ -425,6 +425,23 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
+### v1.10.0
+
+#### New Features
+
+- #23 - add parallelization - builds are now parallelized by default
+- #31 - add LEXSUFFIX, YACCSUFFIX construction variables
+- #30 - place object files for absolute source paths under build_root
+- #28 - support redirecting standard output using the Command builder
+- Always use a build root and default it to "build"
+- Add builder features
+- #8 - add SharedObject and SharedLibrary builders
+
+#### Fixes
+
+- expand target and source paths before calling Builder#create_build_target
+- #29 - fix PROGSUFFIX handling
+
 ### v1.9.3
 
 - Environment#parse_flags should put -std=XXX flags in CCFLAGS, not CFLAGS
