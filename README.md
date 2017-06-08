@@ -396,6 +396,91 @@ compilation flags necessary to build the object file in a manner that allows it
 to be used to create a shared library are added. Although it can be called
 explicitly, it is more commonly implicitly called by the SharedLibrary builder.
 
+### Construction Variables
+
+Construction variables are used to define the toolset and any build options
+that Rscons will use to build a project. The default construction variable
+values are configured to build applications using gcc. However, all
+construction variables can be overridden by the user.
+
+| Name | Type | Description | Default |
+| --- | --- | --- | --- |
+| AR | String | Static library archiver executable | "ar" |
+| ARCMD | Array | Static library archiver command line | ["${AR}", "${ARFLAGS}", "${_TARGET}", "${_SOURCES}"] |
+| ARFLAGS | Array | Static library archiver flags | ["rcs"] |
+| AS | String | Assembler executable | "${CC}" |
+| ASCMD | Array | Assembler command line | ["${AS}", "-c", "-o", "${_TARGET}", "${ASDEPGEN}", "${INCPREFIX}${ASPPPATH}", "${ASPPFLAGS}", "${ASFLAGS}", "${_SOURCES}"] |
+| ASDEPGEN | Array | Assembly dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}"] |
+| ASFLAGS | Array | Assembler flags | [] |
+| ASPPFLAGS | Array | Assembler preprocessor flags | ["${CPPFLAGS}"] |
+| ASPPPATH | Array | Assembler preprocessor path | ["${CPPPATH}"] |
+| ASSUFFIX | Array | Assembly file suffixes | [".S"] |
+| CC | String | C compiler executable | "gcc" |
+| CCCMD | Array | C compiler command line | ["${CC}", "-c", "-o", "${_TARGET}", "${CCDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${CFLAGS}", "${CCFLAGS}", "${_SOURCES}"] |
+| CCDEPGEN | Array | C compiler dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}"] |
+| CCFLAGS | Array | Common flags for both C and C++ compiler | [] |
+| CFLAGS | Array | C compiler flags | [] |
+| CPP_CMD | Array | Preprocess command line | ["${_PREPROCESS_CC}", "-E", "${_PREPROCESS_DEPGEN}", "-o", "${_TARGET}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${_SOURCES}"] |
+| CPP_TARGET_SUFFIX | String | Suffix used for crt:preprocess target filename. | ".c" |
+| CPPDEFINES | Array | C preprocessor defines | [] |
+| CPPDEFPREFIX | String | Prefix used for C preprocessor to introduce a define | "-D" |
+| CPPFLAGS | Array | C preprocessor flags | ["${CPPDEFPREFIX}${CPPDEFINES}"] |
+| CPPPATH | Array | C preprocessor path | [] |
+| CSUFFIX | Array | C source file suffixes | [".c"] |
+| CXX | String | C++ compiler executable | "g++" |
+| CXXCMD | Array | C++ compiler command line | ["${CXX}", "-c", "-o", "${_TARGET}", "${CXXDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${CXXFLAGS}", "${CCFLAGS}", "${_SOURCES}"] |
+| CXXDEPGEN | Array | C++ compiler dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}"] |
+| CXXFLAGS | Array | C++ compiler flags | [] |
+| CXXSUFFIX | Array | C++ source file suffixes | [".cc", ".cpp", ".cxx", ".C"] |
+| D_IMPORT_PATH | Array | D compiler import path | [] |
+| DC | String | D compiler executable | "gdc" |
+| DCCMD | Array | D compiler command line | ["${DC}", "-c", "-o", "${_TARGET}", "${INCPREFIX}${D_IMPORT_PATH}", "${DFLAGS}", "${_SOURCES}"] |
+| DEPFILESUFFIX | String | Dependency file suffix for Makefile-style dependency rules emitted by the compiler (used internally for temporary dependency files used to determine a source file's dependencies) | ".mf" |
+| DFLAGS | Array | D compiler flags | [] |
+| DISASM_CMD | Array | Disassemble command line | ["${OBJDUMP}", "${DISASM_FLAGS}", "${_SOURCES}"] |
+| DISASM_FLAGS | Array | Disassemble flags | ["--disassemble", "--source"] |
+| DSUFFIX | String/Array | Default D source file suffix | ".d" |
+| INCPREFIX | String | Prefix used for C preprocessor to add an include path | "-I" |
+| LD | String |  nil | Linker executable (automatically determined when nil) | nil (if nil, ${CC}, ${CXX}, or ${DC} is used depending on the sources being linked) |
+| LDCMD | Array | Link command line | ["${LD}", "-o", "${_TARGET}", "${LDFLAGS}", "${_SOURCES}", "${LIBDIRPREFIX}${LIBPATH}", "${LIBLINKPREFIX}${LIBS}"] |
+| LDFLAGS | Array | Linker flags | [] |
+| LEX | String | Lex executable | "flex" |
+| LEX_CMD | Array | Lex command line | ["${LEX}", "${LEX_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"] |
+| LEX_FLAGS | Array | Lex flags | [] |
+| LEXSUFFIX | Array | Lex input file suffixes | [".l", ".ll"] |
+| LIBDIRPREFIX | String | Prefix given to linker to add a library search path | "-L" |
+| LIBLINKPREFIX | String | Prefix given to linker to add a library to link with | "-l" |
+| LIBPATH | Array | Library load path | [] |
+| LIBS | Array | Libraries to link with | [] |
+| LIBSUFFIX | String/Array | Default static library file suffix | ".a" |
+| OBJDUMP | String | Objdump executable | "objdump" |
+| OBJSUFFIX | String/Array | Default object file suffix | ".o" |
+| This name will include variant components. |
+| The user should not change this construction variable. | Determined at runtime. |
+| PROGSUFFIX | String | Default program suffix. | Windows: ".exe", POSIX: "" |
+| SHCC | String | Shared object C compiler | "${CC}" |
+| SHCCCMD | Array | Shared object C compiler command line | ["${SHCC}", "-c", "-o", "${_TARGET}", "${CCDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${SHCFLAGS}", "${SHCCFLAGS}", "${_SOURCES}"] |
+| SHCCFLAGS | Array | Shared object C and C++ compiler flags | Windows: ["${CCFLAGS}"], POSIX: ["${CCFLAGS}", -fPIC"] |
+| SHCFLAGS | Array | Shared object C compiler flags | [] |
+| SHCXX | String | Shared object C++ compiler | "${CXX}" |
+| SHCXXCMD | Array | Shared object C++ compiler command line | ["${SHCXX}", "-c", "-o", "${_TARGET}", "${CXXDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${SHCXXFLAGS}", "${SHCCFLAGS}", "${_SOURCES}"] |
+| SHCXXFLAGS | Array | Shared object C++ compiler flags | [] |
+| SHDC | String | Shared object D compiler | "gdc" |
+| SHDCCMD | Array | Shared object D compiler command line | ["${SHDC}", "-c", "-o", "${_TARGET}", "${INCPREFIX}${D_IMPORT_PATH}", "${SHDFLAGS}", "${_SOURCES}"] |
+| SHDFLAGS | Array | Shared object D compiler flags | Windows: ["${DFLAGS}"], POSIX: ["${DFLAGS}", "-fPIC"] |
+| SHLD | String | Shared library linker | nil (if nil, ${SHCC}, ${SHCXX}, or ${SHDC} is used depending on the sources being linked) |
+| SHLDCMD | Array | Shared library linker command line | ["${SHLD}", "-o", "${_TARGET}", "${SHLDFLAGS}", "${_SOURCES}", "${SHLIBDIRPREFIX}${LIBPATH}", "${SHLIBLINKPREFIX}${LIBS}"] |
+| SHLDFLAGS | Array | Shared library linker flags | ["${LDFLAGS}", "-shared"] |
+| SHLIBDIRPREFIX | String | Prefix given to shared library linker to add a library search path | "-L" |
+| SHLIBLINKPREFIX | String | Prefix given to shared library linker to add a library to link with | "-l" |
+| SHLIBPREFIX | String | Shared library file name prefix | Windows: "", POSIX: "lib" |
+| SHLIBSUFFIX | String | Shared library file name suffix | Windows: ".dll", POSIX: ".so" |
+| SIZE | String | Size executable. | "size" |
+| YACC | String | Yacc executable | "bison" |
+| YACC_CMD | Array | Yacc command line | ["${YACC}", "${YACC_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"] |
+| YACC_FLAGS | Array | Yacc flags | ["-d"] |
+| YACCSUFFIX | Array | Yacc input file suffixes | [".y", ".yy"] |
+
 ### Build Hooks
 
 Environments can have build hooks which are added with `env.add_build_hook()`.
