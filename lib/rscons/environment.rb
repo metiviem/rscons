@@ -615,7 +615,7 @@ module Rscons
 
       # Call the builder's #run method.
       if builder.method(:run).arity == 5
-        rv = builder.run(target, sources, cache, self, vars)
+        rv = builder.run(*build_operation.values_at(:target, :sources, :cache, :env, :vars))
       else
         rv = builder.run(build_operation)
       end

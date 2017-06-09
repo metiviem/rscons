@@ -776,6 +776,18 @@ EOF
       result = run_test(rsconsfile: "bc_produces.rb")
       expect(result.stderr).to eq ""
     end
+
+    it 'supports build hooks to override construction variables' do
+      test_dir("build_dir")
+      result = run_test(rsconsfile: "backward_compatible_build_hooks.rb")
+      expect(result.stderr).to eq ""
+      expect(Set[*lines(result.stdout)]).to eq Set[
+        'gcc -c -o one.o -MMD -MF one.mf -Isrc/one/ -Isrc/two/ -O1 src/two/two.c',
+        'gcc -c -o two.o -MMD -MF two.mf -Isrc/one/ -Isrc/two/ -O2 src/two/two.c'
+      ]
+      expect(File.exists?('one.o')).to be_truthy
+      expect(File.exists?('two.o')).to be_truthy
+    end
   end
 
   context "CFile builder" do
