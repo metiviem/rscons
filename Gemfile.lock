@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rscons (1.9.3)
+    rscons (1.10.0)
       json (~> 1.0)
 
 GEM
