@@ -581,6 +581,7 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 - expand target and source paths before calling Builder#create_build_target
 - #29 - fix PROGSUFFIX handling
+- #32 - Pre-build hooks do not respect modified key values
 
 ### v1.9.3
 
