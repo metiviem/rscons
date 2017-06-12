@@ -455,8 +455,6 @@ construction variables can be overridden by the user.
 | LIBSUFFIX | String/Array | Default static library file suffix | ".a" |
 | OBJDUMP | String | Objdump executable | "objdump" |
 | OBJSUFFIX | String/Array | Default object file suffix | ".o" |
-| This name will include variant components. |
-| The user should not change this construction variable. | Determined at runtime. |
 | PROGSUFFIX | String | Default program suffix. | Windows: ".exe", POSIX: "" |
 | SHCC | String | Shared object C compiler | "${CC}" |
 | SHCCCMD | Array | Shared object C compiler command line | ["${SHCC}", "-c", "-o", "${_TARGET}", "${CCDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${SHCFLAGS}", "${SHCCFLAGS}", "${_SOURCES}"] |
