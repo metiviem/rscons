@@ -330,7 +330,8 @@ module Rscons
           end
 
           # If needed, do a blocking wait.
-          if (completed_tcs.empty? and job.nil?) or @threaded_commands.size >= Rscons.n_threads
+          if (@threaded_commands.size > 0) and
+             ((completed_tcs.empty? and job.nil?) or (@threaded_commands.size >= Rscons.n_threads))
             completed_tcs << wait_for_threaded_commands
           end
 
