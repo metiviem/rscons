@@ -47,12 +47,18 @@ module Rscons
     # @return [nil, Hash]
     #   The next job to run.
     def get_next_job_to_run(targets_still_building)
+      targets_skipped = Set.new
       @jobs.keys.each do |target|
         skip = false
         (@jobs[target][0][:sources] + (@build_dependencies[target] || []).to_a).each do |src|
           if @jobs.include?(src)
+            if targets_skipped.include?(src) or (src == target)
+              # We have encountered a circular dependency.
+              raise "Circular build dependency for #{src}"
+            end
             # Skip this target because it depends on another target later in
             # the job set.
+            targets_skipped << target
             skip = true
             break
           end

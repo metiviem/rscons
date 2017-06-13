@@ -732,6 +732,20 @@ EOF
     expect(`./test-static.exe`).to match /Hi from one/
   end
 
+  it "raises an error for a circular dependency" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "error_circular_dependency.rb")
+    expect(result.stderr).to match /Circular build dependency for (foo|bar|baz)/
+    expect(result.status).to_not eq 0
+  end
+
+  it "raises an error for a circular dependency where a build target contains itself in its source list" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "error_circular_dependency2.rb")
+    expect(result.stderr).to match /Circular build dependency for foo/
+    expect(result.status).to_not eq 0
+  end
+
   context "backward compatibility" do
     it "allows a builder to call Environment#run_builder in a non-threaded manner" do
       test_dir("simple")
