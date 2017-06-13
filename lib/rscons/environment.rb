@@ -17,6 +17,11 @@ module Rscons
     # @return [String] The build root.
     attr_reader :build_root
 
+    # @return [Integer]
+    #   The number of threads to use for this Environment. If nil (the
+    #   default), the global Rscons.n_threads default value will be used.
+    attr_writer :n_threads
+
     # Set the build root.
     #
     # @param build_root [String] The build root.
@@ -331,7 +336,7 @@ module Rscons
 
           # If needed, do a blocking wait.
           if (@threaded_commands.size > 0) and
-             ((completed_tcs.empty? and job.nil?) or (@threaded_commands.size >= Rscons.n_threads))
+             ((completed_tcs.empty? and job.nil?) or (@threaded_commands.size >= n_threads))
             completed_tcs << wait_for_threaded_commands
           end
 
@@ -826,6 +831,15 @@ module Rscons
         var_str = var.is_a?(Symbol) ? var.inspect : var
         puts "#{var_str} => #{varset_hash[var].inspect}"
       end
+    end
+
+    # Get the number of threads to use for parallelized builds in this
+    # Environment.
+    #
+    # @return [Integer]
+    #   Number of threads to use for parallelized builds in this Environment.
+    def n_threads
+      @n_threads || Rscons.n_threads
     end
 
     private
