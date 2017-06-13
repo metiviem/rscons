@@ -24,11 +24,11 @@ module Rscons
           'SHCCFLAGS' => ['${CCFLAGS}'] + pic_flags,
 
           'SHCC' => '${CC}',
-          'SHCFLAGS' => [],
+          'SHCFLAGS' => ['${CFLAGS}'],
           'SHCCCMD' => ['${SHCC}', '-c', '-o', '${_TARGET}', '${CCDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
 
           'SHCXX' => '${CXX}',
-          'SHCXXFLAGS' => [],
+          'SHCXXFLAGS' => ['${CXXFLAGS}'],
           'SHCXXCMD' => ['${SHCXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCXXFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
 
           'SHDC' => 'gdc',

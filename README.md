@@ -459,10 +459,10 @@ construction variables can be overridden by the user.
 | SHCC | String | Shared object C compiler | "${CC}" |
 | SHCCCMD | Array | Shared object C compiler command line | ["${SHCC}", "-c", "-o", "${_TARGET}", "${CCDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${SHCFLAGS}", "${SHCCFLAGS}", "${_SOURCES}"] |
 | SHCCFLAGS | Array | Shared object C and C++ compiler flags | Windows: ["${CCFLAGS}"], POSIX: ["${CCFLAGS}", -fPIC"] |
-| SHCFLAGS | Array | Shared object C compiler flags | [] |
+| SHCFLAGS | Array | Shared object C compiler flags | ["${CFLAGS}"] |
 | SHCXX | String | Shared object C++ compiler | "${CXX}" |
 | SHCXXCMD | Array | Shared object C++ compiler command line | ["${SHCXX}", "-c", "-o", "${_TARGET}", "${CXXDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${SHCXXFLAGS}", "${SHCCFLAGS}", "${_SOURCES}"] |
-| SHCXXFLAGS | Array | Shared object C++ compiler flags | [] |
+| SHCXXFLAGS | Array | Shared object C++ compiler flags | ["${CXXFLAGS}"] |
 | SHDC | String | Shared object D compiler | "gdc" |
 | SHDCCMD | Array | Shared object D compiler command line | ["${SHDC}", "-c", "-o", "${_TARGET}", "${INCPREFIX}${D_IMPORT_PATH}", "${SHDFLAGS}", "${_SOURCES}"] |
 | SHDFLAGS | Array | Shared object D compiler flags | Windows: ["${DFLAGS}"], POSIX: ["${DFLAGS}", "-fPIC"] |
