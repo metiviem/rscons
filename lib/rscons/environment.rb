@@ -476,8 +476,10 @@ module Rscons
       targets = Array(targets)
       prerequisites = Array(prerequisites)
       targets.each do |target|
+        target = expand_path(expand_varref(target))
         @registered_build_dependencies[target] ||= Set.new
         prerequisites.each do |prerequisite|
+          prerequisite = expand_path(expand_varref(prerequisite))
           @registered_build_dependencies[target] << prerequisite
         end
       end
