@@ -563,6 +563,19 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
+### v1.10.1
+
+#### New Features
+
+- #38 - raise error when circular dependencies are found
+- #34 - Allow overriding n_threads on a per-Environment level
+
+#### Fixes
+
+- #35 - env.build_after should expand paths
+- #36 - SHCFLAGS and SHCXXFLAGS should inherit non-SH flags by default
+- #37 - Fix non-blocking thread-wait if Rscons.n_threads is set to 0
+
 ### v1.10.0
 
 #### New Features
