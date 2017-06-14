@@ -78,9 +78,9 @@ module Rscons
     # following:
     # - :variables to clone construction variables (on by default)
     # - :builders to clone the builders (on by default)
-    # - :build_root to clone the build root (off by default)
-    # - :build_dirs to clone the build directories (off by default)
-    # - :build_hooks to clone the build hooks (off by default)
+    # - :build_root to clone the build root (on by default)
+    # - :build_dirs to clone the build directories (on by default)
+    # - :build_hooks to clone the build hooks (on by default)
     #
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.
@@ -89,7 +89,7 @@ module Rscons
     #
     # @return [Environment] The newly created {Environment} object.
     def clone(options = {})
-      clone = options[:clone] || Set[:variables, :builders]
+      clone = options[:clone] || :all
       clone = Set[:variables, :builders, :build_root, :build_dirs, :build_hooks] if clone == :all
       clone = Set[] if clone == :none
       clone = Set.new(clone) if clone.is_a?(Array)
@@ -106,7 +106,7 @@ module Rscons
       env.append(@varset) if clone.include?(:variables)
       env.build_root = @build_root if clone.include?(:build_root)
       if clone.include?(:build_dirs)
-        @build_dirs.each do |src_dir, obj_dir|
+        @build_dirs.reverse.each do |src_dir, obj_dir|
           env.build_dir(src_dir, obj_dir)
         end
       end
@@ -227,7 +227,7 @@ module Rscons
       if src_dir.is_a?(String)
         src_dir = src_dir.gsub("\\", "/").sub(%r{/*$}, "")
       end
-      @build_dirs << [src_dir, obj_dir]
+      @build_dirs.unshift([src_dir, obj_dir])
     end
 
     # Return the file name to be built from +source_fname+ with suffix

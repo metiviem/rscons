@@ -336,7 +336,7 @@ EOF
     ]
   end
 
-  it 'allows cloning all attributes of an Environment object' do
+  it 'clones all attributes of an Environment object by default' do
     test_dir('clone_env')
     result = run_test(rsconsfile: "clone_all.rb")
     expect(result.stderr).to eq ""

@@ -10,6 +10,6 @@ env1 = Rscons::Environment.new(echo: :command) do |env|
   env.Program('program.exe', Dir['src/*.c'])
 end
 
-env2 = env1.clone(clone: :all) do |env|
+env2 = env1.clone do |env|
   env.Program('program2.exe', Dir['src/*.c'])
 end
