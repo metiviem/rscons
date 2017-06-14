@@ -564,10 +564,11 @@ http://rubydoc.info/github/holtrop/rscons/frames.
 
 ## Release Notes
 
-### v1.10.1
+### v1.11.0
 
 #### New Features
 
+- Change default Environment :clone option to :all to clone all attributes
 - #38 - raise error when circular dependencies are found
 - #34 - Allow overriding n_threads on a per-Environment level
 
