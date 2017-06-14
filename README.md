@@ -560,7 +560,7 @@ env.depends("my_app", "config/link.ld", "README.txt", *Dir.glob("assets/**/*"))
 ### API documentation
 
 Documentation for the complete Rscons API can be found at
-http://rubydoc.info/github/holtrop/rscons/frames.
+http://www.rubydoc.info/github/holtrop/rscons/master.
 
 ## Release Notes
 
