@@ -47,24 +47,18 @@ module Rscons
     # @return [nil, Hash]
     #   The next job to run.
     def get_next_job_to_run(targets_still_building)
-      targets_skipped = Set.new
       @jobs.keys.each do |target|
         skip = false
         (@jobs[target][0][:sources] + (@build_dependencies[target] || []).to_a).each do |src|
           if @jobs.include?(src)
-            if targets_skipped.include?(src) or (src == target)
-              # We have encountered a circular dependency.
-              raise "Circular build dependency for #{src}"
-            end
-            # Skip this target because it depends on another target later in
-            # the job set.
-            targets_skipped << target
+            # Skip this target because it depends on another target not yet
+            # built.
             skip = true
             break
           end
           if targets_still_building.include?(src)
             # Skip this target because it depends on another target that is
-            # still being built.
+            # currently being built.
             skip = true
             break
           end
@@ -79,7 +73,12 @@ module Rscons
         return job
       end
 
-      nil
+      # If there is a job to run, and nothing is still building, but we did
+      # not find a job to run above, then there might be a circular dependency
+      # introduced by the user.
+      if (@jobs.size > 0) and targets_still_building.empty?
+        raise "Could not find a runnable job. Possible circular dependency for #{@jobs.keys.first}"
+      end
     end
 
     # Remove all jobs from the JobSet.
