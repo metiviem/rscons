@@ -564,6 +564,12 @@ http://www.rubydoc.info/github/holtrop/rscons/master.
 
 ## Release Notes
 
+### v1.11.1
+
+#### Fixes
+
+- fix the circular build dependency detection logic
+
 ### v1.11.0
 
 #### New Features
