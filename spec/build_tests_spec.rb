@@ -746,6 +746,12 @@ EOF
     expect(result.status).to_not eq 0
   end
 
+  it "orders builds to respect user dependencies" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "user_dep_build_order.rb", rscons_args: %w[-j4])
+    expect(result.stderr).to eq ""
+  end
+
   context "backward compatibility" do
     it "allows a builder to call Environment#run_builder in a non-threaded manner" do
       test_dir("simple")

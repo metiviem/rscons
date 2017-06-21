@@ -451,6 +451,7 @@ module Rscons
       user_deps = user_deps.map {|ud| expand_varref(ud)}
       @user_deps[target] ||= []
       @user_deps[target] = (@user_deps[target] + user_deps).uniq
+      build_after(target, user_deps)
     end
 
     # Manually record the given target(s) as needing to be built after the
