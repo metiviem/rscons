@@ -302,13 +302,19 @@ module Rscons
     # @return [void]
     def process
       cache = Cache.instance
+      failure = nil
       begin
         while @job_set.size > 0 or @threaded_commands.size > 0
 
-          targets_still_building = @threaded_commands.map do |tc|
-            tc.build_operation[:target]
+          if failure
+            @job_set.clear!
+            job = nil
+          else
+            targets_still_building = @threaded_commands.map do |tc|
+              tc.build_operation[:target]
+            end
+            job = @job_set.get_next_job_to_run(targets_still_building)
           end
-          job = @job_set.get_next_job_to_run(targets_still_building)
 
           # TODO: have Cache determine when checksums may be invalid based on
           # file size and/or timestamp.
@@ -323,7 +329,9 @@ module Rscons
                                  allow_delayed_execution: true,
                                  setup_info: job[:setup_info])
             unless result
-              raise BuildError.new("Failed to build #{job[:target]}")
+              failure = "Failed to build #{job[:target]}"
+              $stderr.puts failure
+              next
             end
           end
 
@@ -351,13 +359,18 @@ module Rscons
               unless @echo == :command
                 $stdout.puts "Failed command was: #{command_to_s(tc.command)}"
               end
-              raise BuildError.new("Failed to build #{tc.build_operation[:target]}")
+              failure = "Failed to build #{tc.build_operation[:target]}"
+              $stderr.puts failure
+              break
             end
           end
 
         end
       ensure
         cache.write
+      end
+      if failure
+        raise BuildError.new(failure)
       end
     end
 

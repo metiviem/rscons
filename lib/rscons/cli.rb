@@ -70,7 +70,6 @@ module Rscons
         begin
           load rsconsfile
         rescue Rscons::BuildError => e
-          $stderr.puts e.message
           exit 1
         end
 

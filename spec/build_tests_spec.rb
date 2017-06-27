@@ -752,6 +752,16 @@ EOF
     expect(result.stderr).to eq ""
   end
 
+  it "waits for all parallelized builds to complete if one fails" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "wait_for_builds_on_failure.rb", rscons_args: %w[-j4])
+    expect(result.status).to_not eq 0
+    expect(result.stderr).to match /Failed to build foo_1/
+    expect(result.stderr).to match /Failed to build foo_2/
+    expect(result.stderr).to match /Failed to build foo_3/
+    expect(result.stderr).to match /Failed to build foo_4/
+  end
+
   context "backward compatibility" do
     it "allows a builder to call Environment#run_builder in a non-threaded manner" do
       test_dir("simple")
