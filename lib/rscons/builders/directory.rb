@@ -17,10 +17,11 @@ module Rscons
         if File.directory?(target)
           target
         elsif File.exists?(target)
-          $stderr.puts "Error: `#{target}' already exists and is not a directory"
+          Ansi.write($stderr, :red, "Error: `#{target}' already exists and is not a directory", :reset, "\n")
           false
         else
-          puts "Directory #{target}"
+          desc = "Directory #{target}"
+          env.print_builder_run_message(desc, desc)
           cache.mkdir_p(target)
           target
         end
