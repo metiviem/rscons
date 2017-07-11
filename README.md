@@ -564,6 +564,18 @@ http://www.rubydoc.info/github/holtrop/rscons/master.
 
 ## Release Notes
 
+### v1.12.0
+
+#### New Features
+
+- #40 - env.depends should imply env.build_after
+- #41 - be more colorful
+
+#### Fixes
+
+- #39 - wait for in-progress subcommands to complete on build failure
+- #42 - cloned Environments should inherit n_threads
+
 ### v1.11.1
 
 #### Fixes
