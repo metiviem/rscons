@@ -1,3 +1,4 @@
+require_relative "rscons/ansi"
 require_relative "rscons/build_target"
 require_relative "rscons/builder"
 require_relative "rscons/cache"
@@ -49,6 +50,10 @@ module Rscons
     # @return [Integer]
     #   The number of threads to use when scheduling subprocesses.
     attr_accessor :n_threads
+
+    # @return [Boolean]
+    #   Whether to output ANSI color escape sequences.
+    attr_accessor :do_ansi_color
 
     # Remove all generated files.
     #

@@ -190,38 +190,6 @@ module Rscons
       end
     end
 
-    describe "#execute" do
-      context "with echo: :short" do
-        context "with no errors" do
-          it "prints the short description and executes the command" do
-            env = Environment.new(echo: :short)
-            expect(env).to receive(:puts).with("short desc")
-            expect(env).to receive(:system).with(*Rscons.command_executer, "a", "command").and_return(true)
-            env.execute("short desc", ["a", "command"])
-          end
-        end
-
-        context "with errors" do
-          it "prints the short description, executes the command, and prints the failed command line" do
-            env = Environment.new(echo: :short)
-            expect(env).to receive(:puts).with("short desc")
-            expect(env).to receive(:system).with(*Rscons.command_executer, "a", "command").and_return(false)
-            expect($stdout).to receive(:puts).with("Failed command was: a command")
-            env.execute("short desc", ["a", "command"])
-          end
-        end
-      end
-
-      context "with echo: :command" do
-        it "prints the command executed and executes the command" do
-          env = Environment.new(echo: :command)
-          expect(env).to receive(:puts).with("a command '--arg=val with spaces'")
-          expect(env).to receive(:system).with({modified: :environment}, *Rscons.command_executer, "a", "command", "--arg=val with spaces", {opt: :val}).and_return(false)
-          env.execute("short desc", ["a", "command", "--arg=val with spaces"], env: {modified: :environment}, options: {opt: :val})
-        end
-      end
-    end
-
     describe "#method_missing" do
       it "calls the original method missing when the target method is not a known builder" do
         env = Environment.new

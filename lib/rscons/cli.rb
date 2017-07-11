@@ -39,6 +39,15 @@ module Rscons
             Rscons.n_threads = n_threads.to_i
           end
 
+          opts.on("-r", "--color MODE", "Set color mode (off, auto, force)") do |color_mode|
+            case color_mode
+            when "off"
+              Rscons.do_ansi_color = false
+            when "force"
+              Rscons.do_ansi_color = true
+            end
+          end
+
           opts.on_tail("--version", "Show version") do
             puts "Rscons version #{Rscons::VERSION}"
             exit 0

@@ -769,6 +769,29 @@ EOF
     expect(lines(result.stdout)).to eq ["165"]
   end
 
+  context "colored output" do
+    it "does not output in color with --color=off" do
+      test_dir("simple")
+      result = run_test(rscons_args: %w[--color=off])
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to_not match(/\e\[/)
+    end
+
+    it "displays output in color with --color=force" do
+      test_dir("simple")
+
+      result = run_test(rscons_args: %w[--color=force])
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match(/\e\[/)
+
+      File.open("simple.c", "wb") do |fh|
+        fh.write("foobar")
+      end
+      result = run_test(rscons_args: %w[--color=force])
+      expect(result.stderr).to match(/\e\[/)
+    end
+  end
+
   context "backward compatibility" do
     it "allows a builder to call Environment#run_builder in a non-threaded manner" do
       test_dir("simple")
@@ -789,6 +812,21 @@ EOF
         "CC build/two.o",
         "MyProgram simple.exe",
       ]
+    end
+
+    it "prints the failed build command for a non-threaded builder" do
+      test_dir("simple")
+      File.open("simple.c", "wb") do |fh|
+        fh.write(<<EOF)
+void one()
+{
+}
+EOF
+      end
+      result = run_test(rsconsfile: "build_sources.rb")
+      expect(result.status).to_not eq 0
+      expect(result.stderr).to match /main/
+      expect(result.stdout).to match /Failed command was: gcc/
     end
 
     it "prints the failed build command for a threaded builder when called via Environment#run_builder without delayed execution" do

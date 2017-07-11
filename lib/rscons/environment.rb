@@ -331,7 +331,7 @@ module Rscons
                                  setup_info: job[:setup_info])
             unless result
               failure = "Failed to build #{job[:target]}"
-              $stderr.puts failure
+              Ansi.write($stderr, :red, failure, :reset, "\n")
               next
             end
           end
@@ -358,10 +358,10 @@ module Rscons
               end
             else
               unless @echo == :command
-                $stdout.puts "Failed command was: #{command_to_s(tc.command)}"
+                print_failed_command(tc.command)
               end
               failure = "Failed to build #{tc.build_operation[:target]}"
-              $stderr.puts failure
+              Ansi.write($stderr, :red, failure, :reset, "\n")
               break
             end
           end
@@ -412,16 +412,12 @@ module Rscons
     #
     # @return [true,false,nil] Return value from Kernel.system().
     def execute(short_desc, command, options = {})
-      if @echo == :command
-        puts command_to_s(command)
-      elsif @echo == :short
-        puts short_desc
-      end
+      print_builder_run_message(short_desc, command)
       env_args = options[:env] ? [options[:env]] : []
       options_args = options[:options] ? [options[:options]] : []
       system(*env_args, *Rscons.command_executer, *command, *options_args).tap do |result|
         unless result or @echo == :command
-          $stdout.puts "Failed command was: #{command_to_s(command)}"
+          print_failed_command(command)
         end
       end
     end
@@ -657,7 +653,7 @@ module Rscons
             call_build_hooks[:post]
           else
             unless @echo == :command
-              $stdout.puts "Failed command was: #{command_to_s(tc.command)}"
+              print_failed_command(tc.command)
             end
           end
         end
@@ -844,7 +840,7 @@ module Rscons
       varset_hash = @varset.to_h
       varset_hash.keys.sort_by(&:to_s).each do |var|
         var_str = var.is_a?(Symbol) ? var.inspect : var
-        puts "#{var_str} => #{varset_hash[var].inspect}"
+        Ansi.write($stdout, :cyan, var_str, :reset, " => #{varset_hash[var].inspect}\n")
       end
     end
 
@@ -855,6 +851,34 @@ module Rscons
     #   Number of threads to use for parallelized builds in this Environment.
     def n_threads
       @n_threads || Rscons.n_threads
+    end
+
+    # Print the builder run message, depending on the Environment's echo mode.
+    #
+    # @param short_description [String]
+    #   Builder short description, printed if the echo mode is :short.
+    # @param command [Array<String>]
+    #   Builder command, printed if the echo mode is :command.
+    #
+    # @return [void]
+    def print_builder_run_message(short_description, command)
+      case @echo
+      when :command
+        message = command_to_s(command) if command
+      when :short
+        message = short_description if short_description
+      end
+      Ansi.write($stdout, :cyan, message, :reset, "\n") if message
+    end
+
+    # Print a failed command.
+    #
+    # @param command [Array<String>]
+    #   Builder command.
+    #
+    # @return [void]
+    def print_failed_command(command)
+      Ansi.write($stdout, :red, "Failed command was: #{command_to_s(command)}", :reset, "\n")
     end
 
     private
@@ -889,13 +913,7 @@ module Rscons
     #
     # @return [void]
     def start_threaded_command(tc)
-      if @echo == :command
-        puts command_to_s(tc.command)
-      elsif @echo == :short
-        if tc.short_description
-          puts tc.short_description
-        end
-      end
+      print_builder_run_message(tc.short_description, tc.command)
 
       env_args = tc.system_env ? [tc.system_env] : []
       options_args = tc.system_options ? [tc.system_options] : []
