@@ -118,6 +118,7 @@ module Rscons
           env.add_post_build_hook(&build_hook_block)
         end
       end
+      env.instance_variable_set(:@n_threads, @n_threads)
 
       if block_given?
         yield env

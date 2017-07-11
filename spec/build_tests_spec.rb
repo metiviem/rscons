@@ -762,6 +762,13 @@ EOF
     expect(result.stderr).to match /Failed to build foo_4/
   end
 
+  it "clones n_threads attribute when cloning an Environment" do
+    test_dir("simple")
+    result = run_test(rsconsfile: "clone_n_threads.rb")
+    expect(result.stderr).to eq ""
+    expect(lines(result.stdout)).to eq ["165"]
+  end
+
   context "backward compatibility" do
     it "allows a builder to call Environment#run_builder in a non-threaded manner" do
       test_dir("simple")
