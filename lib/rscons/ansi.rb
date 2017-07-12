@@ -1,4 +1,5 @@
 module Rscons
+  # Module to contain logic to write ANSI color escape codes.
   module Ansi
     class << self
 
