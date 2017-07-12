@@ -231,7 +231,7 @@ module Rscons
     # @param env [Environment] The Environment executing the builder.
     # @param cache [Cache] The Cache object.
     # @param options [Hash] Options.
-    # @options options [String] :stdout
+    # @option options [String] :stdout
     #   File name to redirect standard output to.
     #
     # @return [String,ThreadedCommand]
