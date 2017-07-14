@@ -9,9 +9,14 @@ module Rscons
     # @param build_dependencies [Hash]
     #   Hash mapping targets to a set of build dependencies. A job will not be
     #   returned as ready to run if any of its dependencies are still building.
-    def initialize(build_dependencies)
+    # @param side_effects [Hash]
+    #   Hash mapping targets to a set of side-effect files. A job will not be
+    #   returned as ready to run if any of its dependencies is a side-effect
+    #   of another target that has not yet been built.
+    def initialize(build_dependencies, side_effects)
       @jobs = {}
       @build_dependencies = build_dependencies
+      @side_effects = side_effects
     end
 
     # Add a job to the JobSet.
@@ -47,18 +52,16 @@ module Rscons
     # @return [nil, Hash]
     #   The next job to run.
     def get_next_job_to_run(targets_still_building)
+      targets_not_built_yet = targets_still_building + @jobs.keys
+      side_effects = targets_not_built_yet.map do |target|
+        @side_effects[target] || []
+      end.flatten
+      targets_not_built_yet += side_effects
+
       @jobs.keys.each do |target|
         skip = false
         (@jobs[target][0][:sources] + (@build_dependencies[target] || []).to_a).each do |src|
-          if @jobs.include?(src)
-            # Skip this target because it depends on another target not yet
-            # built.
-            skip = true
-            break
-          end
-          if targets_still_building.include?(src)
-            # Skip this target because it depends on another target that is
-            # currently being built.
+          if targets_not_built_yet.include?(src)
             skip = true
             break
           end

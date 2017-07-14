@@ -45,8 +45,9 @@ module Rscons
     def initialize(options = {})
       @threaded_commands = Set.new
       @registered_build_dependencies = {}
+      @side_effects = {}
       @varset = VarSet.new
-      @job_set = JobSet.new(@registered_build_dependencies)
+      @job_set = JobSet.new(@registered_build_dependencies, @side_effects)
       @user_deps = {}
       @builders = {}
       @build_dirs = []
@@ -500,6 +501,26 @@ module Rscons
           @registered_build_dependencies[target] << prerequisite
         end
       end
+    end
+
+    # Manually record the given side effect file(s) as being produced when the
+    # named target is produced.
+    #
+    # @since 1.13.0
+    #
+    # @param target [String]
+    #   Target of a build operation.
+    # @param side_effects [Array<String>]
+    #   File(s) produced when the target file is produced.
+    #
+    # @return [void]
+    def produces(target, *side_effects)
+      target = expand_path(expand_varref(target))
+      side_effects = Array(side_effects).map do |side_effect|
+        expand_path(expand_varref(side_effect))
+      end.flatten
+      @side_effects[target] ||= []
+      @side_effects[target] += side_effects
     end
 
     # Return the list of user dependencies for a given target.
