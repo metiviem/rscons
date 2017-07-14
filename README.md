@@ -564,6 +564,12 @@ http://www.rubydoc.info/github/holtrop/rscons/master.
 
 ## Release Notes
 
+### v1.13.0
+
+#### New Features
+
+- #43 - Add ability to record side-effect file production
+
 ### v1.12.0
 
 #### New Features
