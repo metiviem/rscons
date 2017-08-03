@@ -143,6 +143,19 @@ module Rscons
       end
     end
 
+    # Return an array containing the values associated with the given keys.
+    #
+    # @param keys [Array<String, Symbol>]
+    #   Keys to look up in the VarSet.
+    #
+    # @return [Array]
+    #   An array containing the values associated with the given keys.
+    def values_at(*keys)
+      keys.map do |key|
+        self[key]
+      end
+    end
+
     private
 
     # Move all VarSet variables into the copy-on-access list.

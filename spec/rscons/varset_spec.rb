@@ -199,5 +199,14 @@ module Rscons
       end
     end
 
+    describe "#values_at" do
+      it "returns an array of the values associated with the given keys" do
+        v = VarSet.new({"fuz" => "a string", "foo" => 42, "bar" => :baz,
+                        "qax" => [3, 6], "qux" => {a: :b}})
+        expect(v.values_at).to eq []
+        expect(v.values_at(*%w[fuz qux qax])).to eq ["a string", {a: :b}, [3, 6]]
+      end
+    end
+
   end
 end
