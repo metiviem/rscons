@@ -564,6 +564,16 @@ http://www.rubydoc.info/github/holtrop/rscons/master.
 
 ## Release Notes
 
+### v1.14.0
+
+#### New Features
+
+- #45 - Add Rscons::VarSet#values_at
+
+#### Fixes
+
+- #44 - Environment#print_builder_run_message should support string commands
+
 ### v1.13.0
 
 #### New Features
