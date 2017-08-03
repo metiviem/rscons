@@ -885,7 +885,13 @@ module Rscons
     def print_builder_run_message(short_description, command)
       case @echo
       when :command
-        message = command_to_s(command) if command
+        if command.is_a?(Array)
+          message = command_to_s(command)
+        elsif command.is_a?(String)
+          message = command
+        elsif short_description.is_a?(String)
+          message = short_description
+        end
       when :short
         message = short_description if short_description
       end

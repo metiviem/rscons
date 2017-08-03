@@ -769,6 +769,22 @@ EOF
     expect(lines(result.stdout)).to eq ["165"]
   end
 
+  it "prints a builder's short description with 'command' echo mode if there is no command" do
+    test_dir("build_dir")
+
+    result = run_test(rsconsfile: "echo_command_ruby_builder.rb")
+    expect(result.stderr).to eq ""
+    expect(lines(result.stdout)).to eq ["Install inst.exe"]
+  end
+
+  it "supports a string for a builder's echoed 'command' with Environment#print_builder_run_message" do
+    test_dir("build_dir")
+
+    result = run_test(rsconsfile: "echo_command_string.rb")
+    expect(result.stderr).to eq ""
+    expect(lines(result.stdout)).to eq ["MyBuilder foo command"]
+  end
+
   context "colored output" do
     it "does not output in color with --color=off" do
       test_dir("simple")

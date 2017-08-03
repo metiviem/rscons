@@ -20,8 +20,7 @@ module Rscons
           Ansi.write($stderr, :red, "Error: `#{target}' already exists and is not a directory", :reset, "\n")
           false
         else
-          desc = "Directory #{target}"
-          env.print_builder_run_message(desc, desc)
+          env.print_builder_run_message("Directory #{target}", nil)
           cache.mkdir_p(target)
           target
         end
