@@ -1,5 +1,9 @@
 ## ChangeLog
 
+### v1.15.0
+
+- allow json 1.x or 2.x
+
 ### v1.14.0
 
 #### New Features
