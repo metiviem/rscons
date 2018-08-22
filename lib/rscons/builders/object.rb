@@ -30,7 +30,7 @@ module Rscons
           'ASSUFFIX' => ['.S'],
           'ASPPPATH' => '${CPPPATH}',
           'ASPPFLAGS' => '${CPPFLAGS}',
-          'ASDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
+          'ASDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}', '-MT', 'TARGET'],
           'ASCMD' => ['${AS}', '-c', '-o', '${_TARGET}', '${ASDEPGEN}', '${INCPREFIX}${ASPPPATH}', '${ASPPFLAGS}', '${ASFLAGS}', '${_SOURCES}'],
 
           'CPPFLAGS' => ['${CPPDEFPREFIX}${CPPDEFINES}'],
@@ -42,20 +42,21 @@ module Rscons
           'CC' => 'gcc',
           'CFLAGS' => [],
           'CSUFFIX' => ['.c'],
-          'CCDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
+          'CCDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}', '-MT', 'TARGET'],
           'CCCMD' => ['${CC}', '-c', '-o', '${_TARGET}', '${CCDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${CFLAGS}', '${CCFLAGS}', '${_SOURCES}'],
 
           'CXX' => 'g++',
           'CXXFLAGS' => [],
           'CXXSUFFIX' => ['.cc', '.cpp', '.cxx', '.C'],
-          'CXXDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
+          'CXXDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}', '-MT', 'TARGET'],
           'CXXCMD' =>['${CXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${CXXFLAGS}', '${CCFLAGS}', '${_SOURCES}'],
 
           'DC' => 'gdc',
           'DFLAGS' => [],
           'DSUFFIX' => ['.d'],
+          'DDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}', '-MT', 'TARGET'],
           'D_IMPORT_PATH' => [],
-          'DCCMD' => ['${DC}', '-c', '-o', '${_TARGET}', '${INCPREFIX}${D_IMPORT_PATH}', '${DFLAGS}', '${_SOURCES}'],
+          'DCCMD' => ['${DC}', '-c', '-o', '${_TARGET}', '${DDEPGEN}', '${INCPREFIX}${D_IMPORT_PATH}', '${DFLAGS}', '${_SOURCES}'],
         }
       end
 
@@ -114,7 +115,7 @@ module Rscons
         if options[:command_status]
           target, deps, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
           if File.exists?(vars['_DEPFILE'])
-            deps += Environment.parse_makefile_deps(vars['_DEPFILE'], target)
+            deps += Environment.parse_makefile_deps(vars['_DEPFILE'], 'TARGET')
             FileUtils.rm_f(vars['_DEPFILE'])
           end
           cache.register_build(target, options[:tc].command, deps.uniq, env)
