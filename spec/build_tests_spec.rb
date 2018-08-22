@@ -1261,6 +1261,18 @@ EOF
         "LD simple.exe",
       ]
     end
+
+    it "allows a VarSet to be passed in as the command parameter" do
+      test_dir("simple")
+      result = run_test(rsconsfile: "cache_varset.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq [
+        "TestBuilder foo",
+      ]
+      result = run_test(rsconsfile: "cache_varset.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+    end
   end
 
   context "Object builder" do

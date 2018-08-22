@@ -143,6 +143,13 @@ module Rscons
       end
     end
 
+    # Return a String representing the VarSet.
+    #
+    # @return [String] Representation of the VarSet.
+    def inspect
+      to_h.inspect
+    end
+
     # Return an array containing the values associated with the given keys.
     #
     # @param keys [Array<String, Symbol>]
