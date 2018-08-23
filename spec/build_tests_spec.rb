@@ -250,8 +250,8 @@ EOF
     result = run_test(rsconsfile: "carat.rb")
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
-      %q{gcc -c -o build_root/one.o -MMD -MF build_root/one.mf -MT TARGET -Isrc/one/ -Isrc/two/ build_root/one.c},
-      %q{gcc -c -o build_root/src/two/two.o -MMD -MF build_root/src/two/two.mf -MT TARGET -Isrc/one/ -Isrc/two/ src/two/two.c},
+      %q{gcc -c -o build_root/one.o -MMD -MF build_root/one.mf -MT TARGET -Isrc -Isrc/one -Isrc/two build_root/one.c},
+      %q{gcc -c -o build_root/src/two/two.o -MMD -MF build_root/src/two/two.mf -MT TARGET -Isrc -Isrc/one -Isrc/two src/two/two.c},
       %Q{gcc -o build_dir.exe build_root/src/two/two.o build_root/one.o},
     ]
   end
@@ -393,8 +393,8 @@ EOF
     result = run_test(rsconsfile: "build_hooks.rb")
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
-      'gcc -c -o build_one/one.o -MMD -MF build_one/one.mf -MT TARGET -Isrc/one/ -Isrc/two/ -O1 src/one/one.c',
-      'gcc -c -o build_two/two.o -MMD -MF build_two/two.mf -MT TARGET -Isrc/one/ -Isrc/two/ -O2 src/two/two.c',
+      'gcc -c -o build_one/one.o -MMD -MF build_one/one.mf -MT TARGET -Isrc/one -Isrc/two -O1 src/one/one.c',
+      'gcc -c -o build_two/two.o -MMD -MF build_two/two.mf -MT TARGET -Isrc/one -Isrc/two -O2 src/two/two.c',
       'gcc -o build_hook.exe build_one/one.o build_two/two.o',
     ]
     expect(`./build_hook.exe`).to eq "Hello from two()\n"
@@ -894,8 +894,8 @@ EOF
       result = run_test(rsconsfile: "backward_compatible_build_hooks.rb")
       expect(result.stderr).to eq ""
       expect(Set[*lines(result.stdout)]).to eq Set[
-        'gcc -c -o one.o -MMD -MF one.mf -MT TARGET -Isrc/one/ -Isrc/two/ -O1 src/two/two.c',
-        'gcc -c -o two.o -MMD -MF two.mf -MT TARGET -Isrc/one/ -Isrc/two/ -O2 src/two/two.c'
+        'gcc -c -o one.o -MMD -MF one.mf -MT TARGET -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c',
+        'gcc -c -o two.o -MMD -MF two.mf -MT TARGET -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c'
       ]
       expect(File.exists?('one.o')).to be_truthy
       expect(File.exists?('two.o')).to be_truthy

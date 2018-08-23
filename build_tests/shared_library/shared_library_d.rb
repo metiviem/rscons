@@ -1,8 +1,8 @@
 Rscons::Environment.new do |env|
   env["CPPPATH"] << "src/lib"
-  libmine = env.SharedLibrary("mine", Dir["src/lib/*.d"])
+  libmine = env.SharedLibrary("mine", Rscons.glob("src/lib/*.d"))
   env.Program("test-shared.exe",
-              Dir["src/*.c"],
+              Rscons.glob("src/*.c"),
               "LIBPATH" => %w[.],
               "LIBS" => %w[mine])
   env.build_after("test-shared.exe", libmine.to_s)

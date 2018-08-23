@@ -6,7 +6,7 @@ end
 
 Rscons::Environment.new(echo: :command) do |env|
   env.add_builder(MyObject.new)
-  env.append('CPPPATH' => Dir['src/**/*/'].sort)
+  env.append('CPPPATH' => Rscons.glob('src/**'))
   env.add_build_hook do |build_op|
     if build_op[:builder].name == "MyObject" && build_op[:sources].first =~ %r{one\.c}
       build_op[:vars]["CFLAGS"] << "-O1"
