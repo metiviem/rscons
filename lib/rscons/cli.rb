@@ -60,6 +60,12 @@ module Rscons
 
         end.parse!(argv)
 
+        argv.each do |arg|
+          if arg =~ /^([^=]+)=(.*)$/
+            Rscons.vars[$1] = $2
+          end
+        end
+
         if rsconsfile
           unless File.exists?(rsconsfile)
             $stderr.puts "Cannot read #{rsconsfile}"

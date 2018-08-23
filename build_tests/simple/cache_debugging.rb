@@ -2,17 +2,17 @@ class DebugBuilder < Rscons::Builder
   def run(options)
     target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
     command = %W[gcc -c -o #{target} #{sources.first}]
-    if ENV["command_change"]
+    if Rscons.vars["command_change"]
       command += %w[-Wall]
     end
-    if ENV["new_dep"]
+    if Rscons.vars["new_dep"]
       sources += ["extra"]
     end
-    if ENV["strict_deps1"]
+    if Rscons.vars["strict_deps1"]
       sources += ["extra"]
       strict_deps = true
     end
-    if ENV["strict_deps2"]
+    if Rscons.vars["strict_deps2"]
       sources = ["extra"] + sources
       strict_deps = true
     end
@@ -27,7 +27,7 @@ end
 
 Rscons::Environment.new do |env|
   env.add_builder(DebugBuilder.new)
-  if ENV["new_user_dep"]
+  if Rscons.vars["new_user_dep"]
     env.depends("foo.o", "new_dep")
   end
   env.DebugBuilder("foo.o", "simple.c")

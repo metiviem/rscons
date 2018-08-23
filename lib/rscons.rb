@@ -55,6 +55,11 @@ module Rscons
     #   Whether to output ANSI color escape sequences.
     attr_accessor :do_ansi_color
 
+    # @since 1.16.0
+    # @return [VarSet]
+    #   Access any variables set on the rscons command-line.
+    attr_reader :vars
+
     # Remove all generated files.
     #
     # @return [void]
@@ -232,6 +237,7 @@ module Rscons
   end
 
   @n_threads = determine_n_threads
+  @vars = VarSet.new
 
 end
 

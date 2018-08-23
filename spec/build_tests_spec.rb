@@ -1300,28 +1300,28 @@ EOF
       it "prints a message when the command has changed" do
         test_dir("simple")
         result = run_test(rsconsfile: "cache_debugging.rb")
-        result = run_test(rsconsfile: "cache_debugging.rb", ruby_setup_code: %[ENV["command_change"] = "yes"])
+        result = run_test(rsconsfile: "cache_debugging.rb", rscons_args: %w[command_change=yes])
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the command used to build it has changed/
       end
 
       it "prints a message when strict_deps is in use and the set of dependencies does not match" do
         test_dir("simple")
-        result = run_test(rsconsfile: "cache_debugging.rb", ruby_setup_code: %[ENV["strict_deps1"] = "yes"])
-        result = run_test(rsconsfile: "cache_debugging.rb", ruby_setup_code: %[ENV["strict_deps2"] = "yes"])
+        result = run_test(rsconsfile: "cache_debugging.rb", rscons_args: %w[strict_deps1=yes])
+        result = run_test(rsconsfile: "cache_debugging.rb", rscons_args: %w[strict_deps2=yes])
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the :strict_deps option is given and the set of dependencies does not match the previous set of dependencies/
       end
 
       it "prints a message when there is a new dependency" do
         test_dir("simple")
         result = run_test(rsconsfile: "cache_debugging.rb")
-        result = run_test(rsconsfile: "cache_debugging.rb", ruby_setup_code: %[ENV["new_dep"] = "yes"])
+        result = run_test(rsconsfile: "cache_debugging.rb", rscons_args: %w[new_dep=yes])
         expect(result.stdout).to match /Target foo\.o needs rebuilding because there are new dependencies/
       end
 
       it "prints a message when there is a new user-specified dependency" do
         test_dir("simple")
         result = run_test(rsconsfile: "cache_debugging.rb")
-        result = run_test(rsconsfile: "cache_debugging.rb", ruby_setup_code: %[ENV["new_user_dep"] = "yes"])
+        result = run_test(rsconsfile: "cache_debugging.rb", rscons_args: %w[new_user_dep=yes])
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the set of user-specified dependency files has changed/
       end
 
