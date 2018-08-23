@@ -1,7 +1,7 @@
 # Rscons
 
-Rscons is a software construction framework inspired by SCons and implemented
-in Ruby.
+Rscons (https://github.com/holtrop/rscons) is a software construction framework
+inspired by SCons and implemented in Ruby.
 
 [![Gem Version](https://badge.fury.io/rb/rscons.png)](http://badge.fury.io/rb/rscons)
 
