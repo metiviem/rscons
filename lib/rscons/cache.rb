@@ -133,39 +133,79 @@ module Rscons
 
         unless Rscons.phony_target?(target)
           # target file must exist on disk
-          return false unless File.exists?(target)
+          unless File.exists?(target)
+            if options[:debug]
+              puts "Target #{target} needs rebuilding because it does not exist on disk"
+            end
+            return false
+          end
         end
 
         # target must be registered in the cache
-        return false unless @cache["targets"].has_key?(cache_key)
+        unless @cache["targets"].has_key?(cache_key)
+          if options[:debug]
+            puts "Target #{target} needs rebuilding because there is no cached build information for it"
+          end
+          return false
+        end
 
         unless Rscons.phony_target?(target)
           # target must have the same checksum as when it was built last
-          return false unless @cache["targets"][cache_key]["checksum"] == lookup_checksum(target)
+          unless @cache["targets"][cache_key]["checksum"] == lookup_checksum(target)
+            if options[:debug]
+              puts "Target #{target} needs rebuilding because it has been changed on disk since being built last"
+            end
+            return false
+          end
         end
 
         # command used to build target must be identical
-        return false unless @cache["targets"][cache_key]["command"] == Digest::MD5.hexdigest(command.inspect)
+        unless @cache["targets"][cache_key]["command"] == Digest::MD5.hexdigest(command.inspect)
+          if options[:debug]
+            puts "Target #{target} needs rebuilding because the command used to build it has changed"
+          end
+          return false
+        end
 
         cached_deps = @cache["targets"][cache_key]["deps"] || []
         cached_deps_fnames = cached_deps.map { |dc| dc["fname"] }
         if options[:strict_deps]
           # depedencies passed in must exactly equal those in the cache
-          return false unless deps == cached_deps_fnames
+          unless deps == cached_deps_fnames
+            if options[:debug]
+              puts "Target #{target} needs rebuilding because the :strict_deps option is given and the set of dependencies does not match the previous set of dependencies"
+            end
+            return false
+          end
         else
           # all dependencies passed in must exist in cache (but cache may have more)
-          return false unless (Set.new(deps) - Set.new(cached_deps_fnames)).empty?
+          unless (Set.new(deps) - Set.new(cached_deps_fnames)).empty?
+            if options[:debug]
+              puts "Target #{target} needs rebuilding because there are new dependencies"
+            end
+            return false
+          end
         end
 
         # set of user dependencies must match
         user_deps = env.get_user_deps(target) || []
         cached_user_deps = @cache["targets"][cache_key]["user_deps"] || []
         cached_user_deps_fnames = cached_user_deps.map { |dc| dc["fname"] }
-        return false unless user_deps == cached_user_deps_fnames
+        unless user_deps == cached_user_deps_fnames
+          if options[:debug]
+            puts "Target #{target} needs rebuilding because the set of user-specified dependency files has changed"
+          end
+          return false
+        end
 
         # all cached dependencies must have their checksums match
         (cached_deps + cached_user_deps).each do |dep_cache|
-          return false unless dep_cache["checksum"] == lookup_checksum(dep_cache["fname"])
+          unless dep_cache["checksum"] == lookup_checksum(dep_cache["fname"])
+            if options[:debug]
+              puts "Target #{target} needs rebuilding because dependency file #{dep_cache["fname"]} has changed"
+            end
+            return false
+          end
         end
       end
 
