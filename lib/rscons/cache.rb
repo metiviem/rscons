@@ -111,6 +111,10 @@ module Rscons
     # @param deps [Array<String>] List of the target's dependency files.
     # @param env [Environment] The Rscons::Environment.
     # @param options [Hash] Optional options.
+    # @option options [Boolean] :debug
+    #   If turned on, this causes the Cache to print messages explaining why
+    #   a build target is out of date. This could aid a builder author in
+    #   debugging the operation of their builder.
     # @option options [Boolean] :strict_deps
     #   Only consider a target up to date if its list of dependencies is
     #   exactly equal (including order) to the cached list of dependencies

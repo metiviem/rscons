@@ -30,7 +30,7 @@ task block or split among multiple tasks.
 ```ruby
 Rscons::Environment.new do |env|
   env["CFLAGS"] << "-Wall"
-  env.Program("program", Dir["src/**/*.c"])
+  env.Program("program", Rscons.glob("src/**/*.c"))
 end
 ```
 
@@ -39,7 +39,7 @@ end
 ```ruby
 Rscons::Environment.new do |env|
   env["DFLAGS"] << "-Wall"
-  env.Program("program", Dir["src/**/*.d"])
+  env.Program("program", Rscons.glob("src/**/*.d"))
 end
 ```
 
@@ -51,7 +51,7 @@ main_env = Rscons::Environment.new do |env|
   env.build_dir("src", "build/main")
   env["CFLAGS"] = ["-DSOME_DEFINE", "-O3"]
   env["LIBS"] = ["SDL"]
-  env.Program("program", Dir["src/**/*.cc"])
+  env.Program("program", Rscons.glob("src/**/*.cc"))
 end
 
 debug_env = main_env.clone do |env|
@@ -59,7 +59,7 @@ debug_env = main_env.clone do |env|
   env.build_dir("src", "build/debug")
   env["CFLAGS"] -= ["-O3"]
   env["CFLAGS"] += ["-g", "-O0"]
-  env.Program("program-debug", Dir["src/**/*.cc"])
+  env.Program("program-debug", Rscons.glob("src/**/*.cc"))
 end
 ```
 
@@ -86,7 +86,7 @@ end
 Rscons::Environment.new do |env|
   env.add_builder(GenerateFoo.new)
   env.GenerateFoo("foo.h", [])
-  env.Program("a.out", Dir["*.c"])
+  env.Program("a.out", Rscons.glob("*.c"))
 end
 ```
 
@@ -108,6 +108,15 @@ end
 Rscons::Environment.new do |env|
   env.add_builder(CmdBuilder.new)
   env.CmdBuilder("foo.gen", "foo_gen.cfg")
+end
+```
+
+The `Cache#up_to_date?` method accepts an optional 5th parameter which is an
+options Hash. The `:debug` option can be specified in this Hash with a value
+of `true` to aid in debugging builders while developing them. For example:
+
+```ruby
+unless cache.up_to_date?(target, cmd, sources, env, debug: true)
 end
 ```
 
@@ -191,7 +200,7 @@ Rscons::Environment.new do |env|
     end
   end
   env.build_dir("src", "build")
-  env.Program("program", Dir["**/*.cc"])
+  env.Program("program", Rscons.glob("**/*.cc"))
 end
 ```
 
@@ -199,7 +208,7 @@ end
 
 ```ruby
 Rscons::Environment.new do |env|
-  env.Library("mylib.a", Dir["src/**/*.c"])
+  env.Library("mylib.a", Rscons.glob("src/**/*.c"))
 end
 ```
 
@@ -327,7 +336,7 @@ env.Install("dist/share", "share")
 ```ruby
 env.Library(target, sources)
 # Example
-env.Library("lib.a", Dir["src/**/*.c"])
+env.Library("lib.a", Rscons.glob("src/**/*.c"))
 ```
 
 The Library builder creates a static library archive from the given source
@@ -362,7 +371,7 @@ preprocessed output to the target file.
 ```ruby
 env.Program(target, sources)
 # Example
-env.Program("myprog", Dir["src/**/*.cc"])
+env.Program("myprog", Rscons.glob("src/**/*.cc"))
 ```
 
 The Program builder compiles and links the given sources to an executable file.
@@ -375,7 +384,7 @@ This can be controlled with the `PROGSUFFIX` construction variable.
 ```ruby
 env.SharedLibrary(target, sources)
 # Example
-env.SharedLibrary("mydll", Dir["src/**/*.cc"])
+env.SharedLibrary("mydll", Rscons.glob("src/**/*.cc"))
 ```
 
 The SharedLibrary builder compiles and links the given sources to a dynamically
@@ -411,14 +420,14 @@ construction variables can be overridden by the user.
 | ARFLAGS | Array | Static library archiver flags | ["rcs"] |
 | AS | String | Assembler executable | "${CC}" |
 | ASCMD | Array | Assembler command line | ["${AS}", "-c", "-o", "${_TARGET}", "${ASDEPGEN}", "${INCPREFIX}${ASPPPATH}", "${ASPPFLAGS}", "${ASFLAGS}", "${_SOURCES}"] |
-| ASDEPGEN | Array | Assembly dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}"] |
+| ASDEPGEN | Array | Assembly dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}", "-MT", "TARGET"] |
 | ASFLAGS | Array | Assembler flags | [] |
 | ASPPFLAGS | Array | Assembler preprocessor flags | ["${CPPFLAGS}"] |
 | ASPPPATH | Array | Assembler preprocessor path | ["${CPPPATH}"] |
 | ASSUFFIX | Array | Assembly file suffixes | [".S"] |
 | CC | String | C compiler executable | "gcc" |
 | CCCMD | Array | C compiler command line | ["${CC}", "-c", "-o", "${_TARGET}", "${CCDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${CFLAGS}", "${CCFLAGS}", "${_SOURCES}"] |
-| CCDEPGEN | Array | C compiler dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}"] |
+| CCDEPGEN | Array | C compiler dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}", "-MT", "TARGET"] |
 | CCFLAGS | Array | Common flags for both C and C++ compiler | [] |
 | CFLAGS | Array | C compiler flags | [] |
 | CPP_CMD | Array | Preprocess command line | ["${_PREPROCESS_CC}", "-E", "${_PREPROCESS_DEPGEN}", "-o", "${_TARGET}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${_SOURCES}"] |
@@ -430,12 +439,13 @@ construction variables can be overridden by the user.
 | CSUFFIX | Array | C source file suffixes | [".c"] |
 | CXX | String | C++ compiler executable | "g++" |
 | CXXCMD | Array | C++ compiler command line | ["${CXX}", "-c", "-o", "${_TARGET}", "${CXXDEPGEN}", "${INCPREFIX}${CPPPATH}", "${CPPFLAGS}", "${CXXFLAGS}", "${CCFLAGS}", "${_SOURCES}"] |
-| CXXDEPGEN | Array | C++ compiler dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}"] |
+| CXXDEPGEN | Array | C++ compiler dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}", "-MT", "TARGET"] |
 | CXXFLAGS | Array | C++ compiler flags | [] |
 | CXXSUFFIX | Array | C++ source file suffixes | [".cc", ".cpp", ".cxx", ".C"] |
 | D_IMPORT_PATH | Array | D compiler import path | [] |
 | DC | String | D compiler executable | "gdc" |
-| DCCMD | Array | D compiler command line | ["${DC}", "-c", "-o", "${_TARGET}", "${INCPREFIX}${D_IMPORT_PATH}", "${DFLAGS}", "${_SOURCES}"] |
+| DCCMD | Array | D compiler command line | ["${DC}", "-c", "-o", "${_TARGET}", "${DDEPGEN}", "${INCPREFIX}${D_IMPORT_PATH}", "${DFLAGS}", "${_SOURCES}"] |
+| DDEPGEN | Array | D compiler dependency generation flags | ["-MMD", "-MF", "${_DEPFILE}", "-MT", "TARGET"] |
 | DEPFILESUFFIX | String | Dependency file suffix for Makefile-style dependency rules emitted by the compiler (used internally for temporary dependency files used to determine a source file's dependencies) | ".mf" |
 | DFLAGS | Array | D compiler flags | [] |
 | DISASM_CMD | Array | Disassemble command line | ["${OBJDUMP}", "${DISASM_FLAGS}", "${_SOURCES}"] |
@@ -548,8 +558,18 @@ end
 You can pass multiple dependency files to `Environment#depends`:
 
 ```ruby
-env.depends("my_app", "config/link.ld", "README.txt", *Dir.glob("assets/**/*"))
+env.depends("my_app", "config/link.ld", "README.txt", *Rscons.glob("assets/**/*"))
 ```
+
+### Command-Line Variables
+
+Variables can be specified on the rscons command line. For example:
+
+```
+rscons VAR=val
+```
+
+These variables are accessible in a global VarSet called `Rscons.vars`.
 
 ### Construction Variable Naming
 

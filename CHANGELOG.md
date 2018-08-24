@@ -1,5 +1,18 @@
 ## ChangeLog
 
+### v1.16.0
+
+#### New Features
+
+- Add `Rscons.glob`
+- Support command-line variables
+- improve debuggability of cache.up_to_date?
+- allow passing a VarSet into cache methods
+
+#### Fixes
+
+- generate dependencies for D builds
+
 ### v1.15.0
 
 - allow json 1.x or 2.x
