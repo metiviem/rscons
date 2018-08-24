@@ -1,4 +1,4 @@
 module Rscons
   # gem version
-  VERSION = "1.15.0"
+  VERSION = "1.16.0"
 end
