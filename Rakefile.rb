@@ -13,6 +13,10 @@ require "rake/clean"
 CLEAN.include %w[build_test_run .yardoc doc coverage]
 CLOBBER.include %w[pkg]
 
+task :build_dist do
+  sh "ruby build_dist.rb"
+end
+
 RSpec::Core::RakeTask.new(:spec, :example_string) do |task, args|
   if args.example_string
     ENV["partial_specs"] = "1"

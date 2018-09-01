@@ -3,5 +3,6 @@
 /_yardoc/
 /build_test_run/
 /coverage/
+/dist/
 /doc/
 /pkg/
