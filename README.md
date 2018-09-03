@@ -1,13 +1,13 @@
 # Rscons
 
 Rscons (https://github.com/holtrop/rscons) is a software construction framework
-inspired by SCons and implemented in Ruby.
-
-[![Gem Version](https://badge.fury.io/rb/rscons.png)](http://badge.fury.io/rb/rscons)
+inspired by SCons and waf but implemented in Ruby.
 
 ## Installation
 
-    $ gem install rscons
+Rscons is distributed as a standalone Ruby script named ``rscons``. This file
+(containing the complete rscons build system) can be checked into your project
+and versioned along with your project.
 
 ## Usage
 

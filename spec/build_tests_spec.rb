@@ -62,7 +62,7 @@ describe Rscons do
         []
       end
     rscons_args = options[:rscons_args] || []
-    command = %W[ruby -I. -r _simplecov_setup #{@owd}/bin/rscons] + rsconsfile_args + rscons_args
+    command = %W[ruby -I. -r _simplecov_setup #{@owd}/test/rscons.rb] + rsconsfile_args + rscons_args
     @statics[:build_test_id] ||= 0
     @statics[:build_test_id] += 1
     command_prefix =
@@ -74,6 +74,8 @@ describe Rscons do
     command_name = "#{command_prefix}#{@statics[:build_test_id]}"
     File.open("_simplecov_setup.rb", "w") do |fh|
       fh.puts <<EOF
+require "bundler"
+Bundler.setup
 require "simplecov"
 class MyFormatter
   def format(*args)
@@ -88,7 +90,6 @@ SimpleCov.start do
   end
   formatter(MyFormatter)
 end
-$LOAD_PATH.unshift(#{@owd.inspect} + "/lib")
 # force color off
 ENV["TERM"] = nil
 #{options[:ruby_setup_code]}

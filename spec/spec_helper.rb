@@ -12,4 +12,4 @@ SimpleCov.start do
   merge_timeout 3600
 end
 
-require "rscons"
+require_relative "../test/rscons"

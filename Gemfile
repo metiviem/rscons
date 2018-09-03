@@ -1,4 +1,8 @@
 source 'https://rubygems.org'
 
-# Specify your gem's dependencies in rscons.gemspec
-gemspec
+gem "json"
+gem "rspec"
+gem "rake"
+gem "simplecov"
+gem "yard"
+gem "rdoc"
