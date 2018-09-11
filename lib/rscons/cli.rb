@@ -1,6 +1,31 @@
 require "rscons"
 require "optparse"
 
+USAGE = <<EOF
+Usage: #{$0} [global options] [operation] [operation options]
+
+Global options:
+  --version                   Show rscons version and exit
+  -h, --help                  Show rscons help and exit
+  -r COLOR, --color=COLOR     Set color mode (off, auto, force)
+
+Operations:
+  configure                   Configure the project
+  build                       Build the project
+  clean                       Remove build artifacts (but not configuration)
+  distclean                   Remove build directory and configuration
+  install                     Install project to installation destination
+  uninstall                   Uninstall project from installation destination
+
+Configure options:
+  -b BUILD, --build=BUILD     Set build directory (default: build)
+  --prefix=PREFIX             Set installation prefix (default: /usr/local)
+
+Build options:
+  -j N, --nthreads=N          Set number of threads (local default: #{Rscons.n_threads})
+
+EOF
+
 module Rscons
   # Command-Line Interface functionality.
   module Cli
@@ -26,11 +51,6 @@ module Rscons
           opts.separator ""
           opts.separator "Options:"
 
-          opts.on("-c", "--clean", "Perform clean operation") do
-            Rscons.clean
-            exit 0
-          end
-
           opts.on("-f FILE", "Execute FILE (default Rsconsfile)") do |f|
             rsconsfile = f
           end
@@ -48,17 +68,31 @@ module Rscons
             end
           end
 
-          opts.on_tail("--version", "Show version") do
+          opts.on("--version", "Show version") do
             puts "Rscons version #{Rscons::VERSION}"
             exit 0
           end
 
-          opts.on_tail("-h", "--help", "Show this help.") do
-            puts opts
+          opts.on("-h", "--help", "Show this help.") do
+            puts USAGE
             exit 0
           end
 
-        end.parse!(argv)
+        end.order!(argv)
+
+        if argv.empty?
+          puts USAGE
+          exit 0
+        end
+
+        case argv.first
+        when "clean"
+          Rscons.clean
+          exit 0
+        when "configure"
+          # TODO
+          exit 0
+        end
 
         argv.each do |arg|
           if arg =~ /^([^=]+)=(.*)$/
@@ -77,7 +111,7 @@ module Rscons
           end
           unless rsconsfile
             $stderr.puts "Could not find the Rsconsfile to execute."
-            $stderr.puts "Looked in: [#{DEFAULT_RSCONSFILES.join(", ")}]"
+            $stderr.puts "Looked for: #{DEFAULT_RSCONSFILES.join(", ")}"
             exit 1
           end
         end
