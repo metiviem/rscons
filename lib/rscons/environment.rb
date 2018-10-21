@@ -19,7 +19,8 @@ module Rscons
 
     # @return [Integer]
     #   The number of threads to use for this Environment. If nil (the
-    #   default), the global Rscons.n_threads default value will be used.
+    #   default), the global Rscons.application.n_threads default value will be
+    #   used.
     attr_writer :n_threads
 
     # Set the build root.
@@ -871,7 +872,7 @@ module Rscons
     # @return [Integer]
     #   Number of threads to use for parallelized builds in this Environment.
     def n_threads
-      @n_threads || Rscons.n_threads
+      @n_threads || Rscons.application.n_threads
     end
 
     # Print the builder run message, depending on the Environment's echo mode.

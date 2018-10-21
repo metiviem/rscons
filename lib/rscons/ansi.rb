@@ -12,7 +12,7 @@ module Rscons
       #
       # @return [void]
       def write(io, *message)
-        do_color = Rscons.do_ansi_color
+        do_color = Rscons.application.do_ansi_color
         if do_color.nil?
           do_color = do_ansi?(io)
         end

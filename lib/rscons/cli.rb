@@ -22,7 +22,7 @@ Configure options:
   --prefix=PREFIX             Set installation prefix (default: /usr/local)
 
 Build options:
-  -j N, --nthreads=N          Set number of threads (local default: #{Rscons.n_threads})
+  -j N, --nthreads=N          Set number of threads (local default: #{Rscons.application.n_threads})
 
 EOF
 
@@ -44,56 +44,45 @@ module Rscons
       def run(argv)
         argv = argv.dup
         rsconsfile = nil
+        do_help = false
 
         OptionParser.new do |opts|
           opts.banner = "Usage: #{$0} [options]"
 
-          opts.on("-f FILE", "Execute FILE (default Rsconsfile)") do |f|
+          opts.on("-f FILE") do |f|
             rsconsfile = f
           end
 
-          opts.on("-j NTHREADS", "Use NTHREADS parallel jobs (local default #{Rscons.n_threads})") do |n_threads|
-            Rscons.n_threads = n_threads.to_i
+          opts.on("-j NTHREADS") do |n_threads|
+            Rscons.application.n_threads = n_threads.to_i
           end
 
-          opts.on("-r", "--color MODE", "Set color mode (off, auto, force)") do |color_mode|
+          opts.on("-r", "--color MODE") do |color_mode|
             case color_mode
             when "off"
-              Rscons.do_ansi_color = false
+              Rscons.application.do_ansi_color = false
             when "force"
-              Rscons.do_ansi_color = true
+              Rscons.application.do_ansi_color = true
             end
           end
 
-          opts.on("--version", "Show version") do
+          opts.on("--version") do
             puts "Rscons version #{Rscons::VERSION}"
             exit 0
           end
 
-          opts.on("-h", "--help", "Show this help.") do
-            puts USAGE
-            exit 0
+          opts.on("-h", "--help") do
+            do_help = true
           end
 
         end.order!(argv)
 
-        if argv.empty?
-          puts USAGE
-          exit 0
-        end
-
-        case argv.first
-        when "clean"
-          Rscons.clean
-          exit 0
-        when "configure"
-          # TODO
-          exit 0
-        end
+        # Retrieve the operation, or default to build.
+        operation = argv.shift || "build"
 
         argv.each do |arg|
           if arg =~ /^([^=]+)=(.*)$/
-            Rscons.vars[$1] = $2
+            Rscons.application.vars[$1] = $2
           end
         end
 
@@ -113,13 +102,15 @@ module Rscons
           end
         end
 
-        begin
-          load rsconsfile
-        rescue Rscons::BuildError => e
-          exit 1
-        end
+        script = Script.new
+        script.load(rsconsfile)
 
-        exit 0
+        if do_help
+          puts USAGE
+          exit 0
+        else
+          exit Rscons.application.run(operation)
+        end
       end
 
     end

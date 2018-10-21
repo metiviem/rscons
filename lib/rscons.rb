@@ -1,4 +1,5 @@
 require_relative "rscons/ansi"
+require_relative "rscons/application"
 require_relative "rscons/build_target"
 require_relative "rscons/builder"
 require_relative "rscons/cache"
@@ -48,18 +49,13 @@ module Rscons
 
   class << self
 
-    # @return [Integer]
-    #   The number of threads to use when scheduling subprocesses.
-    attr_accessor :n_threads
-
-    # @return [Boolean]
-    #   Whether to output ANSI color escape sequences.
-    attr_accessor :do_ansi_color
-
-    # @since 1.16.0
-    # @return [VarSet]
-    #   Access any variables set on the rscons command-line.
-    attr_reader :vars
+    # Access the Application singleton.
+    #
+    # @return [Application]
+    #   The Application singleton.
+    def application
+      @application ||= Application.new
+    end
 
     # Remove all generated files.
     #
@@ -200,45 +196,7 @@ module Rscons
       end.sort
     end
 
-    private
-
-    # Determine the number of threads to use by default.
-    #
-    # @return [Integer]
-    #   The number of threads to use by default.
-    def determine_n_threads
-      # If the user specifies the number of threads in the environment, then
-      # respect that.
-      if ENV["RSCONS_NTHREADS"] =~ /^(\d+)$/
-        return $1.to_i
-      end
-
-      # Otherwise try to figure out how many threads are available on the
-      # host hardware.
-      begin
-        case RbConfig::CONFIG["host_os"]
-        when /linux/
-          return File.read("/proc/cpuinfo").scan(/^processor\s*:/).size
-        when /mswin|mingw/
-          if `wmic cpu get NumberOfLogicalProcessors /value` =~ /NumberOfLogicalProcessors=(\d+)/
-            return $1.to_i
-          end
-        when /darwin/
-          if `sysctl -n hw.ncpu` =~ /(\d+)/
-            return $1.to_i
-          end
-        end
-      rescue
-      end
-
-      # If we can't figure it out, default to 1.
-      1
-    end
-
   end
-
-  @n_threads = determine_n_threads
-  @vars = VarSet.new
 
 end
 
