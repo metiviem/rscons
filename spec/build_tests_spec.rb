@@ -121,14 +121,6 @@ EOF
   # Tests
   ###########################################################################
 
-  it "prints usage info when no operation is given" do
-    test_dir("simple")
-    result = run_rscons(op: [])
-    expect(result.stderr).to eq ""
-    expect(result.status).to eq 0
-    expect(result.stdout).to match /Usage:/
-  end
-
   it 'builds a C program with one source file' do
     test_dir('simple')
     result = run_rscons
