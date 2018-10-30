@@ -6,7 +6,7 @@ class TestBuilder < Rscons::Builder
       File.open(target, "w") do |fh|
         fh.puts("hi")
       end
-      msg = "#{self.class.name} #{target}"
+      msg = "#{name} #{target}"
       env.print_builder_run_message(msg, msg)
       cache.register_build(target, command, sources, env)
     end
