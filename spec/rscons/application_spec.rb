@@ -59,7 +59,7 @@ EOF
             expect(RbConfig::CONFIG).to receive(:[]).with("host_os").and_return("mingw")
           end
           it "returns the number of logical processors that wmic reports" do
-            expect(Rscons).to receive(:`).with("wmic cpu get NumberOfLogicalProcessors /value").and_return("NumberOfLogicalProcessors=7")
+            expect(Rscons.application).to receive(:`).with("wmic cpu get NumberOfLogicalProcessors /value").and_return("NumberOfLogicalProcessors=7")
             expect(Rscons.application.__send__(:determine_n_threads)).to eq(7)
           end
         end
@@ -69,7 +69,7 @@ EOF
             expect(RbConfig::CONFIG).to receive(:[]).with("host_os").and_return("darwin")
           end
           it "returns the number of threads that sysctl reports" do
-            expect(Rscons).to receive(:`).with("sysctl -n hw.ncpu").and_return("6")
+            expect(Rscons.application).to receive(:`).with("sysctl -n hw.ncpu").and_return("6")
             expect(Rscons.application.__send__(:determine_n_threads)).to eq(6)
           end
         end
