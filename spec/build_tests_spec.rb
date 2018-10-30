@@ -55,12 +55,6 @@ describe Rscons do
   end
 
   def run_rscons(options = {})
-    if options[:configure].nil? or options[:configure]
-      results = run_rscons(options.merge(op: :configure, configure: false))
-      if results.stderr != ""
-        return results
-      end
-    end
     operation = options[:op] || "build"
     if operation.is_a?(Symbol)
       operation = operation.to_s
