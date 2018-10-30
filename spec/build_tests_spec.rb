@@ -1287,6 +1287,7 @@ EOF
       it "prints a message when the target does not exist" do
         test_dir("simple")
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because it does not exist on disk/
       end
 
@@ -1294,54 +1295,67 @@ EOF
         test_dir("simple")
         FileUtils.touch("foo.o")
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because there is no cached build information for it/
       end
 
       it "prints a message when the target file has changed on disk" do
         test_dir("simple")
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         File.open("foo.o", "wb") {|fh| fh.puts "hi"}
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because it has been changed on disk since being built last/
       end
 
       it "prints a message when the command has changed" do
         test_dir("simple")
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         result = run_rscons(rsconsfile: "cache_debugging.rb", op: %w[build command_change=yes])
+        expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the command used to build it has changed/
       end
 
       it "prints a message when strict_deps is in use and the set of dependencies does not match" do
         test_dir("simple")
         result = run_rscons(rsconsfile: "cache_debugging.rb", op: %w[build strict_deps1=yes])
+        expect(result.stderr).to eq ""
         result = run_rscons(rsconsfile: "cache_debugging.rb", op: %w[build strict_deps2=yes])
+        expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the :strict_deps option is given and the set of dependencies does not match the previous set of dependencies/
       end
 
       it "prints a message when there is a new dependency" do
         test_dir("simple")
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         result = run_rscons(rsconsfile: "cache_debugging.rb", op: %w[build new_dep=yes])
+        expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because there are new dependencies/
       end
 
       it "prints a message when there is a new user-specified dependency" do
         test_dir("simple")
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         result = run_rscons(rsconsfile: "cache_debugging.rb", op: %w[build new_user_dep=yes])
+        expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the set of user-specified dependency files has changed/
       end
 
       it "prints a message when a dependency file has changed" do
         test_dir("simple")
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         f = File.read("simple.c", mode: "rb")
         f += "\n"
         File.open("simple.c", "wb") do |fh|
           fh.write(f)
         end
         result = run_rscons(rsconsfile: "cache_debugging.rb")
+        expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because dependency file simple\.c has changed/
       end
     end

@@ -57,6 +57,13 @@ module Rscons
       @application ||= Application.new
     end
 
+    # Access any variables set on the rscons command-line.
+    #
+    # @return [VarSet]
+    def vars(*args)
+      application.vars(*args)
+    end
+
     # Return whether the given path is an absolute filesystem path.
     #
     # @param path [String] the path to examine.

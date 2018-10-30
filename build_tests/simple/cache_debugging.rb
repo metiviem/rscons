@@ -17,7 +17,7 @@ class DebugBuilder < Rscons::Builder
       strict_deps = true
     end
     unless cache.up_to_date?(target, command, sources, env, debug: true, strict_deps: strict_deps)
-      desc = "#{self.class.name} #{target}"
+      desc = "#{name} #{target}"
       return false unless env.execute(desc, command)
       cache.register_build(target, command, sources, env)
     end
