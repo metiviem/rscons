@@ -29,10 +29,33 @@ module Rscons
     #   Process exit code (0 on success).
     def run(operation)
       # TODO
+      case operation
+      when "clean"
+        clean
+      end
       0
     end
 
     private
+
+    # Remove all generated files.
+    #
+    # @return [void]
+    def clean
+      cache = Cache.instance
+      # remove all built files
+      cache.targets.each do |target|
+        FileUtils.rm_f(target)
+      end
+      # remove all created directories if they are empty
+      cache.directories.sort {|a, b| b.size <=> a.size}.each do |directory|
+        next unless File.directory?(directory)
+        if (Dir.entries(directory) - ['.', '..']).empty?
+          Dir.rmdir(directory) rescue nil
+        end
+      end
+      cache.clear
+    end
 
     # Determine the number of threads to use by default.
     #

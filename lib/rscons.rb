@@ -57,25 +57,6 @@ module Rscons
       @application ||= Application.new
     end
 
-    # Remove all generated files.
-    #
-    # @return [void]
-    def clean
-      cache = Cache.instance
-      # remove all built files
-      cache.targets.each do |target|
-        FileUtils.rm_f(target)
-      end
-      # remove all created directories if they are empty
-      cache.directories.sort {|a, b| b.size <=> a.size}.each do |directory|
-        next unless File.directory?(directory)
-        if (Dir.entries(directory) - ['.', '..']).empty?
-          Dir.rmdir(directory) rescue nil
-        end
-      end
-      cache.clear
-    end
-
     # Return whether the given path is an absolute filesystem path.
     #
     # @param path [String] the path to examine.
