@@ -1065,16 +1065,14 @@ module Rscons
       end
     end
 
-    # Parse dependencies for a given target from a Makefile.
+    # Parse dependencies from a Makefile.
     #
     # This method is used internally by Rscons builders.
     #
     # @param mf_fname [String] File name of the Makefile to read.
-    # @param target [String, nil]
-    #   Name of the target to gather dependencies for, nil for any/all.
     #
     # @return [Array<String>] Paths of dependency files.
-    def self.parse_makefile_deps(mf_fname, target)
+    def self.parse_makefile_deps(mf_fname)
       deps = []
       buildup = ''
       File.read(mf_fname).each_line do |line|
@@ -1082,11 +1080,9 @@ module Rscons
           buildup += ' ' + $1
         else
           buildup += ' ' + line
-          if buildup =~ /^(.*): (.*)$/
-            mf_target, mf_deps = $1.strip, $2
-            if target.nil? or mf_target == target
-              deps += mf_deps.split(' ').map(&:strip)
-            end
+          if buildup =~ /^.*: (.*)$/
+            mf_deps = $1
+            deps += mf_deps.split(' ').map(&:strip)
           end
           buildup = ''
         end
