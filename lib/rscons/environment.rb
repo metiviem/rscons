@@ -386,12 +386,12 @@ module Rscons
 
     # Expand a construction variable reference.
     #
-    # @param varref [Array, String] Variable reference to expand.
+    # @param varref [nil, String, Array, Proc, Symbol, TrueClass, FalseClass] Variable reference to expand.
     # @param extra_vars [Hash, VarSet]
     #   Extra variables to use in addition to (or replace) the Environment's
     #   construction variables when expanding the variable reference.
     #
-    # @return [Array, String] Expansion of the variable reference.
+    # @return [nil, String, Array, Symbol, TrueClass, FalseClass] Expansion of the variable reference.
     def expand_varref(varref, extra_vars = nil)
       vars = if extra_vars.nil?
                @varset
