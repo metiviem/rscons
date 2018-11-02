@@ -1,5 +1,12 @@
 ## ChangeLog
 
+### v1.17.0
+
+#### New Features
+
+- allow construction variable expansion on `true` and `false` values.
+- remove makefile target name check when parsing dependencies
+
 ### v1.16.0
 
 #### New Features
