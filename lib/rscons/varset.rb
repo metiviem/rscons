@@ -86,12 +86,12 @@ module Rscons
     # Replace "$!{var}" variable references in varref with the expanded
     # variables' values, recursively.
     #
-    # @param varref [nil, String, Array, Proc]
+    # @param varref [nil, String, Array, Proc, Symbol, TrueClass, FalseClass]
     #   Value containing references to variables.
     # @param lambda_args [Array]
     #   Arguments to pass to any lambda variable values to be expanded.
     #
-    # @return [nil, String, Array]
+    # @return [nil, String, Array, Symbol, TrueClass, FalseClass]
     #   Expanded value with "$!{var}" variable references replaced.
     def expand_varref(varref, lambda_args)
       if varref.is_a?(String)
@@ -117,6 +117,10 @@ module Rscons
       elsif varref.nil?
         nil
       elsif varref.is_a?(Symbol)
+        varref
+      elsif varref.is_a?(TrueClass)
+        varref
+      elsif varref.is_a?(FalseClass)
         varref
       else
         raise "Unknown varref type: #{varref.class} (#{varref.inspect})"
