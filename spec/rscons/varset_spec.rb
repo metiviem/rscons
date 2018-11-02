@@ -159,6 +159,12 @@ module Rscons
       it "calls a lambda with the given lambda arguments" do
         expect(v.expand_varref("${lambda}", [v: "fez"])).to eq("fez--12")
       end
+      it "returns true when passed true" do
+        expect(v.expand_varref(true, :lambda_args)).to eq(true)
+      end
+      it "returns false when passed false" do
+        expect(v.expand_varref(false, :lambda_args)).to eq(false)
+      end
       it "raises an error when given an invalid argument" do
         expect { v.expand_varref({a: :b}, :lambda_args) }.to raise_error /Unknown varref type: Hash/
       end
