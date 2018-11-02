@@ -329,7 +329,7 @@ module Rscons
         expect(File).to receive(:read).with('makefile').and_return(<<EOS)
 module.o: source.cc
 EOS
-        expect(Environment.parse_makefile_deps('makefile', 'module.o')).to eq ['source.cc']
+        expect(Environment.parse_makefile_deps('makefile')).to eq ['source.cc']
       end
 
       it 'handles dependencies split across many lines' do
@@ -338,7 +338,7 @@ module.o: module.c \\
   module.h \\
   other.h
 EOS
-        expect(Environment.parse_makefile_deps('makefile', 'module.o')).to eq [
+        expect(Environment.parse_makefile_deps('makefile')).to eq [
           'module.c', 'module.h', 'other.h']
       end
     end

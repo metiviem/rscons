@@ -134,7 +134,7 @@ EOF
     result = run_rscons(rsconsfile: "command.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      'gcc -c -o build/simple.o -MMD -MF build/simple.mf -MT TARGET simple.c',
+      'gcc -c -o build/simple.o -MMD -MF build/simple.mf simple.c',
       "gcc -o simple.exe build/simple.o",
     ]
   end
@@ -203,7 +203,7 @@ EOF
     result = run_rscons(rsconsfile: "command.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      'gcc -c -o build/simple.o -MMD -MF build/simple.mf -MT TARGET simple.c',
+      'gcc -c -o build/simple.o -MMD -MF build/simple.mf simple.c',
       "gcc -o simple.exe build/simple.o",
     ]
     result = run_rscons(rsconsfile: "link_flag_change.rb")
@@ -258,8 +258,8 @@ EOF
     result = run_rscons(rsconsfile: "carat.rb")
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
-      %q{gcc -c -o build_root/one.o -MMD -MF build_root/one.mf -MT TARGET -Isrc -Isrc/one -Isrc/two build_root/one.c},
-      %q{gcc -c -o build_root/src/two/two.o -MMD -MF build_root/src/two/two.mf -MT TARGET -Isrc -Isrc/one -Isrc/two src/two/two.c},
+      %q{gcc -c -o build_root/one.o -MMD -MF build_root/one.mf -Isrc -Isrc/one -Isrc/two build_root/one.c},
+      %q{gcc -c -o build_root/src/two/two.o -MMD -MF build_root/src/two/two.mf -Isrc -Isrc/one -Isrc/two src/two/two.c},
       %Q{gcc -o build_dir.exe build_root/src/two/two.o build_root/one.o},
     ]
   end
@@ -338,9 +338,9 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
-      %q{gcc -c -o debug/program.o -MMD -MF debug/program.mf -MT TARGET '-DSTRING="Debug Version"' -O2 src/program.c},
+      %q{gcc -c -o debug/program.o -MMD -MF debug/program.mf '-DSTRING="Debug Version"' -O2 src/program.c},
       %Q{gcc -o program-debug.exe debug/program.o},
-      %q{gcc -c -o release/program.o -MMD -MF release/program.mf -MT TARGET '-DSTRING="Release Version"' -O2 src/program.c},
+      %q{gcc -c -o release/program.o -MMD -MF release/program.mf '-DSTRING="Release Version"' -O2 src/program.c},
       %Q{gcc -o program-release.exe release/program.o},
     ]
   end
@@ -350,7 +350,7 @@ EOF
     result = run_rscons(rsconsfile: "clone_all.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq [
-      %q{gcc -c -o build/program.o -MMD -MF build/program.mf -MT TARGET -DSTRING="Hello" -O2 src/program.c},
+      %q{gcc -c -o build/program.o -MMD -MF build/program.mf -DSTRING="Hello" -O2 src/program.c},
       %q{post build/program.o},
       %Q{gcc -o program.exe build/program.o},
       %q{post program.exe},
@@ -373,8 +373,8 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
-      'gcc -c -o one.o -MMD -MF one.mf -MT TARGET -DONE one.c',
-      'gcc -c -o build/two.o -MMD -MF build/two.mf -MT TARGET two.c',
+      'gcc -c -o one.o -MMD -MF one.mf -DONE one.c',
+      'gcc -c -o build/two.o -MMD -MF build/two.mf two.c',
       "gcc -o two_sources.exe one.o build/two.o",
     ]
     expect(File.exists?("two_sources.exe")).to be_truthy
@@ -386,10 +386,10 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
-      'gcc -c -o build/one.o -MMD -MF build/one.mf -MT TARGET -Dmake_lib one.c',
-      'gcc -c -o build/two.o -MMD -MF build/two.mf -MT TARGET -Dmake_lib two.c',
+      'gcc -c -o build/one.o -MMD -MF build/one.mf -Dmake_lib one.c',
+      'gcc -c -o build/two.o -MMD -MF build/two.mf -Dmake_lib two.c',
       'ar rcs lib.a build/one.o build/two.o',
-      'gcc -c -o build/three.o -MMD -MF build/three.mf -MT TARGET three.c',
+      'gcc -c -o build/three.o -MMD -MF build/three.mf three.c',
       "gcc -o library.exe lib.a build/three.o",
     ]
     expect(File.exists?("library.exe")).to be_truthy
@@ -401,8 +401,8 @@ EOF
     result = run_rscons(rsconsfile: "build_hooks.rb")
     expect(result.stderr).to eq ""
     expect(Set[*lines(result.stdout)]).to eq Set[
-      'gcc -c -o build_one/one.o -MMD -MF build_one/one.mf -MT TARGET -Isrc/one -Isrc/two -O1 src/one/one.c',
-      'gcc -c -o build_two/two.o -MMD -MF build_two/two.mf -MT TARGET -Isrc/one -Isrc/two -O2 src/two/two.c',
+      'gcc -c -o build_one/one.o -MMD -MF build_one/one.mf -Isrc/one -Isrc/two -O1 src/one/one.c',
+      'gcc -c -o build_two/two.o -MMD -MF build_two/two.mf -Isrc/one -Isrc/two -O2 src/two/two.c',
       'gcc -o build_hook.exe build_one/one.o build_two/two.o',
     ]
     expect(`./build_hook.exe`).to eq "Hello from two()\n"
@@ -439,8 +439,8 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      expect(slines).to include("gdc -c -o build/main.o -MMD -MF build/main.mf -MT TARGET main.d")
-      expect(slines).to include("gdc -c -o build/mod.o -MMD -MF build/mod.mf -MT TARGET mod.d")
+      expect(slines).to include("gdc -c -o build/main.o -MMD -MF build/main.mf main.d")
+      expect(slines).to include("gdc -c -o build/mod.o -MMD -MF build/mod.mf mod.d")
       expect(slines.last).to eq("gdc -o hello-d.exe build/main.o build/mod.o")
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
     end
@@ -450,8 +450,8 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      expect(slines).to include("gdc -c -o build/main.o -MMD -MF build/main.mf -MT TARGET main.d")
-      expect(slines).to include("gdc -c -o build/mod.o -MMD -MF build/mod.mf -MT TARGET mod.d")
+      expect(slines).to include("gdc -c -o build/main.o -MMD -MF build/main.mf main.d")
+      expect(slines).to include("gdc -c -o build/mod.o -MMD -MF build/mod.mf mod.d")
       expect(slines.last).to eq("gdc -o hello-d.exe build/main.o build/mod.o")
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
       fcontents = File.read("mod.d", mode: "rb").sub("42", "33")
@@ -459,8 +459,8 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      expect(slines).to include("gdc -c -o build/main.o -MMD -MF build/main.mf -MT TARGET main.d")
-      expect(slines).to include("gdc -c -o build/mod.o -MMD -MF build/mod.mf -MT TARGET mod.d")
+      expect(slines).to include("gdc -c -o build/main.o -MMD -MF build/main.mf main.d")
+      expect(slines).to include("gdc -c -o build/mod.o -MMD -MF build/mod.mf mod.d")
       expect(slines.last).to eq("gdc -o hello-d.exe build/main.o build/mod.o")
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 33!"
     end
@@ -902,8 +902,8 @@ EOF
       result = run_rscons(rsconsfile: "backward_compatible_build_hooks.rb")
       expect(result.stderr).to eq ""
       expect(Set[*lines(result.stdout)]).to eq Set[
-        'gcc -c -o one.o -MMD -MF one.mf -MT TARGET -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c',
-        'gcc -c -o two.o -MMD -MF two.mf -MT TARGET -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c'
+        'gcc -c -o one.o -MMD -MF one.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c',
+        'gcc -c -o two.o -MMD -MF two.mf -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c'
       ]
       expect(File.exists?('one.o')).to be_truthy
       expect(File.exists?('two.o')).to be_truthy
@@ -1376,7 +1376,7 @@ EOF
       result = run_rscons(rsconsfile: "override_depfilesuffix.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to eq [
-        "gcc -c -o simple.o -MMD -MF simple.deppy -MT TARGET simple.c",
+        "gcc -c -o simple.o -MMD -MF simple.deppy simple.c",
       ]
     end
 
