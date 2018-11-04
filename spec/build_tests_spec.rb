@@ -1481,4 +1481,14 @@ EOF
       expect(result.status).to_not eq 0
     end
   end
+
+  context "configure" do
+    it "raises a method not found error for configure methods called outside a configure block" do
+      test_dir "configure"
+      result = run_rscons(rsconsfile: "scope.rb")
+      expect(result.stderr).to match /NoMethodError/
+      expect(result.status).to_not eq 0
+    end
+  end
+
 end
