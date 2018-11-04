@@ -15,23 +15,38 @@ module Rscons
     #   Access any variables set on the rscons command-line.
     attr_reader :vars
 
+    # @return [String]
+    #   Build directory (default "build").
+    attr_accessor :build_dir
+
+    # @return [String]
+    #   Installation prefix (default "/usr/local").
+    attr_accessor :prefix
+
     def initialize
-      @vars = VarSet.new
       @n_threads = determine_n_threads
+      @vars = VarSet.new
+      @build_dir = "build"
+      @prefix = "/usr/local"
+      @default_environment = Environment.new
     end
 
     # Run the specified operation.
     #
     # @param operation [String]
     #   The operation to perform (e.g. "clean", "configure", "build", etc...)
+    # @param script [Script]
+    #   The script.
     #
     # @return [Integer]
     #   Process exit code (0 on success).
-    def run(operation)
-      # TODO
+    def run(operation, script)
+      @script = script
       case operation
       when "clean"
         clean
+      when "configure"
+        configure
       end
       0
     end
@@ -55,6 +70,41 @@ module Rscons
         end
       end
       cache.clear
+    end
+
+    # Configure the project.
+    #
+    # @return [void]
+    def configure
+      if ccc = @script.check_c_compiler
+        check_c_compiler(ccc)
+      end
+    end
+
+    # Configure: check for a working C compiler.
+    #
+    # @param ccc [Array<String>]
+    #   C compiler(s) to check for.
+    #
+    # @return [void]
+    def check_c_compiler(ccc)
+      if ccc.empty?
+        # Default C compiler search array.
+        ccc = %w[gcc clang]
+      end
+      cc = ccc.find do |cc|
+        test_c_compiler(cc)
+      end
+    end
+
+    # Test a C compiler.
+    #
+    # @param cc [String]
+    #   C compiler to test.
+    #
+    # @return [Boolean]
+    #   Whether the C compiler tested successfully.
+    def test_c_compiler(cc)
     end
 
     # Determine the number of threads to use by default.

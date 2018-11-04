@@ -108,9 +108,34 @@ module Rscons
         if do_help
           puts USAGE
           exit 0
-        else
-          exit Rscons.application.run(operation)
         end
+
+        parse_operation_args(operation, argv)
+
+        exit Rscons.application.run(operation, script)
+      end
+
+      private
+
+      def parse_operation_args(operation, argv)
+        case operation
+        when "configure"
+          parse_configure_args(argv)
+        end
+      end
+
+      def parse_configure_args(argv)
+        OptionParser.new do |opts|
+          opts.banner = "Usage: #{$0} [options]"
+
+          opts.on("-b", "--build DIR") do |build_dir|
+            Rscons.application.build_dir = build_dir
+          end
+
+          opts.on("--prefix PREFIX") do |prefix|
+            Rscons.application.prefix = prefix
+          end
+        end.order!(argv)
       end
 
     end
