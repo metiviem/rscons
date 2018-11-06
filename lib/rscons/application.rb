@@ -43,12 +43,17 @@ module Rscons
     def run(operation, script)
       @script = script
       case operation
+      when "build"
+        # TODO
+        0
       when "clean"
         clean
       when "configure"
         configure
+      else
+        $stderr.puts "Unknown operation: #{operation}"
+        1
       end
-      0
     end
 
     private
@@ -70,16 +75,24 @@ module Rscons
         end
       end
       cache.clear
+      0
     end
 
     # Configure the project.
     #
     # @return [void]
     def configure
+      rv = 0
       co = ConfigureOp.new("#{@build_dir}/configure")
-      if ccc = @script.check_c_compiler
-        co.check_c_compiler(ccc)
+      begin
+        if ccc = @script.check_c_compiler
+          co.check_c_compiler(ccc)
+        end
+      rescue ConfigureOp::ConfigFailure
+        rv = 1
       end
+      co.close
+      rv
     end
 
     # Determine the number of threads to use by default.

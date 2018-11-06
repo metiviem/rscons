@@ -4,6 +4,9 @@ module Rscons
   # Class to manage a configure operation.
   class ConfigureOp
 
+    # Exception raised when a configuration error occurs.
+    class ConfigFailure < Exception; end
+
     # Create a ConfigureOp.
     #
     # @param work_dir [String]
@@ -11,6 +14,15 @@ module Rscons
     def initialize(work_dir)
       @work_dir = work_dir
       FileUtils.mkdir_p(@work_dir)
+      @log_fh = File.open("#{@work_dir}/config.log", "wb")
+    end
+
+    # Close the log file handle.
+    #
+    # @return [void]
+    def close
+      @log_fh.close
+      @log_fh = nil
     end
 
     # Check for a working C compiler.
