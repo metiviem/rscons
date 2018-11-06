@@ -76,35 +76,10 @@ module Rscons
     #
     # @return [void]
     def configure
+      co = ConfigureOp.new("#{@build_dir}/configure")
       if ccc = @script.check_c_compiler
-        check_c_compiler(ccc)
+        co.check_c_compiler(ccc)
       end
-    end
-
-    # Configure: check for a working C compiler.
-    #
-    # @param ccc [Array<String>]
-    #   C compiler(s) to check for.
-    #
-    # @return [void]
-    def check_c_compiler(ccc)
-      if ccc.empty?
-        # Default C compiler search array.
-        ccc = %w[gcc clang]
-      end
-      cc = ccc.find do |cc|
-        test_c_compiler(cc)
-      end
-    end
-
-    # Test a C compiler.
-    #
-    # @param cc [String]
-    #   C compiler to test.
-    #
-    # @return [Boolean]
-    #   Whether the C compiler tested successfully.
-    def test_c_compiler(cc)
     end
 
     # Determine the number of threads to use by default.
