@@ -1502,21 +1502,36 @@ EOF
     end
 
     context "check_c_compiler" do
-      it "finds the first listed C compiler" do
-        test_dir "configure"
-        result = run_rscons(rsconsfile: "check_c_compiler_find_first.rb", op: "configure")
-        expect(result.stderr).to eq ""
-        expect(result.status).to eq 0
-        expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
-      end
+      {"check_c_compiler.rb" => "when no arguments are given",
+       "check_c_compiler_find_first.rb" => "when arguments are given"}.each_pair do |rsconsfile, desc|
+        context desc do
+          it "finds the first listed C compiler" do
+            test_dir "configure"
+            result = run_rscons(rsconsfile: rsconsfile, op: "configure")
+            expect(result.stderr).to eq ""
+            expect(result.status).to eq 0
+            expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
+          end
 
-      it "finds the second listed C compiler" do
-        test_dir "configure"
-        create_exe "gcc", "exit 1"
-        result = run_rscons(rsconsfile: "check_c_compiler_find_first.rb", op: "configure")
-        expect(result.stderr).to eq ""
-        expect(result.status).to eq 0
-        expect(result.stdout).to match /Checking for C compiler\.\.\. clang/
+          it "finds the second listed C compiler" do
+            test_dir "configure"
+            create_exe "gcc", "exit 1"
+            result = run_rscons(rsconsfile: rsconsfile, op: "configure")
+            expect(result.stderr).to eq ""
+            expect(result.status).to eq 0
+            expect(result.stdout).to match /Checking for C compiler\.\.\. clang/
+          end
+
+          it "fails to configure when it cannot find a C compiler" do
+            test_dir "configure"
+            create_exe "gcc", "exit 1"
+            create_exe "clang", "exit 1"
+            result = run_rscons(rsconsfile: rsconsfile, op: "configure")
+            expect(result.stderr).to eq ""
+            expect(result.status).to_not eq 0
+            expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
+          end
+        end
       end
     end
   end
