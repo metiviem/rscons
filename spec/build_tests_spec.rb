@@ -1489,6 +1489,16 @@ EOF
       expect(result.stderr).to match /NoMethodError/
       expect(result.status).to_not eq 0
     end
+
+    context "check_c_compiler" do
+      it "finds the first listed C compiler" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_c_compiler_find_first.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
+      end
+    end
   end
 
 end

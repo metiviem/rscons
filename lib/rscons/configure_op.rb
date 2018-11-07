@@ -33,12 +33,19 @@ module Rscons
     #
     # @return [void]
     def check_c_compiler(ccc)
+      $stdout.write("Checking for C compiler... ")
       if ccc.empty?
         # Default C compiler search array.
         ccc = %w[gcc clang]
       end
       cc = ccc.find do |cc|
         test_c_compiler(cc)
+      end
+      if cc
+        Ansi.write($stdout, :green, cc, "\n")
+      else
+        Ansi.write($stdout, :red, "not found\n")
+        raise ConfigureFailure.new
       end
     end
 
@@ -67,13 +74,25 @@ module Rscons
       when "clang"
         command = %W[clang -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
       else
-        raise ConfigureFailure.new("Unknown C compiler (#{cc})")
+        $stderr.puts "Unknown C compiler (#{cc})"
+        raise ConfigureFailure.new
       end
-      @log_fh.puts("Command: #{command.join(" ")}")
-      stdout, stderr, status = Open3.capture3(*command)
-      @log_fh.write(stdout)
-      @log_fh.write(stderr)
-      status != 0
+      _, _, status = log_and_test_command(command)
+      status == 0
+    end
+
+    # Execute a test command and log the result.
+    def log_and_test_command(command)
+      begin
+        @log_fh.puts("Command: #{command.join(" ")}")
+        stdout, stderr, status = Open3.capture3(*command)
+        @log_fh.puts("Exit status: #{status.to_i}")
+        @log_fh.write(stdout)
+        @log_fh.write(stderr)
+        [stdout, stderr, status]
+      rescue Errno::ENOENT
+        ["", "", 127]
+      end
     end
 
   end
