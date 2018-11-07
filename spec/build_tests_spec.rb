@@ -25,7 +25,7 @@ describe Rscons do
 
   before(:all) do
     @statics = {}
-    @build_test_run_dir = "build_test_run"
+    @build_test_run_dir = File.expand_path("build_test_run")
     @run_results = Struct.new(:stdout, :stderr, :status)
     @owd = Dir.pwd
     rm_rf(@build_test_run_dir)
@@ -40,7 +40,16 @@ describe Rscons do
     Dir.chdir(@owd)
     rm_rf(@build_test_run_dir)
     FileUtils.cp_r("build_tests/#{build_test_directory}", @build_test_run_dir)
+    FileUtils.mkdir("#{@build_test_run_dir}/_bin")
     Dir.chdir(@build_test_run_dir)
+  end
+
+  def create_exe(exe_name, contents)
+    exe_file = "#{@build_test_run_dir}/_bin/#{exe_name}"
+    File.open(exe_file, "wb") do |fh|
+      fh.puts(contents)
+    end
+    FileUtils.chmod(0755, exe_file)
   end
 
   def file_sub(fname)
@@ -104,7 +113,9 @@ EOF
     end
     stdout, stderr, status = nil, nil, nil
     Bundler.with_clean_env do
-      stdout, stderr, status = Open3.capture3(*command)
+      env = ENV.to_h
+      env["PATH"] = "#{@build_test_run_dir}/_bin#{File::PATH_SEPARATOR}#{env["PATH"]}"
+      stdout, stderr, status = Open3.capture3(env, *command)
     end
     # Remove output lines generated as a result of the test environment
     stderr = stderr.lines.find_all do |line|
@@ -1497,6 +1508,15 @@ EOF
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
+      end
+
+      it "finds the second listed C compiler" do
+        test_dir "configure"
+        create_exe "gcc", "exit 1"
+        result = run_rscons(rsconsfile: "check_c_compiler_find_first.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for C compiler\.\.\. clang/
       end
     end
   end
