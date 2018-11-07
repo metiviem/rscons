@@ -49,6 +49,29 @@ module Rscons
       end
     end
 
+    # Check for a working C++ compiler.
+    #
+    # @param ccc [Array<String>]
+    #   C++ compiler(s) to check for.
+    #
+    # @return [void]
+    def check_cxx_compiler(ccc)
+      $stdout.write("Checking for C++ compiler... ")
+      if ccc.empty?
+        # Default C++ compiler search array.
+        ccc = %w[g++ clang++]
+      end
+      cc = ccc.find do |cc|
+        test_cxx_compiler(cc)
+      end
+      if cc
+        Ansi.write($stdout, :green, cc, "\n")
+      else
+        Ansi.write($stdout, :red, "not found\n")
+        raise ConfigureFailure.new
+      end
+    end
+
     private
 
     # Test a C compiler.
@@ -75,6 +98,37 @@ module Rscons
         command = %W[clang -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
       else
         $stderr.puts "Unknown C compiler (#{cc})"
+        raise ConfigureFailure.new
+      end
+      _, _, status = log_and_test_command(command)
+      status == 0
+    end
+
+    # Test a C++ compiler.
+    #
+    # @param cc [String]
+    #   C++ compiler to test.
+    #
+    # @return [Boolean]
+    #   Whether the C++ compiler tested successfully.
+    def test_cxx_compiler(cc)
+      File.open("#{@work_dir}/cfgtest.cxx", "wb") do |fh|
+        fh.puts <<-EOF
+          #include <iostream>
+          using namespace std;
+          int main(int argc, char * argv[]) {
+            cout << "Hello." << endl;
+            return 0;
+          }
+        EOF
+      end
+      case cc
+      when "g++"
+        command = %W[g++ -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
+      when "clang++"
+        command = %W[clang++ -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
+      else
+        $stderr.puts "Unknown C++ compiler (#{cc})"
         raise ConfigureFailure.new
       end
       _, _, status = log_and_test_command(command)

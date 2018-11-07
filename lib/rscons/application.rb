@@ -88,6 +88,9 @@ module Rscons
         if ccc = @script.check_c_compiler
           co.check_c_compiler(ccc)
         end
+        if ccc = @script.check_cxx_compiler
+          co.check_cxx_compiler(ccc)
+        end
       rescue ConfigureOp::ConfigureFailure
         rv = 1
       end
