@@ -32,4 +32,4 @@ YARD::Rake::YardocTask.new do |yard|
   yard.files = ['lib/**/*.rb']
 end
 
-task :default => :build_dist
+task :default => :spec
