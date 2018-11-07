@@ -24,8 +24,18 @@ module Rscons
             case m
             when :red
               out += "\e[0;31m"
+            when :green
+              out += "\e[0;32m"
+            when :yellow
+              out += "\e[0;33m"
+            when :blue
+              out += "\e[0;34m"
+            when :magenta
+              out += "\e[0;35m"
             when :cyan
               out += "\e[0;36m"
+            when :white
+              out += "\e[0;37m"
             when :reset
               out += "\e[0m"
             end
