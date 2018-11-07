@@ -1,11 +1,12 @@
 require "fileutils"
+require "open3"
 
 module Rscons
   # Class to manage a configure operation.
   class ConfigureOp
 
     # Exception raised when a configuration error occurs.
-    class ConfigFailure < Exception; end
+    class ConfigureFailure < Exception; end
 
     # Create a ConfigureOp.
     #
@@ -51,6 +52,28 @@ module Rscons
     # @return [Boolean]
     #   Whether the C compiler tested successfully.
     def test_c_compiler(cc)
+      File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
+        fh.puts <<-EOF
+          #include <stdio.h>
+          int main(int argc, char * argv[]) {
+            printf("Hello.\\n");
+            return 0;
+          }
+        EOF
+      end
+      case cc
+      when "gcc"
+        command = %W[gcc -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
+      when "clang"
+        command = %W[clang -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
+      else
+        raise ConfigureFailure.new("Unknown C compiler (#{cc})")
+      end
+      @log_fh.puts("Command: #{command.join(" ")}")
+      stdout, stderr, status = Open3.capture3(*command)
+      @log_fh.write(stdout)
+      @log_fh.write(stderr)
+      status != 0
     end
 
   end
