@@ -25,15 +25,33 @@ describe Rscons do
 
   before(:all) do
     @statics = {}
-    @build_test_run_dir = File.expand_path("build_test_run")
+    @build_test_run_base_dir = File.expand_path("build_test_run")
     @run_results = Struct.new(:stdout, :stderr, :status)
     @owd = Dir.pwd
-    rm_rf(@build_test_run_dir)
+    rm_rf(@build_test_run_base_dir)
+    FileUtils.mkdir_p(@build_test_run_base_dir)
   end
 
-  after(:each) do
+  before(:each) do
+    @statics[:example_id] ||= 0
+    @statics[:example_id] += 1
+    @build_test_run_dir = "#{@build_test_run_base_dir}/test#{@statics[:example_id]}"
+  end
+
+  after(:each) do |example|
     Dir.chdir(@owd)
-    rm_rf(@build_test_run_dir)
+    if example.exception
+      @statics[:keep_test_run_dir] = true
+      puts "Leaving #{@build_test_run_dir} for inspection due to test failure"
+    else
+      rm_rf(@build_test_run_dir)
+    end
+  end
+
+  after(:all) do
+    unless @statics[:keep_test_run_dir]
+      rm_rf(@build_test_run_base_dir)
+    end
   end
 
   def test_dir(build_test_directory)
