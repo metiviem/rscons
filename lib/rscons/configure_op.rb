@@ -119,6 +119,27 @@ module Rscons
       common_config_checks(status, options)
     end
 
+    # Check for a C++ header.
+    def check_cxx_header(header_name, options = {})
+      $stdout.write("Checking for C++ header '#{header_name}'... ")
+      File.open("#{@work_dir}/cfgtest.cxx", "wb") do |fh|
+        fh.puts <<-EOF
+          #include "#{header_name}"
+          int main(int argc, char * argv[]) {
+            return 0;
+          }
+        EOF
+      end
+      vars = {
+        "LD" => "${CXX}",
+        "_SOURCES" => "#{@work_dir}/cfgtest.cxx",
+        "_TARGET" => "#{@work_dir}/cfgtest.exe",
+      }
+      command = @env.build_command("${LDCMD}", vars)
+      _, _, status = log_and_test_command(command)
+      common_config_checks(status, options)
+    end
+
     private
 
     # Test a C compiler.

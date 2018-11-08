@@ -99,6 +99,11 @@ module Rscons
             co.check_c_header(*cch)
           end
         end
+        if cchs = @script.check_cxx_headers
+          cchs.each do |cch|
+            co.check_cxx_header(*cch)
+          end
+        end
       rescue ConfigureOp::ConfigureFailure
         rv = 1
       end

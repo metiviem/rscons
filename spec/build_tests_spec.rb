@@ -1646,6 +1646,32 @@ EOF
         expect(result.stdout).to match /Checking for C header 'not___found\.h'... not found/
       end
     end
+
+    context "check_cxx_header" do
+      it "succeeds when the requested header is found" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_cxx_header_success.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for C\+\+ header 'string\.h'... found/
+      end
+
+      it "fails when the requested header is not found" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_cxx_header_failure.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to_not eq 0
+        expect(result.stdout).to match /Checking for C\+\+ header 'not___found\.h'... not found/
+      end
+
+      it "succeeds when the requested header is not found but :fail is set to false" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_cxx_header_no_fail.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for C\+\+ header 'not___found\.h'... not found/
+      end
+    end
   end
 
 end
