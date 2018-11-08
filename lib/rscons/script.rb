@@ -28,45 +28,42 @@ module Rscons
 
     class ConfigureDsl < Dsl
       # Check for a C compiler.
-      def check_c_compiler(*c_compilers)
-        @script.check_c_compiler ||= []
-        @script.check_c_compiler += c_compilers
+      def check_c_compiler(*args)
+        @script.check_c_compiler = args
       end
 
       # Check for a C++ compiler.
-      def check_cxx_compiler(*cxx_compilers)
-        @script.check_cxx_compiler ||= []
-        @script.check_cxx_compiler += cxx_compilers
+      def check_cxx_compiler(*args)
+        @script.check_cxx_compiler = args
       end
 
       # Check for a D compiler.
-      def check_d_compiler(*d_compilers)
-        @script.check_d_compiler ||= []
-        @script.check_d_compiler += d_compilers
+      def check_d_compiler(*args)
+        @script.check_d_compiler = args
       end
 
       # Check for a C header.
-      def check_c_header(*c_headers)
+      def check_c_header(*args)
         @script.check_c_headers ||= []
-        @script.check_c_headers += c_headers
+        @script.check_c_headers << args
       end
 
       # Check for a C++ header.
-      def check_cxx_header(*cxx_headers)
+      def check_cxx_header(*args)
         @script.check_cxx_headers ||= []
-        @script.check_cxx_headers += cxx_headers
+        @script.check_cxx_headers << args
       end
 
       # Check for a D import.
-      def check_d_import(*d_imports)
+      def check_d_import(*args)
         @script.check_d_imports ||= []
-        @script.check_d_imports += d_imports
+        @script.check_d_imports << args
       end
 
       # Check for an executable.
-      def check_executable(*executables)
+      def check_executable(*args)
         @script.check_executables ||= []
-        @script.check_executables += executables
+        @script.check_executables << args
       end
     end
 
