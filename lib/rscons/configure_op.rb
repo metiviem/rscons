@@ -72,6 +72,29 @@ module Rscons
       end
     end
 
+    # Check for a working D compiler.
+    #
+    # @param cdc [Array<String>]
+    #   D compiler(s) to check for.
+    #
+    # @return [void]
+    def check_d_compiler(cdc)
+      $stdout.write("Checking for D compiler... ")
+      if cdc.empty?
+        # Default D compiler search array.
+        cdc = %w[gdc ldc2]
+      end
+      dc = cdc.find do |dc|
+        test_d_compiler(dc)
+      end
+      if dc
+        Ansi.write($stdout, :green, dc, "\n")
+      else
+        Ansi.write($stdout, :red, "not found\n")
+        raise ConfigureFailure.new
+      end
+    end
+
     private
 
     # Test a C compiler.
@@ -129,6 +152,36 @@ module Rscons
         command = %W[clang++ -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
       else
         $stderr.puts "Unknown C++ compiler (#{cc})"
+        raise ConfigureFailure.new
+      end
+      _, _, status = log_and_test_command(command)
+      status == 0
+    end
+
+    # Test a D compiler.
+    #
+    # @param dc [String]
+    #   D compiler to test.
+    #
+    # @return [Boolean]
+    #   Whether the D compiler tested successfully.
+    def test_d_compiler(dc)
+      File.open("#{@work_dir}/cfgtest.d", "wb") do |fh|
+        fh.puts <<-EOF
+          import std.stdio;
+          int main() {
+            writeln("Hello.");
+            return 0;
+          }
+        EOF
+      end
+      case dc
+      when "gdc"
+        command = %W[gdc -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+      when "ldc2"
+        command = %W[ldc2 -of=#{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+      else
+        $stderr.puts "Unknown D compiler (#{dc})"
         raise ConfigureFailure.new
       end
       _, _, status = log_and_test_command(command)
