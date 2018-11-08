@@ -82,6 +82,12 @@ module Rscons
     #
     # @return [void]
     def configure
+      if project_name = @script.project_name
+        Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
+      else
+        $stdout.puts "Configuring project..."
+      end
+      Ansi.write($stdout, "Setting build directory... ", :green, @build_dir, :reset, "\n")
       rv = 0
       co = ConfigureOp.new("#{@build_dir}/configure", @default_environment)
       begin
