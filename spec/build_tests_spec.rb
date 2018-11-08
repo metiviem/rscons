@@ -1698,6 +1698,32 @@ EOF
         expect(result.stdout).to match /Checking for D import 'not\.found'... not found/
       end
     end
+
+    context "check_executable" do
+      it "succeeds when the requested executable is found" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_executable_success.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for executable 'find'... .*find/
+      end
+
+      it "fails when the requested executable is not found" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_executable_failure.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to_not eq 0
+        expect(result.stdout).to match /Checking for executable 'executable-that-is-not-found'... not found/
+      end
+
+      it "succeeds when the requested executable is not found but :fail is set to false" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_executable_no_fail.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for executable 'executable-that-is-not-found'... not found/
+      end
+    end
   end
 
 end

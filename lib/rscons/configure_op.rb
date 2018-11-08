@@ -161,6 +161,27 @@ module Rscons
       common_config_checks(status, options)
     end
 
+    # Check for an executable.
+    def check_executable(executable, options = {})
+      $stdout.write("Checking for executable '#{executable}'... ")
+      found = false
+      if executable["/"] or executable["\\"]
+        if File.file?(executable) and File.executable?(executable)
+          found = true
+          success_message = executable
+        end
+      else
+        path_entries = ENV["PATH"].split(File::PATH_SEPARATOR)
+        path_entries.find do |path_entry|
+          if path = test_path_for_executable(path_entry, executable)
+            found = true
+            success_message = path
+          end
+        end
+      end
+      common_config_checks(found ? 0 : 1, options.merge(success_message: success_message))
+    end
+
     private
 
     # Test a C compiler.
@@ -307,9 +328,12 @@ module Rscons
     #   Whether to fail configuration if the requested item is not found.
     # @option options [String] :set_define
     #   A define to set (in CPPDEFINES) if the requested item is found.
+    # @option options [String] :success_message
+    #   Message to print on success (default "found").
     def common_config_checks(status, options)
+      success_message = options[:success_message] || "found"
       if status == 0
-        Ansi.write($stdout, :green, "found\n")
+        Ansi.write($stdout, :green, "#{success_message}\n")
       else
         if options.has_key?(:fail) and not options[:fail]
           Ansi.write($stdout, :yellow, "not found\n")
@@ -320,6 +344,35 @@ module Rscons
       end
       if options[:set_define]
         @env["CPPDEFINES"] << options[:set_define]
+      end
+    end
+
+    # Check if a directory contains a certain executable.
+    #
+    # @param path_entry [String]
+    #   Directory to look in.
+    # @param executable [String]
+    #   Executable to look for.
+    def test_path_for_executable(path_entry, executable)
+      is_executable = lambda do |path|
+        File.file?(path) and File.executable?(path)
+      end
+      if RbConfig::CONFIG["host_os"] =~ /mswin|windows|mingw/i
+        executable = executable.downcase
+        dir_entries = Dir.entries(path_entry)
+        dir_entries.find do |entry|
+          path = "#{path_entry}/#{entry}"
+          entry = entry.downcase
+          if ((entry == executable) or
+              (entry == "#{executable}.exe") or
+              (entry == "#{executable}.com") or
+              (entry == "#{executable}.bat")) and is_executable[path]
+            return path
+          end
+        end
+      else
+        path = "#{path_entry}/#{executable}"
+        return path if is_executable[path]
       end
     end
 

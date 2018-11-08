@@ -115,6 +115,11 @@ module Rscons
             co.check_d_import(*cdi)
           end
         end
+        if ces = @script.check_executables
+          ces.each do |ce|
+            co.check_executable(*ce)
+          end
+        end
       rescue ConfigureOp::ConfigureFailure
         rv = 1
       end
