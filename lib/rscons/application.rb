@@ -83,7 +83,7 @@ module Rscons
     # @return [void]
     def configure
       rv = 0
-      co = ConfigureOp.new("#{@build_dir}/configure")
+      co = ConfigureOp.new("#{@build_dir}/configure", @default_environment)
       begin
         if ccc = @script.check_c_compiler
           co.check_c_compiler(ccc)

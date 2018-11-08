@@ -12,8 +12,11 @@ module Rscons
     #
     # @param work_dir [String]
     #   Work directory for configure operation.
-    def initialize(work_dir)
+    # @param env [Environment]
+    #   Environment aggregating the configuration options.
+    def initialize(work_dir, env)
       @work_dir = work_dir
+      @env = env
       FileUtils.mkdir_p(@work_dir)
       @log_fh = File.open("#{@work_dir}/config.log", "wb")
     end
@@ -117,14 +120,19 @@ module Rscons
       case cc
       when "gcc"
         command = %W[gcc -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
+        merge = {"CC" => "gcc"}
       when "clang"
         command = %W[clang -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
+        merge = {"CC" => "clang"}
       else
         $stderr.puts "Unknown C compiler (#{cc})"
         raise ConfigureFailure.new
       end
       _, _, status = log_and_test_command(command)
-      status == 0
+      if status == 0
+        merge_vars(merge)
+        true
+      end
     end
 
     # Test a C++ compiler.
@@ -148,14 +156,19 @@ module Rscons
       case cc
       when "g++"
         command = %W[g++ -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
+        merge = {"CXX" => "g++"}
       when "clang++"
         command = %W[clang++ -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
+        merge = {"CXX" => "clang++"}
       else
         $stderr.puts "Unknown C++ compiler (#{cc})"
         raise ConfigureFailure.new
       end
       _, _, status = log_and_test_command(command)
-      status == 0
+      if status == 0
+        merge_vars(merge)
+        true
+      end
     end
 
     # Test a D compiler.
@@ -178,14 +191,23 @@ module Rscons
       case dc
       when "gdc"
         command = %W[gdc -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+        merge = {"DC" => "gdc"}
       when "ldc2"
-        command = %W[ldc2 -of=#{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+        command = %W[ldc2 -of #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+        merge = {
+          "DC" => "ldc2",
+          "DCCMD" => @env["DCCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
+          "LDCMD" => @env["LDCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
+        }
       else
         $stderr.puts "Unknown D compiler (#{dc})"
         raise ConfigureFailure.new
       end
       _, _, status = log_and_test_command(command)
-      status == 0
+      if status == 0
+        merge_vars(merge)
+        true
+      end
     end
 
     # Execute a test command and log the result.
@@ -199,6 +221,16 @@ module Rscons
         [stdout, stderr, status]
       rescue Errno::ENOENT
         ["", "", 127]
+      end
+    end
+
+    # Merge construction variables into the configured Environment.
+    #
+    # @param vars [Hash]
+    #   Hash containing the variables to merge.
+    def merge_vars(vars)
+      vars.each_pair do |key, value|
+        @env[key] = value
       end
     end
 
