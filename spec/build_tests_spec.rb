@@ -1672,6 +1672,32 @@ EOF
         expect(result.stdout).to match /Checking for C\+\+ header 'not___found\.h'... not found/
       end
     end
+
+    context "check_d_import" do
+      it "succeeds when the requested import is found" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_d_import_success.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for D import 'std\.stdio'... found/
+      end
+
+      it "fails when the requested import is not found" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_d_import_failure.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to_not eq 0
+        expect(result.stdout).to match /Checking for D import 'not\.found'... not found/
+      end
+
+      it "succeeds when the requested import is not found but :fail is set to false" do
+        test_dir "configure"
+        result = run_rscons(rsconsfile: "check_d_import_no_fail.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for D import 'not\.found'... not found/
+      end
+    end
   end
 
 end

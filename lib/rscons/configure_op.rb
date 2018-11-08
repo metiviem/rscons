@@ -140,6 +140,27 @@ module Rscons
       common_config_checks(status, options)
     end
 
+    # Check for a D import.
+    def check_d_import(d_import, options = {})
+      $stdout.write("Checking for D import '#{d_import}'... ")
+      File.open("#{@work_dir}/cfgtest.d", "wb") do |fh|
+        fh.puts <<-EOF
+          import #{d_import};
+          int main() {
+            return 0;
+          }
+        EOF
+      end
+      vars = {
+        "LD" => "${DC}",
+        "_SOURCES" => "#{@work_dir}/cfgtest.d",
+        "_TARGET" => "#{@work_dir}/cfgtest.exe",
+      }
+      command = @env.build_command("${LDCMD}", vars)
+      _, _, status = log_and_test_command(command)
+      common_config_checks(status, options)
+    end
+
     private
 
     # Test a C compiler.

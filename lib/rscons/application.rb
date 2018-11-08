@@ -104,6 +104,11 @@ module Rscons
             co.check_cxx_header(*cch)
           end
         end
+        if cdis = @script.check_d_imports
+          cdis.each do |cdi|
+            co.check_d_import(*cdi)
+          end
+        end
       rescue ConfigureOp::ConfigureFailure
         rv = 1
       end
