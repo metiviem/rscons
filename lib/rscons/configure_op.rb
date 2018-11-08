@@ -98,6 +98,27 @@ module Rscons
       end
     end
 
+    # Check for a C header.
+    def check_c_header(header_name, options = {})
+      $stdout.write("Checking for C header '#{header_name}'... ")
+      File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
+        fh.puts <<-EOF
+          #include "#{header_name}"
+          int main(int argc, char * argv[]) {
+            return 0;
+          }
+        EOF
+      end
+      vars = {
+        "LD" => "${CC}",
+        "_SOURCES" => "#{@work_dir}/cfgtest.c",
+        "_TARGET" => "#{@work_dir}/cfgtest.exe",
+      }
+      command = @env.build_command("${LDCMD}", vars)
+      _, _, status = log_and_test_command(command)
+      common_config_checks(status, options)
+    end
+
     private
 
     # Test a C compiler.
@@ -231,6 +252,32 @@ module Rscons
     def merge_vars(vars)
       vars.each_pair do |key, value|
         @env[key] = value
+      end
+    end
+
+    # Perform processing common to several configure checks.
+    #
+    # @param status [Process::Status, Integer]
+    #   Process exit code.
+    # @param options [Hash]
+    #   Common check options.
+    # @option options [Boolean] :fail
+    #   Whether to fail configuration if the requested item is not found.
+    # @option options [String] :set_define
+    #   A define to set (in CPPDEFINES) if the requested item is found.
+    def common_config_checks(status, options)
+      if status == 0
+        Ansi.write($stdout, :green, "found\n")
+      else
+        if options.has_key?(:fail) and not options[:fail]
+          Ansi.write($stdout, :yellow, "not found\n")
+        else
+          Ansi.write($stdout, :red, "not found\n")
+          raise ConfigureFailure.new
+        end
+      end
+      if options[:set_define]
+        @env["CPPDEFINES"] << options[:set_define]
       end
     end
 

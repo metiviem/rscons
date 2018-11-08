@@ -94,6 +94,11 @@ module Rscons
         if cdc = @script.check_d_compiler
           co.check_d_compiler(cdc)
         end
+        if cchs = @script.check_c_headers
+          cchs.each do |cch|
+            co.check_c_header(*cch)
+          end
+        end
       rescue ConfigureOp::ConfigureFailure
         rv = 1
       end
