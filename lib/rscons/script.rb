@@ -42,6 +42,12 @@ module Rscons
         @script.check_d_compiler = args
       end
 
+      # Check for a package or configure program output.
+      def check_cfg(*args)
+        @script.check_cfgs ||= []
+        @script.check_cfgs << args
+      end
+
       # Check for a C header.
       def check_c_header(*args)
         @script.check_c_headers ||= []
@@ -88,6 +94,10 @@ module Rscons
     # @return [Array<Array>]
     #   D compilers to check for.
     attr_accessor :check_d_compiler
+
+    # @return [Array<Array>]
+    #   Configs to check for.
+    attr_accessor :check_cfgs
 
     # @return [Array<Array>]
     #   C headers to check for.

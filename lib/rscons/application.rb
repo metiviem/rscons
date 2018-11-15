@@ -100,6 +100,11 @@ module Rscons
         if cdc = @script.check_d_compiler
           co.check_d_compiler(cdc)
         end
+        if ccs = @script.check_cfgs
+          ccs.each do |cc|
+            co.check_cfg(*cc)
+          end
+        end
         if cchs = @script.check_c_headers
           cchs.each do |cch|
             co.check_c_header(*cch)

@@ -98,6 +98,21 @@ module Rscons
       end
     end
 
+    # Check for a package or configure program output.
+    def check_cfg(options = {})
+      program = options[:program] || "pkg-config"
+      args = options[:args] || %w[--cflags --libs]
+      command = [program] + args
+      if options[:package]
+        command += [options[:package]]
+      end
+      stdout, _, status = log_and_test_command(command)
+      if status == 0
+        parse_flags(stdout)
+      end
+      common_config_checks(status, options)
+    end
+
     # Check for a C header.
     def check_c_header(header_name, options = {})
       $stdout.write("Checking for C header '#{header_name}'... ")
@@ -339,6 +354,24 @@ module Rscons
       end
     end
 
+    # Merge construction variables into the configured Environment.
+    #
+    # This method does the same thing as {#merge_vars}, except that Array
+    # values in +vars+ are appended to the end of Array construction variables
+    # instead of replacing their contents.
+    #
+    # @param vars [Hash]
+    #   Hash containing the variables to merge.
+    def append_vars(vars)
+      vars.each_pair do |key, val|
+        if @env[key].is_a?(Array) and val.is_a?(Array)
+          @env[key] += val
+        else
+          @env[key] = val
+        end
+      end
+    end
+
     # Perform processing common to several configure checks.
     #
     # @param status [Process::Status, Integer]
@@ -395,6 +428,83 @@ module Rscons
         path = "#{path_entry}/#{executable}"
         return path if is_executable[path]
       end
+    end
+
+    # Parse compilation flags (from a program like pkg-config for example).
+    #
+    # @param flags [String]
+    #   Compilation flags.
+    def parse_flags(flags)
+      vars = {}
+      words = Shellwords.split(flags)
+      skip = false
+      words.each_with_index do |word, i|
+        if skip
+          skip = false
+          next
+        end
+        append = lambda do |var, val|
+          vars[var] ||= []
+          vars[var] += val
+        end
+        handle = lambda do |var, val|
+          if val.nil? or val.empty?
+            val = words[i + 1]
+            skip = true
+          end
+          if val and not val.empty?
+            append[var, [val]]
+          end
+        end
+        if word == "-arch"
+          if val = words[i + 1]
+            append["CCFLAGS", ["-arch", val]]
+            append["LDFLAGS", ["-arch", val]]
+          end
+          skip = true
+        elsif word =~ /^#{@env["CPPDEFPREFIX"]}(.*)$/
+          handle["CPPDEFINES", $1]
+        elsif word == "-include"
+          if val = words[i + 1]
+            append["CCFLAGS", ["-include", val]]
+          end
+          skip = true
+        elsif word == "-isysroot"
+          if val = words[i + 1]
+            append["CCFLAGS", ["-isysroot", val]]
+            append["LDFLAGS", ["-isysroot", val]]
+          end
+          skip = true
+        elsif word =~ /^#{@env["INCPREFIX"]}(.*)$/
+          handle["CPPPATH", $1]
+        elsif word =~ /^#{@env["LIBLINKPREFIX"]}(.*)$/
+          handle["LIBS", $1]
+        elsif word =~ /^#{@env["LIBDIRPREFIX"]}(.*)$/
+          handle["LIBPATH", $1]
+        elsif word == "-mno-cygwin"
+          append["CCFLAGS", [word]]
+          append["LDFLAGS", [word]]
+        elsif word == "-mwindows"
+          append["LDFLAGS", [word]]
+        elsif word == "-pthread"
+          append["CCFLAGS", [word]]
+          append["LDFLAGS", [word]]
+        elsif word =~ /^-Wa,(.*)$/
+          append["ASFLAGS", $1.split(",")]
+        elsif word =~ /^-Wl,(.*)$/
+          append["LDFLAGS", $1.split(",")]
+        elsif word =~ /^-Wp,(.*)$/
+          append["CPPFLAGS", $1.split(",")]
+        elsif word.start_with?("-")
+          append["CCFLAGS", [word]]
+        elsif word.start_with?("+")
+          append["CCFLAGS", [word]]
+          append["LDFLAGS", [word]]
+        else
+          append["LIBS", [word]]
+        end
+      end
+      append_vars(vars)
     end
 
   end
