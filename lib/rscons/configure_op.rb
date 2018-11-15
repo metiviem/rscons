@@ -85,12 +85,14 @@ module Rscons
 
     # Check for a package or configure program output.
     def check_cfg(options = {})
-      program = options[:program] || "pkg-config"
-      args = options[:args] || %w[--cflags --libs]
-      command = [program] + args
-      if options[:package]
-        command += [options[:package]]
+      if package = options[:package]
+        Ansi.write($stdout, "Checking for package '", :cyan, package, :reset, "'... ")
+      elsif program = options[:program]
+        Ansi.write($stdout, "Checking ", :cyan, program, :reset, "... ")
       end
+      program ||= "pkg-config"
+      args = options[:args] || %w[--cflags --libs]
+      command = [program, *args, package].compact
       stdout, _, status = log_and_test_command(command)
       if status == 0
         parse_flags(stdout)
