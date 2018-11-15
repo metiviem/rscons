@@ -134,6 +134,10 @@ module Rscons
         rv = 1
       end
       co.close
+      cache = Cache.instance
+      cache.set_configured(rv == 0)
+      cache.set_default_environment_vars(@default_environment.to_h)
+      cache.write
       rv
     end
 

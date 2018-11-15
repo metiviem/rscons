@@ -85,6 +85,45 @@ module Rscons
       @lookup_checksums = {}
     end
 
+    # Return whether the project has been configured.
+    #
+    # @return [Boolean]
+    #   Whether the project has been configured.
+    def configured?
+      @cache["configured"]
+    end
+
+    # Set whether the project has been configured.
+    #
+    # @param configured [Boolean]
+    #   Whether the project has been configured.
+    #
+    # @return [void]
+    def set_configured(configured)
+      @cache["configured"] = configured
+      @dirty = true
+    end
+
+    # Get the default environment construction variables.
+    #
+    # @return [Hash]
+    #   Default environment construction variables.
+    def get_default_environment_vars
+      @cache["default_environment_vars"]
+    end
+
+    # Set the default environment construction variables.
+    #
+    # @param vars [Hash]
+    #   Default environment construction variables.
+    #
+    # @return [void]
+    def set_default_environment_vars(vars)
+      validate_json_object(vars)
+      @cache["default_environment_vars"] = vars
+      @dirty = true
+    end
+
     # Write the cache to disk to be loaded next time.
     #
     # @return [void]
@@ -314,6 +353,7 @@ module Rscons
       end
       @cache["targets"] ||= {}
       @cache["directories"] ||= {}
+      @cache["default_environment_vars"] ||= {}
       @lookup_checksums = {}
       @dirty = false
     end
@@ -336,5 +376,21 @@ module Rscons
     def calculate_checksum(file)
       @lookup_checksums[file] = Digest::MD5.hexdigest(File.read(file, mode: "rb")) rescue ""
     end
+
+    # Validate that an object is one of a known set of values that can be
+    # serialized properly with JSON.
+    #
+    # @param o [Object]
+    #   Object to validate.
+    def validate_json_object(o)
+      if o.is_a?(Array)
+        o.each {|v| validate_json_object(v)}
+      elsif o.is_a?(Hash)
+        o.each {|*kv| validate_json_object(kv)}
+      elsif [NilClass, TrueClass, FalseClass, String].none? {|c| o.is_a?(c)}
+        raise "Unexpected cache value for serialization: #{o.inspect}"
+      end
+    end
+
   end
 end
