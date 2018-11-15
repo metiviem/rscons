@@ -161,6 +161,27 @@ module Rscons
       common_config_checks(status, options)
     end
 
+    # Check for a library.
+    def check_lib(lib, options = {})
+      $stdout.write("Checking for library '#{lib}'... ")
+      File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
+        fh.puts <<-EOF
+          int main(int argc, char * argv[]) {
+            return 0;
+          }
+        EOF
+      end
+      vars = {
+        "LD" => "${CC}",
+        "LIBS" => [lib],
+        "_SOURCES" => "#{@work_dir}/cfgtest.c",
+        "_TARGET" => "#{@work_dir}/cfgtest.exe",
+      }
+      command = @env.build_command("${LDCMD}", vars)
+      _, _, status = log_and_test_command(command)
+      common_config_checks(status, options)
+    end
+
     # Check for an executable.
     def check_executable(executable, options = {})
       $stdout.write("Checking for executable '#{executable}'... ")

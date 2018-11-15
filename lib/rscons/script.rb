@@ -60,6 +60,12 @@ module Rscons
         @script.check_d_imports << args
       end
 
+      # Check for a library.
+      def check_lib(*args)
+        @script.check_libs ||= []
+        @script.check_libs << args
+      end
+
       # Check for an executable.
       def check_executable(*args)
         @script.check_executables ||= []
@@ -71,31 +77,35 @@ module Rscons
     #   Project name.
     attr_accessor :project_name
 
-    # @return [Array<String>]
+    # @return [Array<Array>]
     #   C compilers to check for.
     attr_accessor :check_c_compiler
 
-    # @return [Array<String>]
+    # @return [Array<Array>]
     #   C++ compilers to check for.
     attr_accessor :check_cxx_compiler
 
-    # @return [Array<String>]
+    # @return [Array<Array>]
     #   D compilers to check for.
     attr_accessor :check_d_compiler
 
-    # @return [Array<String>]
+    # @return [Array<Array>]
     #   C headers to check for.
     attr_accessor :check_c_headers
 
-    # @return [Array<String>]
+    # @return [Array<Array>]
     #   C++ headers to check for.
     attr_accessor :check_cxx_headers
 
-    # @return [Array<String>]
+    # @return [Array<Array>]
     #   D imports to check for.
     attr_accessor :check_d_imports
 
-    # @return [Array<String>]
+    # @return [Array<Array>]
+    #   Libraries to check for.
+    attr_accessor :check_libs
+
+    # @return [Array<Array>]
     #   Executables to check for.
     attr_accessor :check_executables
 

@@ -115,6 +115,11 @@ module Rscons
             co.check_d_import(*cdi)
           end
         end
+        if cls = @script.check_libs
+          cls.each do |cl|
+            co.check_lib(*cl)
+          end
+        end
         if ces = @script.check_executables
           ces.each do |ce|
             co.check_executable(*ce)
