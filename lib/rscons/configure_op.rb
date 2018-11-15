@@ -182,19 +182,19 @@ module Rscons
       common_config_checks(status, options)
     end
 
-    # Check for an executable.
-    def check_executable(executable, options = {})
-      $stdout.write("Checking for executable '#{executable}'... ")
+    # Check for a executable program.
+    def check_program(program, options = {})
+      $stdout.write("Checking for program '#{program}'... ")
       found = false
-      if executable["/"] or executable["\\"]
-        if File.file?(executable) and File.executable?(executable)
+      if program["/"] or program["\\"]
+        if File.file?(program) and File.executable?(program)
           found = true
-          success_message = executable
+          success_message = program
         end
       else
         path_entries = ENV["PATH"].split(File::PATH_SEPARATOR)
         path_entries.find do |path_entry|
-          if path = test_path_for_executable(path_entry, executable)
+          if path = test_path_for_executable(path_entry, program)
             found = true
             success_message = path
           end

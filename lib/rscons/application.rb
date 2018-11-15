@@ -120,9 +120,9 @@ module Rscons
             co.check_lib(*cl)
           end
         end
-        if ces = @script.check_executables
+        if ces = @script.check_programs
           ces.each do |ce|
-            co.check_executable(*ce)
+            co.check_program(*ce)
           end
         end
       rescue ConfigureOp::ConfigureFailure

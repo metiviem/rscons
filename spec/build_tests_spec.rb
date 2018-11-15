@@ -1725,29 +1725,29 @@ EOF
       end
     end
 
-    context "check_executable" do
-      it "succeeds when the requested executable is found" do
+    context "check_program" do
+      it "succeeds when the requested program is found" do
         test_dir "configure"
-        result = run_rscons(rsconsfile: "check_executable_success.rb", op: "configure")
+        result = run_rscons(rsconsfile: "check_program_success.rb", op: "configure")
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
-        expect(result.stdout).to match /Checking for executable 'find'... .*find/
+        expect(result.stdout).to match /Checking for program 'find'... .*find/
       end
 
-      it "fails when the requested executable is not found" do
+      it "fails when the requested program is not found" do
         test_dir "configure"
-        result = run_rscons(rsconsfile: "check_executable_failure.rb", op: "configure")
+        result = run_rscons(rsconsfile: "check_program_failure.rb", op: "configure")
         expect(result.stderr).to eq ""
         expect(result.status).to_not eq 0
-        expect(result.stdout).to match /Checking for executable 'executable-that-is-not-found'... not found/
+        expect(result.stdout).to match /Checking for program 'program-that-is-not-found'... not found/
       end
 
-      it "succeeds when the requested executable is not found but :fail is set to false" do
+      it "succeeds when the requested program is not found but :fail is set to false" do
         test_dir "configure"
-        result = run_rscons(rsconsfile: "check_executable_no_fail.rb", op: "configure")
+        result = run_rscons(rsconsfile: "check_program_no_fail.rb", op: "configure")
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
-        expect(result.stdout).to match /Checking for executable 'executable-that-is-not-found'... not found/
+        expect(result.stdout).to match /Checking for program 'program-that-is-not-found'... not found/
       end
     end
   end

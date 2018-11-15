@@ -66,10 +66,10 @@ module Rscons
         @script.check_libs << args
       end
 
-      # Check for an executable.
-      def check_executable(*args)
-        @script.check_executables ||= []
-        @script.check_executables << args
+      # Check for an executable program.
+      def check_program(*args)
+        @script.check_programs ||= []
+        @script.check_programs << args
       end
     end
 
@@ -107,7 +107,7 @@ module Rscons
 
     # @return [Array<Array>]
     #   Executables to check for.
-    attr_accessor :check_executables
+    attr_accessor :check_programs
 
     # @return [Boolean]
     #   Whether to autoconfigure if the user does not explicitly perform a
