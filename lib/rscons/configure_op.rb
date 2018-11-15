@@ -44,12 +44,7 @@ module Rscons
       cc = ccc.find do |cc|
         test_c_compiler(cc)
       end
-      if cc
-        Ansi.write($stdout, :green, cc, "\n")
-      else
-        Ansi.write($stdout, :red, "not found\n")
-        raise ConfigureFailure.new
-      end
+      common_config_checks(cc ? 0 : 1, success_message: cc)
     end
 
     # Check for a working C++ compiler.
@@ -67,12 +62,7 @@ module Rscons
       cc = ccc.find do |cc|
         test_cxx_compiler(cc)
       end
-      if cc
-        Ansi.write($stdout, :green, cc, "\n")
-      else
-        Ansi.write($stdout, :red, "not found\n")
-        raise ConfigureFailure.new
-      end
+      common_config_checks(cc ? 0 : 1, success_message: cc)
     end
 
     # Check for a working D compiler.
@@ -90,12 +80,7 @@ module Rscons
       dc = cdc.find do |dc|
         test_d_compiler(dc)
       end
-      if dc
-        Ansi.write($stdout, :green, dc, "\n")
-      else
-        Ansi.write($stdout, :red, "not found\n")
-        raise ConfigureFailure.new
-      end
+      common_config_checks(dc ? 0 : 1, success_message: dc)
     end
 
     # Check for a package or configure program output.
