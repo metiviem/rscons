@@ -35,7 +35,7 @@ module Rscons
     #   C compiler(s) to check for.
     #
     # @return [void]
-    def check_c_compiler(ccc)
+    def check_c_compiler(*ccc)
       $stdout.write("Checking for C compiler... ")
       if ccc.empty?
         # Default C compiler search array.
@@ -53,7 +53,7 @@ module Rscons
     #   C++ compiler(s) to check for.
     #
     # @return [void]
-    def check_cxx_compiler(ccc)
+    def check_cxx_compiler(*ccc)
       $stdout.write("Checking for C++ compiler... ")
       if ccc.empty?
         # Default C++ compiler search array.
@@ -71,7 +71,7 @@ module Rscons
     #   D compiler(s) to check for.
     #
     # @return [void]
-    def check_d_compiler(cdc)
+    def check_d_compiler(*cdc)
       $stdout.write("Checking for D compiler... ")
       if cdc.empty?
         # Default D compiler search array.

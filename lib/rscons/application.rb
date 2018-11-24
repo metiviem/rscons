@@ -91,45 +91,7 @@ module Rscons
       rv = 0
       co = ConfigureOp.new("#{@build_dir}/configure", @default_environment)
       begin
-        if ccc = @script.check_c_compiler
-          co.check_c_compiler(ccc)
-        end
-        if ccc = @script.check_cxx_compiler
-          co.check_cxx_compiler(ccc)
-        end
-        if cdc = @script.check_d_compiler
-          co.check_d_compiler(cdc)
-        end
-        if ccs = @script.check_cfgs
-          ccs.each do |cc|
-            co.check_cfg(*cc)
-          end
-        end
-        if cchs = @script.check_c_headers
-          cchs.each do |cch|
-            co.check_c_header(*cch)
-          end
-        end
-        if cchs = @script.check_cxx_headers
-          cchs.each do |cch|
-            co.check_cxx_header(*cch)
-          end
-        end
-        if cdis = @script.check_d_imports
-          cdis.each do |cdi|
-            co.check_d_import(*cdi)
-          end
-        end
-        if cls = @script.check_libs
-          cls.each do |cl|
-            co.check_lib(*cl)
-          end
-        end
-        if ces = @script.check_programs
-          ces.each do |ce|
-            co.check_program(*ce)
-          end
-        end
+        @script.configure(co)
       rescue ConfigureOp::ConfigureFailure
         rv = 1
       end

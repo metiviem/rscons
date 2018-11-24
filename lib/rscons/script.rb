@@ -21,61 +21,33 @@ module Rscons
 
       # Enter configuration block.
       def configure(&block)
-        cdsl = ConfigureDsl.new(@script)
-        cdsl.instance_eval(&block)
+        @script.operations["configure"] = block
       end
     end
 
-    class ConfigureDsl < Dsl
-      # Check for a C compiler.
-      def check_c_compiler(*args)
-        @script.check_c_compiler = args
+    class ConfigureDsl
+      # Create a ConfigureDsl.
+      #
+      # @param configure_op [ConfigureOp]
+      #   The configure operation object.
+      def initialize(configure_op)
+        @configure_op = configure_op
       end
 
-      # Check for a C++ compiler.
-      def check_cxx_compiler(*args)
-        @script.check_cxx_compiler = args
-      end
-
-      # Check for a D compiler.
-      def check_d_compiler(*args)
-        @script.check_d_compiler = args
-      end
-
-      # Check for a package or configure program output.
-      def check_cfg(*args)
-        @script.check_cfgs ||= []
-        @script.check_cfgs << args
-      end
-
-      # Check for a C header.
-      def check_c_header(*args)
-        @script.check_c_headers ||= []
-        @script.check_c_headers << args
-      end
-
-      # Check for a C++ header.
-      def check_cxx_header(*args)
-        @script.check_cxx_headers ||= []
-        @script.check_cxx_headers << args
-      end
-
-      # Check for a D import.
-      def check_d_import(*args)
-        @script.check_d_imports ||= []
-        @script.check_d_imports << args
-      end
-
-      # Check for a library.
-      def check_lib(*args)
-        @script.check_libs ||= []
-        @script.check_libs << args
-      end
-
-      # Check for an executable program.
-      def check_program(*args)
-        @script.check_programs ||= []
-        @script.check_programs << args
+      [
+        :check_c_compiler,
+        :check_cxx_compiler,
+        :check_d_compiler,
+        :check_cfg,
+        :check_c_header,
+        :check_cxx_header,
+        :check_d_import,
+        :check_lib,
+        :check_program,
+      ].each do |method_name|
+        define_method(method_name) do |*args|
+          @configure_op.__send__(method_name, *args)
+        end
       end
     end
 
@@ -83,50 +55,19 @@ module Rscons
     #   Project name.
     attr_accessor :project_name
 
-    # @return [Array<Array>]
-    #   C compilers to check for.
-    attr_accessor :check_c_compiler
-
-    # @return [Array<Array>]
-    #   C++ compilers to check for.
-    attr_accessor :check_cxx_compiler
-
-    # @return [Array<Array>]
-    #   D compilers to check for.
-    attr_accessor :check_d_compiler
-
-    # @return [Array<Array>]
-    #   Configs to check for.
-    attr_accessor :check_cfgs
-
-    # @return [Array<Array>]
-    #   C headers to check for.
-    attr_accessor :check_c_headers
-
-    # @return [Array<Array>]
-    #   C++ headers to check for.
-    attr_accessor :check_cxx_headers
-
-    # @return [Array<Array>]
-    #   D imports to check for.
-    attr_accessor :check_d_imports
-
-    # @return [Array<Array>]
-    #   Libraries to check for.
-    attr_accessor :check_libs
-
-    # @return [Array<Array>]
-    #   Executables to check for.
-    attr_accessor :check_programs
-
     # @return [Boolean]
     #   Whether to autoconfigure if the user does not explicitly perform a
     #   configure operation before building (default: true).
     attr_accessor :autoconf
 
+    # @return [Hash]
+    #   Operation lambdas.
+    attr_reader :operations
+
     # Construct a Script.
     def initialize
       @autoconf = true
+      @operations = {}
     end
 
     # Load a script from the specified file.
@@ -138,6 +79,14 @@ module Rscons
     def load(path)
       script_contents = File.read(path, mode: "rb")
       Dsl.new(self).instance_eval(script_contents, path, 1)
+    end
+
+    # Perform configure operation.
+    def configure(configure_op)
+      if operation_lambda = @operations["configure"]
+        cdsl = ConfigureDsl.new(configure_op)
+        cdsl.instance_eval(&operation_lambda)
+      end
     end
 
   end
