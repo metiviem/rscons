@@ -104,27 +104,21 @@ module Rscons
       @dirty = true
     end
 
-    # Get the default environment construction variables.
-    #
-    # @return [Hash]
-    #   Default environment construction variables.
-    def get_default_environment_vars
-      @cache["default_environment_vars"]
+    # Access configuration data.
+    def configuration_data
+      @cache["configuration_data"]
     end
 
-    # Set the default environment construction variables.
+    # Set configuration data.
     #
-    # @param vars [Hash]
-    #   Default environment construction variables.
-    #
-    # @return [void]
-    def set_default_environment_vars(vars)
-      validate_json_object(vars)
-      @cache["default_environment_vars"] = vars
+    # @param value [Hash]
+    #   Configuration data.
+    def configuration_data=(value)
+      @cache["configuration_data"] = value
       @dirty = true
     end
 
-    # Write the cache to disk to be loaded next time.
+    # Write the cache to disk if it is dirty.
     #
     # @return [void]
     def write
@@ -135,6 +129,14 @@ module Rscons
         end
       end
       @dirty = false
+    end
+
+    # Force a write of the cache to disk.
+    #
+    # @return [void]
+    def write!
+      @dirty = true
+      write
     end
 
     # Check if target(s) are up to date.
@@ -354,6 +356,7 @@ module Rscons
       @cache["targets"] ||= {}
       @cache["directories"] ||= {}
       @cache["default_environment_vars"] ||= {}
+      @cache["configuration_data"] ||= {}
       @lookup_checksums = {}
       @dirty = false
     end

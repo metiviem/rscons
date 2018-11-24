@@ -82,6 +82,8 @@ module Rscons
     #
     # @return [void]
     def configure
+      cache = Cache.instance
+      cache.configuration_data = {}
       if project_name = @script.project_name
         Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
       else
@@ -96,10 +98,8 @@ module Rscons
         rv = 1
       end
       co.close
-      cache = Cache.instance
       cache.set_configured(rv == 0)
-      cache.set_default_environment_vars(@default_environment.to_h)
-      cache.write
+      cache.write!
       rv
     end
 
