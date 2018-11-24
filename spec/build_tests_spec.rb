@@ -1756,6 +1756,22 @@ EOF
         expect(result.stdout).to match /Checking for program 'program-that-is-not-found'... not found/
       end
     end
+
+    context "check_cfg" do
+      it "stores flags and uses them during a build operation" do
+        test_dir "configure"
+        create_exe "my-config", "echo '-DMYCONFIG -lm'"
+        result = run_rscons(rsconsfile: "check_cfg.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking 'my-config'\.\.\. found/
+        result = run_rscons(rsconsfile: "check_cfg.rb", op: "build")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /gcc.*-o.*\.o.*-DMYCONFIG/
+        expect(result.stdout).to match /gcc.*-o myconfigtest.*-lm/
+      end
+    end
   end
 
 end

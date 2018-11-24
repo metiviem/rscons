@@ -85,7 +85,7 @@ module Rscons
       if package = options[:package]
         Ansi.write($stdout, "Checking for package '", :cyan, package, :reset, "'... ")
       elsif program = options[:program]
-        Ansi.write($stdout, "Checking ", :cyan, program, :reset, "... ")
+        Ansi.write($stdout, "Checking '", :cyan, program, :reset, "'... ")
       end
       program ||= "pkg-config"
       args = options[:args] || %w[--cflags --libs]
