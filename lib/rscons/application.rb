@@ -28,7 +28,6 @@ module Rscons
       @vars = VarSet.new
       @build_dir = "build"
       @prefix = "/usr/local"
-      @default_environment = Environment.new
     end
 
     # Run the specified operation.
@@ -91,7 +90,7 @@ module Rscons
       end
       Ansi.write($stdout, "Setting build directory... ", :green, @build_dir, :reset, "\n")
       rv = 0
-      co = ConfigureOp.new("#{@build_dir}/configure", @default_environment)
+      co = ConfigureOp.new("#{@build_dir}/configure")
       begin
         @script.configure(co)
       rescue ConfigureOp::ConfigureFailure

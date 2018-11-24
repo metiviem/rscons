@@ -62,6 +62,7 @@ module Rscons
       end
       @echo = options[:echo] || :short
       @build_root = options[:build_root] || "build"
+      load_configuration_data!
 
       if block_given?
         yield self
@@ -1101,6 +1102,29 @@ module Rscons
         end
       end
       deps
+    end
+
+    # Load construction variables saved from the configure operation.
+    def load_configuration_data!
+      if vars = Cache.instance.configuration_data["vars"]
+        if default_vars = vars["_default_"]
+          apply_configuration_data!(default_vars)
+        end
+      end
+    end
+
+    def apply_configuration_data!(vars)
+      if merge_vars = vars["merge"]
+        append(merge_vars)
+      end
+      if append_vars = vars["append"]
+        merge_flags(append_vars)
+      end
+      if parse_vars = vars["parse"]
+        parse_vars.each do |parse_string|
+          parse_flags!(parse_string)
+        end
+      end
     end
   end
 end

@@ -12,11 +12,8 @@ module Rscons
     #
     # @param work_dir [String]
     #   Work directory for configure operation.
-    # @param env [Environment]
-    #   Environment aggregating the configuration options.
-    def initialize(work_dir, env)
+    def initialize(work_dir)
       @work_dir = work_dir
-      @env = env
       FileUtils.mkdir_p(@work_dir)
       @log_fh = File.open("#{@work_dir}/config.log", "wb")
     end
@@ -95,7 +92,7 @@ module Rscons
       command = [program, *args, package].compact
       stdout, _, status = log_and_test_command(command)
       if status == 0
-        parse_flags(stdout)
+        store_parse(stdout, options)
       end
       common_config_checks(status, options)
     end
@@ -116,7 +113,7 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.c",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = @env.build_command("${LDCMD}", vars)
+      command = Environment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -137,7 +134,7 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.cxx",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = @env.build_command("${LDCMD}", vars)
+      command = Environment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -158,7 +155,7 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.d",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = @env.build_command("${LDCMD}", vars)
+      command = Environment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -179,7 +176,7 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.c",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = @env.build_command("${LDCMD}", vars)
+      command = Environment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -237,7 +234,7 @@ module Rscons
       end
       _, _, status = log_and_test_command(command)
       if status == 0
-        merge_vars(merge)
+        store_merge(merge)
         true
       end
     end
@@ -273,7 +270,7 @@ module Rscons
       end
       _, _, status = log_and_test_command(command)
       if status == 0
-        merge_vars(merge)
+        store_merge(merge)
         true
       end
     end
@@ -301,10 +298,11 @@ module Rscons
         merge = {"DC" => "gdc"}
       when "ldc2"
         command = %W[ldc2 -of #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+        env = Environment.new
         merge = {
           "DC" => "ldc2",
-          "DCCMD" => @env["DCCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
-          "LDCMD" => @env["LDCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
+          "DCCMD" => env["DCCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
+          "LDCMD" => env["LDCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
         }
       else
         $stderr.puts "Unknown D compiler (#{dc})"
@@ -312,7 +310,7 @@ module Rscons
       end
       _, _, status = log_and_test_command(command)
       if status == 0
-        merge_vars(merge)
+        store_merge(merge)
         true
       end
     end
@@ -331,32 +329,57 @@ module Rscons
       end
     end
 
-    # Merge construction variables into the configured Environment.
+    # Store construction variables for merging into the Cache.
     #
     # @param vars [Hash]
     #   Hash containing the variables to merge.
-    def merge_vars(vars)
+    # @param options [Hash]
+    #   Options.
+    def store_merge(vars, options = {})
+      usename = options[:use] || "_default_"
+      cache = Cache.instance
+      cache.configuration_data["vars"] ||= {}
+      cache.configuration_data["vars"][usename] ||= {}
+      cache.configuration_data["vars"][usename]["merge"] ||= {}
       vars.each_pair do |key, value|
-        @env[key] = value
+        cache.configuration_data["vars"][usename]["merge"][key] = value
       end
     end
 
-    # Merge construction variables into the configured Environment.
-    #
-    # This method does the same thing as {#merge_vars}, except that Array
-    # values in +vars+ are appended to the end of Array construction variables
-    # instead of replacing their contents.
+    # Store construction variables for appending into the Cache.
     #
     # @param vars [Hash]
-    #   Hash containing the variables to merge.
-    def append_vars(vars)
-      vars.each_pair do |key, val|
-        if @env[key].is_a?(Array) and val.is_a?(Array)
-          @env[key] += val
+    #   Hash containing the variables to append.
+    # @param options [Hash]
+    #   Options.
+    def store_append(vars, options = {})
+      usename = options[:use] || "_default_"
+      cache = Cache.instance
+      cache.configuration_data["vars"] ||= {}
+      cache.configuration_data["vars"][usename] ||= {}
+      cache.configuration_data["vars"][usename]["append"] ||= {}
+      vars.each_pair do |key, value|
+        if cache.configuration_data["vars"][usename]["append"][key].is_a?(Array) and value.is_a?(Array)
+          cache.configuration_data["vars"][usename]["append"][key] += value
         else
-          @env[key] = val
+          cache.configuration_data["vars"][usename]["append"][key] = value
         end
       end
+    end
+
+    # Store flags to be parsed into the Cache.
+    #
+    # @param flags [String]
+    #   String containing the flags to parse.
+    # @param options [Hash]
+    #   Options.
+    def store_parse(flags, options = {})
+      usename = options[:use] || "_default_"
+      cache = Cache.instance
+      cache.configuration_data["vars"] ||= {}
+      cache.configuration_data["vars"][usename] ||= {}
+      cache.configuration_data["vars"][usename]["parse"] ||= []
+      cache.configuration_data["vars"][usename]["parse"] << flags
     end
 
     # Perform processing common to several configure checks.
@@ -384,7 +407,7 @@ module Rscons
         end
       end
       if options[:set_define]
-        @env["CPPDEFINES"] << options[:set_define]
+        store_append("CPPDEFINES" => options[:set_define])
       end
     end
 
@@ -415,83 +438,6 @@ module Rscons
         path = "#{path_entry}/#{executable}"
         return path if is_executable[path]
       end
-    end
-
-    # Parse compilation flags (from a program like pkg-config for example).
-    #
-    # @param flags [String]
-    #   Compilation flags.
-    def parse_flags(flags)
-      vars = {}
-      words = Shellwords.split(flags)
-      skip = false
-      words.each_with_index do |word, i|
-        if skip
-          skip = false
-          next
-        end
-        append = lambda do |var, val|
-          vars[var] ||= []
-          vars[var] += val
-        end
-        handle = lambda do |var, val|
-          if val.nil? or val.empty?
-            val = words[i + 1]
-            skip = true
-          end
-          if val and not val.empty?
-            append[var, [val]]
-          end
-        end
-        if word == "-arch"
-          if val = words[i + 1]
-            append["CCFLAGS", ["-arch", val]]
-            append["LDFLAGS", ["-arch", val]]
-          end
-          skip = true
-        elsif word =~ /^#{@env["CPPDEFPREFIX"]}(.*)$/
-          handle["CPPDEFINES", $1]
-        elsif word == "-include"
-          if val = words[i + 1]
-            append["CCFLAGS", ["-include", val]]
-          end
-          skip = true
-        elsif word == "-isysroot"
-          if val = words[i + 1]
-            append["CCFLAGS", ["-isysroot", val]]
-            append["LDFLAGS", ["-isysroot", val]]
-          end
-          skip = true
-        elsif word =~ /^#{@env["INCPREFIX"]}(.*)$/
-          handle["CPPPATH", $1]
-        elsif word =~ /^#{@env["LIBLINKPREFIX"]}(.*)$/
-          handle["LIBS", $1]
-        elsif word =~ /^#{@env["LIBDIRPREFIX"]}(.*)$/
-          handle["LIBPATH", $1]
-        elsif word == "-mno-cygwin"
-          append["CCFLAGS", [word]]
-          append["LDFLAGS", [word]]
-        elsif word == "-mwindows"
-          append["LDFLAGS", [word]]
-        elsif word == "-pthread"
-          append["CCFLAGS", [word]]
-          append["LDFLAGS", [word]]
-        elsif word =~ /^-Wa,(.*)$/
-          append["ASFLAGS", $1.split(",")]
-        elsif word =~ /^-Wl,(.*)$/
-          append["LDFLAGS", $1.split(",")]
-        elsif word =~ /^-Wp,(.*)$/
-          append["CPPFLAGS", $1.split(",")]
-        elsif word.start_with?("-")
-          append["CCFLAGS", [word]]
-        elsif word.start_with?("+")
-          append["CCFLAGS", [word]]
-          append["LDFLAGS", [word]]
-        else
-          append["LIBS", [word]]
-        end
-      end
-      append_vars(vars)
     end
 
   end

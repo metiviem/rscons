@@ -134,6 +134,12 @@ EOF
       env = ENV.to_h
       env["PATH"] = "#{@build_test_run_dir}/_bin#{File::PATH_SEPARATOR}#{env["PATH"]}"
       stdout, stderr, status = Open3.capture3(env, *command)
+      File.open("#{@build_test_run_dir}/.stdout", "wb") do |fh|
+        fh.write(stdout)
+      end
+      File.open("#{@build_test_run_dir}/.stderr", "wb") do |fh|
+        fh.write(stderr)
+      end
     end
     # Remove output lines generated as a result of the test environment
     stderr = stderr.lines.find_all do |line|

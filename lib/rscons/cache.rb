@@ -124,6 +124,7 @@ module Rscons
     def write
       if @dirty || (@cache["version"] != VERSION)
         @cache["version"] = VERSION
+        validate_json_object(@cache)
         File.open(CACHE_FILE, "w") do |fh|
           fh.puts(JSON.dump(@cache))
         end
