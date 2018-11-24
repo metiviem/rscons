@@ -99,7 +99,7 @@ module Rscons
 
     # Check for a C header.
     def check_c_header(header_name, options = {})
-      $stdout.write("Checking for C header '#{header_name}'... ")
+      Ansi.write($stdout, "Checking for C header '", :cyan, header_name, :reset, "'... ")
       File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
         fh.puts <<-EOF
           #include "#{header_name}"
@@ -120,7 +120,7 @@ module Rscons
 
     # Check for a C++ header.
     def check_cxx_header(header_name, options = {})
-      $stdout.write("Checking for C++ header '#{header_name}'... ")
+      Ansi.write($stdout, "Checking for C++ header '", :cyan, header_name, :reset, "'... ")
       File.open("#{@work_dir}/cfgtest.cxx", "wb") do |fh|
         fh.puts <<-EOF
           #include "#{header_name}"
@@ -141,7 +141,7 @@ module Rscons
 
     # Check for a D import.
     def check_d_import(d_import, options = {})
-      $stdout.write("Checking for D import '#{d_import}'... ")
+      Ansi.write($stdout, "Checking for D import '", :cyan, d_import, :reset, "'... ")
       File.open("#{@work_dir}/cfgtest.d", "wb") do |fh|
         fh.puts <<-EOF
           import #{d_import};
@@ -162,7 +162,7 @@ module Rscons
 
     # Check for a library.
     def check_lib(lib, options = {})
-      $stdout.write("Checking for library '#{lib}'... ")
+      Ansi.write($stdout, "Checking for library '", :cyan, lib, :reset, "'... ")
       File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
         fh.puts <<-EOF
           int main(int argc, char * argv[]) {
@@ -183,7 +183,7 @@ module Rscons
 
     # Check for a executable program.
     def check_program(program, options = {})
-      $stdout.write("Checking for program '#{program}'... ")
+      Ansi.write($stdout, "Checking for program '", :cyan, program, :reset, "'... ")
       found = false
       if program["/"] or program["\\"]
         if File.file?(program) and File.executable?(program)
