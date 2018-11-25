@@ -8,6 +8,20 @@ module Rscons
   # contains a collection of construction variables, options, builders, and
   # rules for building targets.
   class Environment
+
+    class << self
+      # Get an ID for a new Environment. This is a monotonically increasing
+      # integer.
+      #
+      # @return [Integer]
+      #   Environment ID.
+      def get_id
+        @id ||= 0
+        @id += 1
+        @id
+      end
+    end
+
     # @return [Hash] Set of !{"builder_name" => builder_object} pairs.
     attr_reader :builders
 
@@ -23,27 +37,18 @@ module Rscons
     #   used.
     attr_writer :n_threads
 
-    # Set the build root.
-    #
-    # @param build_root [String] The build root.
-    def build_root=(build_root)
-      raise "build_root must be non-nil" unless build_root
-      @build_root = build_root.gsub("\\", "/")
-    end
-
     # Create an Environment object.
     #
     # @param options [Hash]
     # @option options [Symbol] :echo
     #   :command, :short, or :off (default :short)
-    # @option options [String] :build_root
-    #   Build root directory (default "build")
     # @option options [Boolean] :exclude_builders
     #   Whether to omit adding default builders (default false)
     #
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
+      @id = self.class.get_id
       @threaded_commands = Set.new
       @registered_build_dependencies = {}
       @side_effects = {}
@@ -61,7 +66,8 @@ module Rscons
         end
       end
       @echo = options[:echo] || :short
-      @build_root = options[:build_root] || "build"
+      # TODO: remove the || "build" below when autoconf is turned on for build test specs
+      @build_root = "#{Cache.instance.configuration_data["build_dir"] || "build"}/e.#{@id}"
       load_configuration_data!
 
       if block_given?
@@ -81,7 +87,6 @@ module Rscons
     # following:
     # - :variables to clone construction variables (on by default)
     # - :builders to clone the builders (on by default)
-    # - :build_root to clone the build root (on by default)
     # - :build_dirs to clone the build directories (on by default)
     # - :build_hooks to clone the build hooks (on by default)
     #
@@ -93,13 +98,12 @@ module Rscons
     # @return [Environment] The newly created {Environment} object.
     def clone(options = {})
       clone = options[:clone] || :all
-      clone = Set[:variables, :builders, :build_root, :build_dirs, :build_hooks] if clone == :all
+      clone = Set[:variables, :builders, :build_dirs, :build_hooks] if clone == :all
       clone = Set[] if clone == :none
       clone = Set.new(clone) if clone.is_a?(Array)
       clone.delete(:builders) if options[:exclude_builders]
       env = self.class.new(
         echo: options[:echo] || @echo,
-        build_root: options[:build_root],
         exclude_builders: true)
       if clone.include?(:builders)
         @builders.each do |builder_name, builder|
@@ -107,7 +111,6 @@ module Rscons
         end
       end
       env.append(@varset) if clone.include?(:variables)
-      env.build_root = @build_root if clone.include?(:build_root)
       if clone.include?(:build_dirs)
         @build_dirs.reverse.each do |src_dir, obj_dir|
           env.build_dir(src_dir, obj_dir)
@@ -1126,5 +1129,6 @@ module Rscons
         end
       end
     end
+
   end
 end

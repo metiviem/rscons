@@ -81,57 +81,6 @@ module Rscons
       end
     end
 
-    describe "#get_build_fname" do
-      context "with no build directories" do
-        it "returns the name of the source file with suffix changed" do
-          env = Environment.new
-          expect(env.get_build_fname("src/dir/file.c", ".o")).to eq "build/src/dir/file.o"
-          expect(env.get_build_fname("src\\dir\\other.d", ".a")).to eq "build/src/dir/other.a"
-          expect(env.get_build_fname("source.cc", ".o")).to eq "build/source.o"
-        end
-
-        context "with a build_root" do
-          it "uses the build_root" do
-            stub_const("RUBY_PLATFORM", "mingw")
-            env = Environment.new
-            env.build_root = "build/proj"
-            expect(env.get_build_fname("src/dir/file.c", ".o")).to eq "build/proj/src/dir/file.o"
-            expect(env.get_build_fname("/some/lib.c", ".a")).to eq "build/proj/_/some/lib.a"
-            expect(env.get_build_fname("C:\\abspath\\mod.cc", ".o")).to eq "build/proj/_C/abspath/mod.o"
-            expect(env.get_build_fname("build\\proj\\generated.c", ".o")).to eq "build/proj/generated.o"
-            expect(env.get_build_fname("build/proj.XX", ".yy")).to eq "build/proj/build/proj.yy"
-          end
-        end
-      end
-
-      context "with build directories" do
-        it "uses the build directories to create the output file name" do
-          env = Environment.new
-          env.build_dir("src", "bld")
-          env.build_dir(%r{^libs/([^/]+)}, 'build/libs/\1')
-          expect(env.get_build_fname("src/input.cc", ".o")).to eq "bld/input.o"
-          expect(env.get_build_fname("libs/lib1/some/file.c", ".o")).to eq "build/libs/lib1/some/file.o"
-          expect(env.get_build_fname("libs/otherlib/otherlib.cc", ".o")).to eq "build/libs/otherlib/otherlib.o"
-          expect(env.get_build_fname("other_directory/o.d", ".a")).to eq "build/other_directory/o.a"
-        end
-
-        context "with a build_root" do
-          it "uses the build_root unless a build directory matches or the path is absolute" do
-            env = Environment.new
-            env.build_dir("src", "bld")
-            env.build_dir(%r{^libs/([^/]+)}, 'build/libs/\1')
-            env.build_root = "bldit"
-
-            expect(env.get_build_fname("src/input.cc", ".o")).to eq "bld/input.o"
-            expect(env.get_build_fname("libs/lib1/some/file.c", ".o")).to eq "build/libs/lib1/some/file.o"
-            expect(env.get_build_fname("libs/otherlib/otherlib.cc", ".o")).to eq "build/libs/otherlib/otherlib.o"
-            expect(env.get_build_fname("other_directory/o.d", ".a")).to eq "bldit/other_directory/o.a"
-            expect(env.get_build_fname("bldit/some/mod.d", ".a")).to eq "bldit/some/mod.a"
-          end
-        end
-      end
-    end
-
     describe "#[]" do
       it "allows reading construction variables" do
         env = Environment.new

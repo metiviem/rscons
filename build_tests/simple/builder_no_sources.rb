@@ -4,7 +4,6 @@ class TestBuilder < Rscons::Builder
   end
 end
 Rscons::Environment.new do |env|
-  env.build_root = "build"
   env.add_builder(TestBuilder.new)
   env.TestBuilder("file")
 end
