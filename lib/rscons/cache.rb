@@ -356,7 +356,6 @@ module Rscons
       end
       @cache["targets"] ||= {}
       @cache["directories"] ||= {}
-      @cache["default_environment_vars"] ||= {}
       @cache["configuration_data"] ||= {}
       @lookup_checksums = {}
       @dirty = false
