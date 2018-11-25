@@ -94,6 +94,8 @@ module Rscons
         rv = 1
       end
       co.close
+      cache.configuration_data["build_dir"] = options[:build_dir]
+      cache.configuration_data["prefix"] = options[:prefix]
       cache.set_configured(rv == 0)
       cache.write!
       rv
