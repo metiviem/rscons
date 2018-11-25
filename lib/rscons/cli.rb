@@ -110,9 +110,9 @@ module Rscons
           exit 0
         end
 
-        parse_operation_args(operation, argv)
+        operation_options = parse_operation_args(operation, argv)
 
-        exit Rscons.application.run(operation, script)
+        exit Rscons.application.run(operation, script, operation_options)
       end
 
       private
@@ -125,17 +125,22 @@ module Rscons
       end
 
       def parse_configure_args(argv)
+        options = {
+          build_dir: "build",
+          prefix: "/usr/local",
+        }
         OptionParser.new do |opts|
           opts.banner = "Usage: #{$0} [options]"
 
           opts.on("-b", "--build DIR") do |build_dir|
-            Rscons.application.build_dir = build_dir
+            options[:build_dir] = build_dir
           end
 
           opts.on("--prefix PREFIX") do |prefix|
-            Rscons.application.prefix = prefix
+            options[:prefix] = prefix
           end
         end.order!(argv)
+        options
       end
 
     end

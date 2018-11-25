@@ -15,14 +15,6 @@ module Rscons
     #   Access any variables set on the rscons command-line.
     attr_reader :vars
 
-    # @return [String]
-    #   Build directory (default "build").
-    attr_accessor :build_dir
-
-    # @return [String]
-    #   Installation prefix (default "/usr/local").
-    attr_accessor :prefix
-
     def initialize
       @n_threads = determine_n_threads
       @vars = VarSet.new
@@ -36,10 +28,12 @@ module Rscons
     #   The operation to perform (e.g. "clean", "configure", "build", etc...)
     # @param script [Script]
     #   The script.
+    # @param operation_options [Hash]
+    #   Option values from the CLI for the operation.
     #
     # @return [Integer]
     #   Process exit code (0 on success).
-    def run(operation, script)
+    def run(operation, script, operation_options)
       @script = script
       case operation
       when "build"
@@ -48,7 +42,7 @@ module Rscons
       when "clean"
         clean
       when "configure"
-        configure
+        configure(operation_options)
       else
         $stderr.puts "Unknown operation: #{operation}"
         1
@@ -79,8 +73,11 @@ module Rscons
 
     # Configure the project.
     #
+    # @param options [Hash]
+    #   Options.
+    #
     # @return [void]
-    def configure
+    def configure(options)
       cache = Cache.instance
       cache.configuration_data = {}
       if project_name = @script.project_name
