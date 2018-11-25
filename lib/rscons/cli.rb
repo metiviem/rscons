@@ -31,7 +31,7 @@ module Rscons
   module Cli
 
     # Default files to look for to execute if none specified.
-    DEFAULT_RSCONSFILES = %w[Rsconsfile Rsconsfile.rb]
+    DEFAULT_RSCONSCRIPTS = %w[Rsconscript Rsconscript.rb]
 
     class << self
 
@@ -43,14 +43,14 @@ module Rscons
       # @return [void]
       def run(argv)
         argv = argv.dup
-        rsconsfile = nil
+        rsconscript = nil
         do_help = false
 
         OptionParser.new do |opts|
           opts.banner = "Usage: #{$0} [options]"
 
           opts.on("-f FILE") do |f|
-            rsconsfile = f
+            rsconscript = f
           end
 
           opts.on("-j NTHREADS") do |n_threads|
@@ -86,24 +86,24 @@ module Rscons
           end
         end
 
-        if rsconsfile
-          unless File.exists?(rsconsfile)
-            $stderr.puts "Cannot read #{rsconsfile}"
+        if rsconscript
+          unless File.exists?(rsconscript)
+            $stderr.puts "Cannot read #{rsconscript}"
             exit 1
           end
         else
-          rsconsfile = DEFAULT_RSCONSFILES.find do |f|
+          rsconscript = DEFAULT_RSCONSCRIPTS.find do |f|
             File.exists?(f)
           end
-          unless rsconsfile
-            $stderr.puts "Could not find the Rsconsfile to execute."
-            $stderr.puts "Looked for: #{DEFAULT_RSCONSFILES.join(", ")}"
+          unless rsconscript
+            $stderr.puts "Could not find the Rsconscript to execute."
+            $stderr.puts "Looked for: #{DEFAULT_RSCONSCRIPTS.join(", ")}"
             exit 1
           end
         end
 
         script = Script.new
-        script.load(rsconsfile)
+        script.load(rsconscript)
 
         if do_help
           puts USAGE
