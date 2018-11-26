@@ -399,7 +399,7 @@ module Rscons
       if status == 0
         Ansi.write($stdout, :green, "#{success_message}\n")
         if options[:set_define]
-          store_append("CPPDEFINES" => options[:set_define])
+          store_append("CPPDEFINES" => [options[:set_define]])
         end
       else
         if options.has_key?(:fail) and not options[:fail]
