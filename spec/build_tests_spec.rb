@@ -1659,6 +1659,30 @@ EOF
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C header 'not___found\.h'... not found/
       end
+
+      it "sets the specified define when the header is found" do
+        test_dir "configure"
+        result = run_rscons(rsconscript: "check_c_header_success_set_define.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for C header 'string\.h'... found/
+        result = run_rscons(rsconscript: "check_c_header_success_set_define.rb", op: "build")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /-DHAVE_STRING_H/
+      end
+
+      it "does not set the specified define when the header is not found" do
+        test_dir "configure"
+        result = run_rscons(rsconscript: "check_c_header_no_fail_set_define.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for C header 'not___found\.h'... not found/
+        result = run_rscons(rsconscript: "check_c_header_no_fail_set_define.rb", op: "build")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to_not match /-DHAVE_/
+      end
     end
 
     context "check_cxx_header" do

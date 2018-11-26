@@ -398,6 +398,9 @@ module Rscons
       success_message = options[:success_message] || "found"
       if status == 0
         Ansi.write($stdout, :green, "#{success_message}\n")
+        if options[:set_define]
+          store_append("CPPDEFINES" => options[:set_define])
+        end
       else
         if options.has_key?(:fail) and not options[:fail]
           Ansi.write($stdout, :yellow, "not found\n")
@@ -405,9 +408,6 @@ module Rscons
           Ansi.write($stdout, :red, "not found\n")
           raise ConfigureFailure.new
         end
-      end
-      if options[:set_define]
-        store_append("CPPDEFINES" => options[:set_define])
       end
     end
 
