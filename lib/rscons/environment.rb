@@ -265,15 +265,7 @@ module Rscons
         end
       end
       unless found_match
-        if Rscons.absolute_path?(build_fname)
-          if build_fname =~ %r{^(\w):(.*)$}
-            build_fname = "#{@build_root}#{extra_path}/_#{$1}#{$2}"
-          else
-            build_fname = "#{@build_root}#{extra_path}/_#{build_fname}"
-          end
-        elsif !build_fname.start_with?("#{@build_root}/")
-          build_fname = "#{@build_root}#{extra_path}/#{build_fname}"
-        end
+        build_fname = "#{@build_root}#{extra_path}/#{Util.make_relative_path(build_fname)}"
       end
       build_fname.gsub('\\', '/')
     end

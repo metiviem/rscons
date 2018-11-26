@@ -8,6 +8,7 @@ require_relative "rscons/environment"
 require_relative "rscons/job_set"
 require_relative "rscons/script"
 require_relative "rscons/threaded_command"
+require_relative "rscons/util"
 require_relative "rscons/varset"
 require_relative "rscons/version"
 
