@@ -8,6 +8,12 @@ SimpleCov.start do
   else
     command_name "RSpec"
   end
+  if ENV["dist_specs"]
+    add_filter "/bin/"
+    add_filter "/lib/"
+  else
+    add_filter "test/rscons.rb"
+  end
   project_name "Rscons"
   merge_timeout 3600
 end
