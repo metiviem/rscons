@@ -12,4 +12,8 @@ SimpleCov.start do
   merge_timeout 3600
 end
 
-require_relative "../test/rscons"
+if ENV["dist_specs"]
+  require_relative "../test/rscons"
+else
+  require "rscons"
+end

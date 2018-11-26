@@ -96,7 +96,12 @@ describe Rscons do
         []
       end
     rscons_args = options[:rscons_args] || []
-    command = %W[ruby -I. -r _simplecov_setup #{@owd}/test/rscons.rb] + rsconscript_args + rscons_args + operation
+    if ENV["dist_specs"]
+      exe = "#{@owd}/test/rscons.rb"
+    else
+      exe = "#{@owd}/bin/rscons"
+    end
+    command = %W[ruby -I. -r _simplecov_setup #{exe}] + rsconscript_args + rscons_args + operation
     @statics[:build_test_id] ||= 0
     @statics[:build_test_id] += 1
     command_prefix =
@@ -128,6 +133,9 @@ end
 ENV["TERM"] = nil
 #{options[:ruby_setup_code]}
 EOF
+      unless ENV["dist_specs"]
+        fh.puts %[$LOAD_PATH.unshift(#{@owd.inspect} + "/lib")]
+      end
     end
     stdout, stderr, status = nil, nil, nil
     Bundler.with_clean_env do
