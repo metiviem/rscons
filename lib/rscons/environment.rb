@@ -292,18 +292,6 @@ module Rscons
       @varset.__send__(:[]=, *args)
     end
 
-    # Return the Environment construction variables as a Hash.
-    #
-    # @since 2.0.0
-    #
-    # @api private
-    #
-    # @return [Hash]
-    #   Environment construction variables.
-    def to_h
-      @varset.to_h
-    end
-
     # Add a set of construction variables to the Environment.
     #
     # @param values [VarSet, Hash] New set of variables.
