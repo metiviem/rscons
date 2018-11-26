@@ -65,6 +65,7 @@ describe Rscons do
   def create_exe(exe_name, contents)
     exe_file = "#{@build_test_run_dir}/_bin/#{exe_name}"
     File.open(exe_file, "wb") do |fh|
+      fh.puts("#!/bin/sh")
       fh.puts(contents)
     end
     FileUtils.chmod(0755, exe_file)
@@ -1790,18 +1791,35 @@ EOF
     end
 
     context "check_cfg" do
-      it "stores flags and uses them during a build operation" do
-        test_dir "configure"
-        create_exe "my-config", "echo '-DMYCONFIG -lm'"
-        result = run_rscons(rsconscript: "check_cfg.rb", op: "configure")
-        expect(result.stderr).to eq ""
-        expect(result.status).to eq 0
-        expect(result.stdout).to match /Checking 'my-config'\.\.\. found/
-        result = run_rscons(rsconscript: "check_cfg.rb", op: "build")
-        expect(result.stderr).to eq ""
-        expect(result.status).to eq 0
-        expect(result.stdout).to match /gcc.*-o.*\.o.*-DMYCONFIG/
-        expect(result.stdout).to match /gcc.*-o myconfigtest.*-lm/
+      context "when passed a package" do
+        it "stores flags and uses them during a build operation" do
+          test_dir "configure"
+          create_exe "pkg-config", "echo '-DMYPACKAGE'"
+          result = run_rscons(rsconscript: "check_cfg_package.rb", op: "configure")
+          expect(result.stderr).to eq ""
+          expect(result.status).to eq 0
+          expect(result.stdout).to match /Checking for package 'mypackage'\.\.\. found/
+          result = run_rscons(rsconscript: "check_cfg_package.rb", op: "build")
+          expect(result.stderr).to eq ""
+          expect(result.status).to eq 0
+          expect(result.stdout).to match /gcc.*-o.*\.o.*-DMYPACKAGE/
+        end
+      end
+
+      context "when passed a program" do
+        it "stores flags and uses them during a build operation" do
+          test_dir "configure"
+          create_exe "my-config", "echo '-DMYCONFIG -lm'"
+          result = run_rscons(rsconscript: "check_cfg.rb", op: "configure")
+          expect(result.stderr).to eq ""
+          expect(result.status).to eq 0
+          expect(result.stdout).to match /Checking 'my-config'\.\.\. found/
+          result = run_rscons(rsconscript: "check_cfg.rb", op: "build")
+          expect(result.stderr).to eq ""
+          expect(result.status).to eq 0
+          expect(result.stdout).to match /gcc.*-o.*\.o.*-DMYCONFIG/
+          expect(result.stdout).to match /gcc.*-o myconfigtest.*-lm/
+        end
       end
     end
   end
