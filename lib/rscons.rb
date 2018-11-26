@@ -66,19 +66,6 @@ module Rscons
       application.vars(*args)
     end
 
-    # Return whether the given path is an absolute filesystem path.
-    #
-    # @param path [String] the path to examine.
-    #
-    # @return [Boolean] Whether the given path is an absolute filesystem path.
-    def absolute_path?(path)
-      if RUBY_PLATFORM =~ /mingw/
-        path =~ %r{^(?:\w:)?[\\/]}
-      else
-        path.start_with?("/")
-      end
-    end
-
     # Return whether the given target is a phony target.
     #
     # @param target [Symbol, String] Target name.

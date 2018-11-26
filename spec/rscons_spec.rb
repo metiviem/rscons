@@ -1,31 +1,4 @@
 describe Rscons do
-  describe ".absolute_path?" do
-    context "on Windows" do
-      it "returns whether a path is absolute" do
-        stub_const("RUBY_PLATFORM", "mingw")
-        expect(Rscons.absolute_path?("/foo")).to be_truthy
-        expect(Rscons.absolute_path?("\\Windows")).to be_truthy
-        expect(Rscons.absolute_path?("C:\\Windows")).to be_truthy
-        expect(Rscons.absolute_path?("f:\\stuff")).to be_truthy
-        expect(Rscons.absolute_path?("g:/projects")).to be_truthy
-        expect(Rscons.absolute_path?("x:foo")).to be_falsey
-        expect(Rscons.absolute_path?("file.txt")).to be_falsey
-      end
-    end
-
-    context "not on Windows" do
-      it "returns whether a path is absolute" do
-        stub_const("RUBY_PLATFORM", "linux")
-        expect(Rscons.absolute_path?("/foo")).to be_truthy
-        expect(Rscons.absolute_path?("\\Windows")).to be_falsey
-        expect(Rscons.absolute_path?("C:\\Windows")).to be_falsey
-        expect(Rscons.absolute_path?("f:\\stuff")).to be_falsey
-        expect(Rscons.absolute_path?("g:/projects")).to be_falsey
-        expect(Rscons.absolute_path?("x:foo")).to be_falsey
-        expect(Rscons.absolute_path?("file.txt")).to be_falsey
-      end
-    end
-  end
 
   describe ".set_suffix" do
     it "changes the suffix to the new one" do
@@ -125,4 +98,5 @@ describe Rscons do
       end
     end
   end
+
 end
