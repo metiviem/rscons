@@ -216,26 +216,20 @@ module Rscons
         fh.puts <<-EOF
           #include <stdio.h>
           int main(int argc, char * argv[]) {
-            printf("Hello.\\n");
+            printf("Success.\\n");
             return 0;
           }
         EOF
       end
-      case cc
-      when "gcc"
-        command = %W[gcc -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
-        merge = {"CC" => "gcc"}
-      when "clang"
-        command = %W[clang -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
-        merge = {"CC" => "clang"}
-      else
-        $stderr.puts "Unknown C compiler (#{cc})"
-        raise ConfigureFailure.new
-      end
+      command = %W[#{cc} -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
+      merge = {"CC" => cc}
       _, _, status = log_and_test_command(command)
       if status == 0
-        store_merge(merge)
-        true
+        stdout, _, status = log_and_test_command(["#{@work_dir}/cfgtest.exe"])
+        if status == 0 and stdout =~ /Success/
+          store_merge(merge)
+          true
+        end
       end
     end
 
@@ -252,26 +246,20 @@ module Rscons
           #include <iostream>
           using namespace std;
           int main(int argc, char * argv[]) {
-            cout << "Hello." << endl;
+            cout << "Success." << endl;
             return 0;
           }
         EOF
       end
-      case cc
-      when "g++"
-        command = %W[g++ -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
-        merge = {"CXX" => "g++"}
-      when "clang++"
-        command = %W[clang++ -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
-        merge = {"CXX" => "clang++"}
-      else
-        $stderr.puts "Unknown C++ compiler (#{cc})"
-        raise ConfigureFailure.new
-      end
+      command = %W[#{cc} -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
+      merge = {"CXX" => cc}
       _, _, status = log_and_test_command(command)
       if status == 0
-        store_merge(merge)
-        true
+        stdout, _, status = log_and_test_command(["#{@work_dir}/cfgtest.exe"])
+        if status == 0 and stdout =~ /Success/
+          store_merge(merge)
+          true
+        end
       end
     end
 
@@ -287,31 +275,33 @@ module Rscons
         fh.puts <<-EOF
           import std.stdio;
           int main() {
-            writeln("Hello.");
+            writeln("Success.");
             return 0;
           }
         EOF
       end
-      case dc
-      when "gdc"
-        command = %W[gdc -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
-        merge = {"DC" => "gdc"}
-      when "ldc2"
-        command = %W[ldc2 -of #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
-        env = Environment.new
-        merge = {
-          "DC" => "ldc2",
-          "DCCMD" => env["DCCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
-          "LDCMD" => env["LDCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
-        }
-      else
-        $stderr.puts "Unknown D compiler (#{dc})"
-        raise ConfigureFailure.new
-      end
-      _, _, status = log_and_test_command(command)
-      if status == 0
-        store_merge(merge)
-        true
+      [:gdc, :ldc2].find do |dc_test|
+        case dc_test
+        when :gdc
+          command = %W[#{dc} -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+          merge = {"DC" => dc}
+        when :ldc2
+          command = %W[#{dc} -of #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+          env = Environment.new
+          merge = {
+            "DC" => dc,
+            "DCCMD" => env["DCCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
+            "LDCMD" => env["LDCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
+          }
+        end
+        _, _, status = log_and_test_command(command)
+        if status == 0
+          stdout, _, status = log_and_test_command(["#{@work_dir}/cfgtest.exe"])
+          if status == 0 and stdout =~ /Success/
+            store_merge(merge)
+            true
+          end
+        end
       end
     end
 
