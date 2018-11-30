@@ -1566,6 +1566,15 @@ EOF
           end
         end
       end
+
+      it "successfully tests a compiler with an unknown name" do
+        test_dir "configure"
+        create_exe "mycompiler", %[exec gcc "$@"]
+        result = run_rscons(rsconscript: "check_c_compiler_custom.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for C compiler\.\.\. mycompiler/
+      end
     end
 
     context "check_cxx_compiler" do
@@ -1600,6 +1609,15 @@ EOF
           end
         end
       end
+
+      it "successfully tests a compiler with an unknown name" do
+        test_dir "configure"
+        create_exe "mycompiler", %[exec clang++ "$@"]
+        result = run_rscons(rsconscript: "check_cxx_compiler_custom.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. mycompiler/
+      end
     end
 
     context "check_d_compiler" do
@@ -1633,6 +1651,24 @@ EOF
             expect(result.stdout).to match /Checking for D compiler\.\.\. not found/
           end
         end
+      end
+
+      it "successfully tests a compiler with an unknown name that uses gdc-compatible options" do
+        test_dir "configure"
+        create_exe "mycompiler", %[exec gdc "$@"]
+        result = run_rscons(rsconscript: "check_d_compiler_custom.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for D compiler\.\.\. mycompiler/
+      end
+
+      it "successfully tests a compiler with an unknown name that uses ldc2-compatible options" do
+        test_dir "configure"
+        create_exe "mycompiler", %[exec ldc2 "$@"]
+        result = run_rscons(rsconscript: "check_d_compiler_custom.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for D compiler\.\.\. mycompiler/
       end
     end
 
