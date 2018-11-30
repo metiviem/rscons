@@ -1874,8 +1874,7 @@ EOF
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /Configuring configure test\.\.\./
-      #TODO
-      #expect(result.stdout).to match /Setting build directory\.\.\. bb/
+      expect(result.stdout).to match /Setting build directory\.\.\. bb/
       expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
       expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. g++/
       expect(result.stdout).to match /Checking for D compiler\.\.\. gdc/

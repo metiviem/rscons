@@ -18,8 +18,6 @@ module Rscons
     def initialize
       @n_threads = determine_n_threads
       @vars = VarSet.new
-      @build_dir = "build"
-      @prefix = "/usr/local"
     end
 
     # Run the specified operation.
@@ -78,6 +76,9 @@ module Rscons
     #
     # @return [void]
     def configure(options)
+      # Default options.
+      options[:build_dir] ||= "build"
+      options[:prefix] ||= "/usr/local"
       cache = Cache.instance
       cache.configuration_data = {}
       if project_name = @script.project_name
@@ -85,9 +86,10 @@ module Rscons
       else
         $stdout.puts "Configuring project..."
       end
-      Ansi.write($stdout, "Setting build directory... ", :green, @build_dir, :reset, "\n")
+      Ansi.write($stdout, "Setting build directory... ", :green, options[:build_dir], :reset, "\n")
+      Ansi.write($stdout, "Setting prefix... ", :green, options[:prefix], :reset, "\n")
       rv = 0
-      co = ConfigureOp.new("#{@build_dir}/configure")
+      co = ConfigureOp.new("#{options[:build_dir]}/configure")
       begin
         @script.configure(co)
       rescue ConfigureOp::ConfigureFailure

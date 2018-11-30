@@ -125,10 +125,7 @@ module Rscons
       end
 
       def parse_configure_args(argv)
-        options = {
-          build_dir: "build",
-          prefix: "/usr/local",
-        }
+        options = {}
         OptionParser.new do |opts|
           opts.banner = "Usage: #{$0} [options]"
 
