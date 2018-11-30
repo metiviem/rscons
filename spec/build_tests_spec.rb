@@ -1885,6 +1885,17 @@ EOF
       expect(result.stdout).to match /Checking for library 'm'\.\.\. found/
       expect(result.stdout).to match /Checking for program 'ls'\.\.\. .*ls/
     end
+
+    it "aggregates multiple set_define's" do
+      test_dir "configure"
+      result = run_rscons(rsconscript: "multiple_set_define.rb", op: "configure")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      result = run_rscons(rsconscript: "multiple_set_define.rb", op: "build")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /gcc.*-o.*\.o.*-DHAVE_MATH_H\s.*-DHAVE_STDIO_H/
+    end
   end
 
 end
