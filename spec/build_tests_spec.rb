@@ -1866,6 +1866,26 @@ EOF
         end
       end
     end
+
+    it "does everything" do
+      test_dir "configure"
+      create_exe "pkg-config", "echo '-DMYPACKAGE'"
+      result = run_rscons(rsconscript: "everything.rb", op: %w[configure --build=bb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /Configuring configure test\.\.\./
+      #TODO
+      #expect(result.stdout).to match /Setting build directory\.\.\. bb/
+      expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
+      expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. g++/
+      expect(result.stdout).to match /Checking for D compiler\.\.\. gdc/
+      expect(result.stdout).to match /Checking for package 'mypackage'\.\.\. found/
+      expect(result.stdout).to match /Checking for C header 'stdio.h'\.\.\. found/
+      expect(result.stdout).to match /Checking for C\+\+ header 'iostream'\.\.\. found/
+      expect(result.stdout).to match /Checking for D import 'std.stdio'\.\.\. found/
+      expect(result.stdout).to match /Checking for library 'm'\.\.\. found/
+      expect(result.stdout).to match /Checking for program 'ls'\.\.\. .*ls/
+    end
   end
 
 end
