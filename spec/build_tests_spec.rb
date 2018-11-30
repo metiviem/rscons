@@ -1840,6 +1840,14 @@ EOF
           expect(result.status).to eq 0
           expect(result.stdout).to match /gcc.*-o.*\.o.*-DMYPACKAGE/
         end
+
+        it "fails when the configure program given does not exist" do
+          test_dir "configure"
+          result = run_rscons(rsconscript: "check_cfg.rb", op: "configure")
+          expect(result.stderr).to eq ""
+          expect(result.status).to_not eq 0
+          expect(result.stdout).to match /Checking 'my-config'\.\.\. not found/
+        end
       end
 
       context "when passed a program" do
