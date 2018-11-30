@@ -184,22 +184,8 @@ module Rscons
     # Check for a executable program.
     def check_program(program, options = {})
       Ansi.write($stdout, "Checking for program '", :cyan, program, :reset, "'... ")
-      found = false
-      if program["/"] or program["\\"]
-        if File.file?(program) and File.executable?(program)
-          found = true
-          success_message = program
-        end
-      else
-        path_entries = ENV["PATH"].split(File::PATH_SEPARATOR)
-        path_entries.find do |path_entry|
-          if path = test_path_for_executable(path_entry, program)
-            found = true
-            success_message = path
-          end
-        end
-      end
-      common_config_checks(found ? 0 : 1, options.merge(success_message: success_message))
+      path = Util.find_executable(program)
+      common_config_checks(path ? 0 : 1, options.merge(success_message: path))
     end
 
     private
@@ -398,35 +384,6 @@ module Rscons
           Ansi.write($stdout, :red, "not found\n")
           raise ConfigureFailure.new
         end
-      end
-    end
-
-    # Check if a directory contains a certain executable.
-    #
-    # @param path_entry [String]
-    #   Directory to look in.
-    # @param executable [String]
-    #   Executable to look for.
-    def test_path_for_executable(path_entry, executable)
-      is_executable = lambda do |path|
-        File.file?(path) and File.executable?(path)
-      end
-      if RbConfig::CONFIG["host_os"] =~ /mswin|windows|mingw/i
-        executable = executable.downcase
-        dir_entries = Dir.entries(path_entry)
-        dir_entries.find do |entry|
-          path = "#{path_entry}/#{entry}"
-          entry = entry.downcase
-          if ((entry == executable) or
-              (entry == "#{executable}.exe") or
-              (entry == "#{executable}.com") or
-              (entry == "#{executable}.bat")) and is_executable[path]
-            return path
-          end
-        end
-      else
-        path = "#{path_entry}/#{executable}"
-        return path if is_executable[path]
       end
     end
 
