@@ -1524,6 +1524,13 @@ EOF
       expect(result.stderr).to match /Cannot read nonexistent/
       expect(result.status).to_not eq 0
     end
+
+    it "outputs an error for an unknown operation" do
+      test_dir "simple"
+      result = run_rscons(op: "unknownop")
+      expect(result.stderr).to match /Unknown operation: unknownop/
+      expect(result.status).to_not eq 0
+    end
   end
 
   context "configure" do
