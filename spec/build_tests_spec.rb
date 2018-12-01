@@ -1531,6 +1531,24 @@ EOF
       expect(result.stderr).to match /Unknown operation: unknownop/
       expect(result.status).to_not eq 0
     end
+
+    it "displays usage and error message without a backtrace for an invalid CLI option" do
+      test_dir "simple"
+      result = run_rscons(rscons_args: %w[--xyz])
+      expect(result.stderr).to_not match /Traceback/
+      expect(result.stderr).to match /invalid option.*--xyz/
+      expect(result.stderr).to match /Usage:/
+      expect(result.status).to_not eq 0
+    end
+
+    it "displays usage and error message without a backtrace for an invalid CLI option to a valid subcommand" do
+      test_dir "simple"
+      result = run_rscons(op: %w[configure --xyz])
+      expect(result.stderr).to_not match /Traceback/
+      expect(result.stderr).to match /invalid option.*--xyz/
+      expect(result.stderr).to match /Usage:/
+      expect(result.status).to_not eq 0
+    end
   end
 
   context "configure" do

@@ -43,6 +43,18 @@ module Rscons
       # @return [void]
       def run(argv)
         argv = argv.dup
+        begin
+          exit run_toplevel(argv)
+        rescue OptionParser::InvalidOption => io
+          $stderr.puts io.message
+          $stderr.puts USAGE
+          exit 2
+        end
+      end
+
+      private
+
+      def run_toplevel(argv)
         rsconscript = nil
         do_help = false
 
@@ -114,8 +126,6 @@ module Rscons
 
         exit Rscons.application.run(operation, script, operation_options)
       end
-
-      private
 
       def parse_operation_args(operation, argv)
         case operation
