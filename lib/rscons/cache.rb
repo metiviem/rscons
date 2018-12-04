@@ -85,25 +85,6 @@ module Rscons
       @lookup_checksums = {}
     end
 
-    # Return whether the project has been configured.
-    #
-    # @return [Boolean]
-    #   Whether the project has been configured.
-    def configured?
-      @cache["configured"]
-    end
-
-    # Set whether the project has been configured.
-    #
-    # @param configured [Boolean]
-    #   Whether the project has been configured.
-    #
-    # @return [void]
-    def set_configured(configured)
-      @cache["configured"] = configured
-      @dirty = true
-    end
-
     # Access configuration data.
     def configuration_data
       @cache["configuration_data"]

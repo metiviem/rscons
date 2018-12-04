@@ -10,6 +10,11 @@ module Rscons
   class Environment
 
     class << self
+
+      # @return [Array<Environment>]
+      #   All Environments.
+      attr_reader :environments
+
       # Get an ID for a new Environment. This is a monotonically increasing
       # integer.
       #
@@ -19,6 +24,12 @@ module Rscons
         @id ||= 0
         @id += 1
         @id
+      end
+
+      # Register an Environment.
+      def register(env)
+        @environments ||= []
+        @environments << env
       end
     end
 
@@ -49,6 +60,7 @@ module Rscons
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
       @id = self.class.get_id
+      self.class.register(self)
       @threaded_commands = Set.new
       @registered_build_dependencies = {}
       @side_effects = {}
@@ -72,7 +84,6 @@ module Rscons
 
       if block_given?
         yield self
-        self.process
       end
     end
 
@@ -128,7 +139,6 @@ module Rscons
 
       if block_given?
         yield env
-        env.process
       end
       env
     end

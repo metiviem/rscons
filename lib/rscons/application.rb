@@ -35,8 +35,18 @@ module Rscons
       @script = script
       case operation
       when "build"
-        # TODO
-        0
+        unless Cache.instance.configuration_data["configured"]
+          if @script.autoconf
+            rv = configure(operation_options)
+            if rv != 0
+              return rv
+            end
+          else
+            $stderr.puts "Project must be configured first, and autoconf is disabled"
+            return 1
+          end
+        end
+        build(operation_options)
       when "clean"
         clean
       when "configure"
@@ -49,9 +59,29 @@ module Rscons
 
     private
 
+    # Build the project.
+    #
+    # @param options [Hash]
+    #   Options.
+    #
+    # @return [Integer]
+    #   Exit code.
+    def build(options)
+      begin
+        Environment.environments.each do |env|
+          env.process
+        end
+        0
+      rescue BuildError => be
+        $stderr.puts be
+        1
+      end
+    end
+
     # Remove all generated files.
     #
-    # @return [void]
+    # @return [Integer]
+    #   Exit code.
     def clean
       cache = Cache.instance
       # remove all built files
@@ -74,7 +104,8 @@ module Rscons
     # @param options [Hash]
     #   Options.
     #
-    # @return [void]
+    # @return [Integer]
+    #   Exit code.
     def configure(options)
       # Default options.
       options[:build_dir] ||= "build"
@@ -98,7 +129,7 @@ module Rscons
       co.close
       cache.configuration_data["build_dir"] = options[:build_dir]
       cache.configuration_data["prefix"] = options[:prefix]
-      cache.set_configured(rv == 0)
+      cache.configuration_data["configured"] = rv == 0
       cache.write!
       rv
     end

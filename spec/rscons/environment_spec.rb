@@ -14,14 +14,6 @@ module Rscons
         env = Environment.new(exclude_builders: true)
         expect(env.builders.size).to eq 0
       end
-
-      context "when a block is given" do
-        it "yields self and invokes #process()" do
-          env = Environment.new do |env|
-            expect(env).to receive(:process)
-          end
-        end
-      end
     end
 
     describe "#clone" do
@@ -53,15 +45,6 @@ module Rscons
         expect(env2["Array"]).to eq(["a", "b"])
         expect(env2["Hash"]).to eq({"a" => "b"})
         expect(env2["Integer"]).to eq(1234)
-      end
-
-      context "when a block is given" do
-        it "yields self and invokes #process()" do
-          env = Environment.new
-          env.clone do |env2|
-            expect(env2).to receive(:process)
-          end
-        end
       end
     end
 

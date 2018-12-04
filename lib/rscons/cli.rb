@@ -122,7 +122,7 @@ module Rscons
           exit 0
         end
 
-        operation_options = parse_operation_args(operation, argv)
+        operation_options = parse_operation_args(operation, argv) || {}
 
         exit Rscons.application.run(operation, script, operation_options)
       end
