@@ -97,11 +97,21 @@ module Rscons
       if varref.is_a?(String)
         if varref =~ /^(.*)\$\{([^}]+)\}(.*)$/
           prefix, varname, suffix = $1, $2, $3
+          prefix = expand_varref(prefix, lambda_args) unless prefix.empty?
           varval = expand_varref(self[varname], lambda_args)
+          # suffix needs no expansion since the regex matches the last occurence
           if varval.is_a?(String) or varval.nil?
-            expand_varref("#{prefix}#{varval}#{suffix}", lambda_args)
+            if prefix.is_a?(Array)
+              prefix.map {|p| "#{p}#{varval}#{suffix}"}
+            else
+              "#{prefix}#{varval}#{suffix}"
+            end
           elsif varval.is_a?(Array)
-            varval.map {|vv| expand_varref("#{prefix}#{vv}#{suffix}", lambda_args)}.flatten
+            if prefix.is_a?(Array)
+              varval.map {|vv| prefix.map {|p| "#{p}#{vv}#{suffix}"}}.flatten
+            else
+              varval.map {|vv| "#{prefix}#{vv}#{suffix}"}
+            end
           else
             raise "I do not know how to expand a variable reference to a #{varval.class.name} (from #{varname.inspect} => #{self[varname].inspect})"
           end
