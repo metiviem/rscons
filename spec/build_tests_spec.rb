@@ -74,6 +74,8 @@ describe Rscons do
     command_name = "#{command_prefix}#{@statics[:build_test_id]}"
     File.open("_simplecov_setup.rb", "w") do |fh|
       fh.puts <<EOF
+require "bundler"
+Bundler.setup
 require "simplecov"
 class MyFormatter
   def format(*args)
