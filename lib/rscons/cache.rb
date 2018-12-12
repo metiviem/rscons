@@ -272,7 +272,7 @@ module Rscons
         next if parts[i] == ""
         subpath = File.join(*parts[0, i + 1])
         unless File.exists?(subpath)
-          FileUtils.mkdir(subpath)
+          FileUtils.mkdir_p(subpath)
           @cache["directories"][subpath] = true
           @dirty = true
         end
