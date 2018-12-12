@@ -68,7 +68,6 @@ module Rscons
       @job_set = JobSet.new(@registered_build_dependencies, @side_effects)
       @user_deps = {}
       @builders = {}
-      @build_dirs = []
       @build_hooks = {pre: [], post: []}
       unless options[:exclude_builders]
         DEFAULT_BUILDERS.each do |builder_class_name|
@@ -98,7 +97,6 @@ module Rscons
     # following:
     # - :variables to clone construction variables (on by default)
     # - :builders to clone the builders (on by default)
-    # - :build_dirs to clone the build directories (on by default)
     # - :build_hooks to clone the build hooks (on by default)
     #
     # If a block is given, the Environment object is yielded to the block and
@@ -109,7 +107,7 @@ module Rscons
     # @return [Environment] The newly created {Environment} object.
     def clone(options = {})
       clone = options[:clone] || :all
-      clone = Set[:variables, :builders, :build_dirs, :build_hooks] if clone == :all
+      clone = Set[:variables, :builders, :build_hooks] if clone == :all
       clone = Set[] if clone == :none
       clone = Set.new(clone) if clone.is_a?(Array)
       clone.delete(:builders) if options[:exclude_builders]
@@ -122,11 +120,6 @@ module Rscons
         end
       end
       env.append(@varset) if clone.include?(:variables)
-      if clone.include?(:build_dirs)
-        @build_dirs.reverse.each do |src_dir, obj_dir|
-          env.build_dir(src_dir, obj_dir)
-        end
-      end
       if clone.include?(:build_hooks)
         @build_hooks[:pre].each do |build_hook_block|
           env.add_build_hook(&build_hook_block)
@@ -227,26 +220,6 @@ module Rscons
       @build_hooks[:post] << block
     end
 
-    # Specify a build directory for this Environment.
-    #
-    # Source files from src_dir will produce object files under obj_dir.
-    #
-    # @param src_dir [String, Regexp]
-    #   Path to the source directory. If a Regexp is given, it will be matched
-    #   to source file names.
-    # @param obj_dir [String]
-    #   Path to the object directory. If a Regexp is given as src_dir, then
-    #   obj_dir can contain backreferences to groups matched from the source
-    #   file name.
-    #
-    # @return [void]
-    def build_dir(src_dir, obj_dir)
-      if src_dir.is_a?(String)
-        src_dir = src_dir.gsub("\\", "/").sub(%r{/*$}, "")
-      end
-      @build_dirs.unshift([src_dir, obj_dir])
-    end
-
     # Return the file name to be built from +source_fname+ with suffix
     # +suffix+.
     #
@@ -264,20 +237,9 @@ module Rscons
     # @return [String]
     #   The file name to be built from +source_fname+ with suffix +suffix+.
     def get_build_fname(source_fname, suffix, options = {})
-      build_fname = Rscons.set_suffix(source_fname, suffix).gsub('\\', '/')
       options[:features] ||= []
       extra_path = options[:features].include?("shared") ? "/_shared" : ""
-      found_match = @build_dirs.find do |src_dir, obj_dir|
-        if src_dir.is_a?(Regexp)
-          build_fname.sub!(src_dir, "#{obj_dir}#{extra_path}")
-        else
-          build_fname.sub!(%r{^#{src_dir}/}, "#{obj_dir}#{extra_path}/")
-        end
-      end
-      unless found_match
-        build_fname = "#{@build_root}#{extra_path}/#{Util.make_relative_path(build_fname)}"
-      end
-      build_fname.gsub('\\', '/')
+      "#{@build_root}#{extra_path}/#{Util.make_relative_path(Rscons.set_suffix(source_fname, suffix))}".gsub("\\", "/")
     end
 
     # Get a construction variable's value.

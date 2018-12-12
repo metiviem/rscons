@@ -257,54 +257,14 @@ EOF
     ]
   end
 
-  it 'builds object files in a different build directory' do
-    test_dir('build_dir')
-    result = run_rscons
-    expect(result.stderr).to eq ""
-    expect(`./build_dir.exe`).to eq "Hello from two()\n"
-    expect(File.exists?('build_one/one.o')).to be_truthy
-    expect(File.exists?('build_two/two.o')).to be_truthy
-  end
-
-  it "supports trailing slashes at the end of build_dir sources and destinations" do
-    test_dir("build_dir")
-    result = run_rscons(rsconscript: "slashes.rb")
-    expect(result.stderr).to eq ""
-    expect(`./build_dir.exe`).to eq "Hello from two()\n"
-    expect(File.exists?("build_one/one.o")).to be_truthy
-    expect(File.exists?("build_two/two.o")).to be_truthy
-  end
-
-  it 'uses build directories before build root' do
-    test_dir('build_dir')
-    result = run_rscons(rsconscript: "build_dirs_and_root.rb")
-    expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *[
-      "CC build/one/one.o",
-      "CC build/two/two.o",
-      "LD build_dir.exe",
-    ]
-  end
-
-  it 'uses build_root if no build directories match' do
-    test_dir('build_dir')
-    result = run_rscons(rsconscript: "no_match_build_dir.rb")
-    expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *[
-      "CC build/e.1/src/one/one.o",
-      "CC build/e.1/src/two/two.o",
-      "LD build_dir.exe",
-    ]
-  end
-
   it "expands target and source paths starting with ^/ to be relative to the build root" do
-    test_dir('build_dir')
+    test_dir("typical")
     result = run_rscons(rsconscript: "carat.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
       %q{gcc -c -o build/e.1/one.o -MMD -MF build/e.1/one.mf -Isrc -Isrc/one -Isrc/two build/e.1/one.c},
       %q{gcc -c -o build/e.1/src/two/two.o -MMD -MF build/e.1/src/two/two.mf -Isrc -Isrc/one -Isrc/two src/two/two.c},
-      %Q{gcc -o build_dir.exe build/e.1/src/two/two.o build/e.1/one.o},
+      %Q{gcc -o program.exe build/e.1/src/two/two.o build/e.1/one.o},
     ]
   end
 
@@ -317,36 +277,28 @@ EOF
   end
 
   it 'cleans built files' do
-    test_dir('build_dir')
+    test_dir("simple")
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(`./build_dir.exe`).to eq "Hello from two()\n"
-    expect(File.exists?('build_one/one.o')).to be_truthy
-    expect(File.exists?('build_two/two.o')).to be_truthy
+    expect(`./simple.exe`).to match /This is a simple C program/
+    expect(File.exists?('build/e.1/simple.o')).to be_truthy
     result = run_rscons(op: %w[clean])
-    expect(File.exists?('build_one/one.o')).to be_falsey
-    expect(File.exists?('build_two/two.o')).to be_falsey
-    expect(File.exists?('build_one')).to be_falsey
-    expect(File.exists?('build_two')).to be_falsey
-    expect(File.exists?('build_dir.exe')).to be_falsey
-    expect(File.exists?('src/one/one.c')).to be_truthy
+    expect(File.exists?('build/e.1/simple.o')).to be_falsey
+    expect(File.exists?('build/e.1')).to be_falsey
+    expect(File.exists?('simple.exe')).to be_falsey
+    expect(File.exists?('simple.c')).to be_truthy
   end
 
   it 'does not clean created directories if other non-rscons-generated files reside there' do
-    test_dir('build_dir')
+    test_dir("simple")
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(`./build_dir.exe`).to eq "Hello from two()\n"
-    expect(File.exists?('build_one/one.o')).to be_truthy
-    expect(File.exists?('build_two/two.o')).to be_truthy
-    File.open('build_two/tmp', 'w') { |fh| fh.puts "dum" }
+    expect(`./simple.exe`).to match /This is a simple C program/
+    expect(File.exists?('build/e.1/simple.o')).to be_truthy
+    File.open('build/e.1/dum', 'w') { |fh| fh.puts "dum" }
     result = run_rscons(op: %w[clean])
-    expect(File.exists?('build_one/one.o')).to be_falsey
-    expect(File.exists?('build_two/two.o')).to be_falsey
-    expect(File.exists?('build_one')).to be_falsey
-    expect(File.exists?('build_two')).to be_truthy
-    expect(File.exists?('build_dir.exe')).to be_falsey
-    expect(File.exists?('src/one/one.c')).to be_truthy
+    expect(File.exists?('build/e.1')).to be_truthy
+    expect(File.exists?('build/e.1/dum')).to be_truthy
   end
 
   it 'allows Ruby classes as custom builders to be used to construct files' do
@@ -380,10 +332,10 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      %q{gcc -c -o debug/program.o -MMD -MF debug/program.mf '-DSTRING="Debug Version"' -O2 src/program.c},
-      %Q{gcc -o program-debug.exe debug/program.o},
-      %q{gcc -c -o release/program.o -MMD -MF release/program.mf '-DSTRING="Release Version"' -O2 src/program.c},
-      %Q{gcc -o program-release.exe release/program.o},
+      %q{gcc -c -o build/e.1/src/program.o -MMD -MF build/e.1/src/program.mf '-DSTRING="Debug Version"' -O2 src/program.c},
+      %Q{gcc -o program-debug.exe build/e.1/src/program.o},
+      %q{gcc -c -o build/e.2/src/program.o -MMD -MF build/e.2/src/program.mf '-DSTRING="Release Version"' -O2 src/program.c},
+      %Q{gcc -o program-release.exe build/e.2/src/program.o},
     ]
   end
 
@@ -392,12 +344,12 @@ EOF
     result = run_rscons(rsconscript: "clone_all.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      %q{gcc -c -o build/program.o -MMD -MF build/program.mf -DSTRING="Hello" -O2 src/program.c},
-      %q{post build/program.o},
-      %Q{gcc -o program.exe build/program.o},
+      %q{gcc -c -o build/e.1/src/program.o -MMD -MF build/e.1/src/program.mf -DSTRING="Hello" -O2 src/program.c},
+      %q{post build/e.1/src/program.o},
+      %Q{gcc -o program.exe build/e.1/src/program.o},
       %q{post program.exe},
-      %q{post build/program.o},
-      %Q{gcc -o program2.exe build/program.o},
+      %q{post build/e.2/src/program.o},
+      %Q{gcc -o program2.exe build/e.2/src/program.o},
       %q{post program2.exe},
     ]
   end
@@ -439,13 +391,13 @@ EOF
   end
 
   it 'supports build hooks to override construction variables' do
-    test_dir("build_dir")
+    test_dir("typical")
     result = run_rscons(rsconscript: "build_hooks.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      'gcc -c -o build_one/one.o -MMD -MF build_one/one.mf -Isrc/one -Isrc/two -O1 src/one/one.c',
-      'gcc -c -o build_two/two.o -MMD -MF build_two/two.mf -Isrc/one -Isrc/two -O2 src/two/two.c',
-      'gcc -o build_hook.exe build_one/one.o build_two/two.o',
+      'gcc -c -o build/e.1/src/one/one.o -MMD -MF build/e.1/src/one/one.mf -Isrc/one -Isrc/two -O1 src/one/one.c',
+      'gcc -c -o build/e.1/src/two/two.o -MMD -MF build/e.1/src/two/two.mf -Isrc/one -Isrc/two -O2 src/two/two.c',
+      'gcc -o build_hook.exe build/e.1/src/one/one.o build/e.1/src/two/two.o',
     ]
     expect(`./build_hook.exe`).to eq "Hello from two()\n"
   end
@@ -596,13 +548,13 @@ EOF
   end
 
   it "supports multiple values for CSUFFIX" do
-    test_dir("build_dir")
+    test_dir("typical")
     FileUtils.mv("src/one/one.c", "src/one/one.yargh")
     result = run_rscons(rsconscript: "csuffix.rb")
     expect(result.stderr).to eq ""
     expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
     expect(File.exists?("build/e.1/src/two/two.o")).to be_truthy
-    expect(`./build_dir.exe`).to eq "Hello from two()\n"
+    expect(`./program.exe`).to eq "Hello from two()\n"
   end
 
   it "supports multiple values for OBJSUFFIX" do
@@ -678,7 +630,7 @@ EOF
   end
 
   it "supports registering multiple build targets with the same target path" do
-    test_dir("build_dir")
+    test_dir("typical")
     result = run_rscons(rsconscript: "multiple_targets_same_name.rb")
     expect(result.stderr).to eq ""
     expect(File.exists?("one.o")).to be_truthy
@@ -689,7 +641,7 @@ EOF
   end
 
   it "expands target and source paths when builders are registered in build hooks" do
-    test_dir("build_dir")
+    test_dir("typical")
     result = run_rscons(rsconscript: "post_build_hook_expansion.rb")
     expect(result.stderr).to eq ""
     expect(File.exists?("one.o")).to be_truthy
@@ -841,7 +793,7 @@ EOF
   end
 
   it "prints a builder's short description with 'command' echo mode if there is no command" do
-    test_dir("build_dir")
+    test_dir("typical")
 
     result = run_rscons(rsconscript: "echo_command_ruby_builder.rb")
     expect(result.stderr).to eq ""
@@ -849,7 +801,7 @@ EOF
   end
 
   it "supports a string for a builder's echoed 'command' with Environment#print_builder_run_message" do
-    test_dir("build_dir")
+    test_dir("typical")
 
     result = run_rscons(rsconscript: "echo_command_string.rb")
     expect(result.stderr).to eq ""
@@ -940,7 +892,7 @@ EOF
     end
 
     it 'supports build hooks to override construction variables' do
-      test_dir("build_dir")
+      test_dir("typical")
       result = run_rscons(rsconscript: "backward_compatible_build_hooks.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
@@ -1031,7 +983,7 @@ EOF
 
   context "Install buildler" do
     it "copies a file to the target file name" do
-      test_dir("build_dir")
+      test_dir("typical")
 
       result = run_rscons(rsconscript: "install.rb")
       expect(result.stderr).to eq ""
@@ -1051,7 +1003,7 @@ EOF
     end
 
     it "operates the same as a Copy builder" do
-      test_dir("build_dir")
+      test_dir("typical")
 
       result = run_rscons(rsconscript: "copy.rb")
       expect(result.stderr).to eq ""
@@ -1071,7 +1023,7 @@ EOF
     end
 
     it "copies a file to the target directory name" do
-      test_dir "build_dir"
+      test_dir("typical")
 
       result = run_rscons(rsconscript: "install_directory.rb")
       expect(result.stderr).to eq ""
@@ -1085,7 +1037,7 @@ EOF
     end
 
     it "copies a directory to the non-existent target directory name" do
-      test_dir "build_dir"
+      test_dir("typical")
       result = run_rscons(rsconscript: "install_directory.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include("Install noexist/src")
@@ -1096,7 +1048,7 @@ EOF
     end
 
     it "copies a directory to the existent target directory name" do
-      test_dir "build_dir"
+      test_dir("typical")
       result = run_rscons(rsconscript: "install_directory.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include("Install exist/src")

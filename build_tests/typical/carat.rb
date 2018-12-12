@@ -3,5 +3,5 @@ Rscons::Environment.new(echo: :command) do |env|
   FileUtils.mkdir_p(env.build_root)
   FileUtils.mv("src/one/one.c", env.build_root)
   env.Object("^/one.o", "^/one.c")
-  env.Program("build_dir.exe", Rscons.glob('src/**/*.c') + ["^/one.o"])
+  env.Program("program.exe", Rscons.glob('src/**/*.c') + ["^/one.o"])
 end
