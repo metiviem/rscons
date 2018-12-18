@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env["build_root"] = env.build_root
     env["inc_h"] = "inc.h"
 

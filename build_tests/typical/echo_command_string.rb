@@ -7,7 +7,7 @@ class MyBuilder < Rscons::Builder
 end
 
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.echo = :command
     env.add_builder(MyBuilder.new)
     env.MyBuilder("foo")

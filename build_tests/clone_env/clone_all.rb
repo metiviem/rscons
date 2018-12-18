@@ -1,5 +1,5 @@
 build do
-  env1 = Rscons::Environment.new(echo: :command) do |env|
+  env1 = Environment.new(echo: :command) do |env|
     env['CFLAGS'] = '-O2'
     env.add_build_hook do |build_op|
       build_op[:vars]['CPPFLAGS'] = '-DSTRING="Hello"'

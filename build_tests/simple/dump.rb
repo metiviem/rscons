@@ -1,5 +1,5 @@
 build do
-  env = Rscons::Environment.new do |env|
+  env = Environment.new do |env|
     env["CFLAGS"] += %w[-O2 -fomit-frame-pointer]
     env[:foo] = :bar
   end

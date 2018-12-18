@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env["CPPPATH"] << "src/two"
     env.Object("one.o", "src/one/one.c")
     env.add_post_build_hook do |build_op|

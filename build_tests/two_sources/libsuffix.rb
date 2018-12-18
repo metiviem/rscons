@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new() do |env|
+  Environment.new() do |env|
     env["LIBSUFFIX"] = %w[.aaaa .aaa]
     env.Library("one.aaaa", "one.c", "CPPFLAGS" => ["-DONE"])
     env.Library("two.aaa", "two.c")

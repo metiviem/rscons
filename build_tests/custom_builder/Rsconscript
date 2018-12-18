@@ -10,7 +10,7 @@ EOF
 end
 
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.add_builder(MySource.new)
     env.MySource('inc.h', [])
     env.Program('program.exe', Dir['*.c'])

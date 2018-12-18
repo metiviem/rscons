@@ -9,7 +9,7 @@ class MyProgram < Rscons::Builder
 end
 
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.add_builder(MyProgram.new)
     env.Object("simple.o", "simple.c")
     File.open("two.c", "wb") do |fh|

@@ -11,7 +11,7 @@ build do
     end
   end
 
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.add_builder(MyCommand.new)
     command = %w[gcc -c -o ${_TARGET} ${_SOURCES}]
     env.MyCommand("simple.o", "simple.c", "CMD" => command)

@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new(echo: :command) do |env|
+  Environment.new(echo: :command) do |env|
     env.append('CPPPATH' => Rscons.glob('src/**/*/'))
     env.add_build_hook do |build_op|
       if File.basename(build_op[:target]) == "one.o"

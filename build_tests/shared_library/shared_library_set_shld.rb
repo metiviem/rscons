@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env["CPPPATH"] << "src/lib"
     env["SHLD"] = "gcc"
     libmine = env.SharedLibrary("mine", Rscons.glob("src/lib/*.c"))

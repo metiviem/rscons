@@ -10,7 +10,7 @@ EOF
 end
 
 build do
-  e1 = Rscons::Environment.new do |env|
+  e1 = Environment.new do |env|
     env.add_builder(MySource.new)
     env["one"] = "5"
     env[:cfg] = {val: "9"}

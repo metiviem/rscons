@@ -1,5 +1,5 @@
 build do
-  base_env = Rscons::Environment.new do |env|
+  base_env = Environment.new do |env|
     env.n_threads = 165
   end
 

@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env["ASSUFFIX"] = %w[.ssss .sss]
     env["CFLAGS"] += %w[-S]
     env.Object("one.ssss", "one.c", "CPPFLAGS" => ["-DONE"])

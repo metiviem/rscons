@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     tempdir = ENV["TEMP"] || ENV["TMP"] || "/tmp"
     source_file = File.join(tempdir, "abs.c")
     File.open(source_file, "w") do |fh|

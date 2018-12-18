@@ -3,7 +3,7 @@ configure do
 end
 
 build do
-  Rscons::Environment.new(echo: :command) do |env|
+  Environment.new(echo: :command) do |env|
     env.Program("myconfigtest", "simple.c")
   end
 end

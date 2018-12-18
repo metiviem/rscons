@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env["CSUFFIX"] = %w[.yargh .c]
     env["CFLAGS"] += %w[-x c]
     env["CPPPATH"] += Rscons.glob("src/**")

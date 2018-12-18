@@ -5,7 +5,7 @@ class MyObject < Rscons::Builder
 end
 
 build do
-  Rscons::Environment.new(echo: :command) do |env|
+  Environment.new(echo: :command) do |env|
     env.add_builder(MyObject.new)
     env.append('CPPPATH' => Rscons.glob('src/**'))
     env.add_build_hook do |build_op|

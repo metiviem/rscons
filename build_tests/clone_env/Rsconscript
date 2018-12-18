@@ -1,5 +1,5 @@
 build do
-  debug = Rscons::Environment.new(echo: :command) do |env|
+  debug = Environment.new(echo: :command) do |env|
     env['CFLAGS'] = '-O2'
     env['CPPFLAGS'] = '-DSTRING="Debug Version"'
     env.Program('program-debug.exe', Dir['src/*.c'])

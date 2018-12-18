@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.Program("simple.exe", Dir["*.c"])
     env.add_build_hook do |build_op|
       if build_op[:target].end_with?(".o")

@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.Object("simple.o", "simple.c")
     env.Object("two.o", "two.c")
   end

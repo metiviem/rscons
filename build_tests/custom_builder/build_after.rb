@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.Command("inc.c",
                 [],
                 "CMD" => %w[ruby gen.rb ${_TARGET}],

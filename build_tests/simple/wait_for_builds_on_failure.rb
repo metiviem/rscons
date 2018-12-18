@@ -12,7 +12,7 @@ class Fail < Rscons::Builder
 end
 
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.add_builder(Fail.new)
     4.times do |i|
       wait_time = i + 1

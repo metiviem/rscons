@@ -1,5 +1,5 @@
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.add_builder(:Checker) do |target, sources, cache, env, vars|
       unless cache.up_to_date?(target, :Checker, sources, env)
         puts "Checker #{sources.first}" if env.echo != :off

@@ -13,7 +13,7 @@ class MyObject < Rscons::Builder
 end
 
 build do
-  Rscons::Environment.new do |env|
+  Environment.new do |env|
     env.add_builder(MyObject.new)
     File.open("test.xyz", "w") do |fh|
       fh.puts <<EOF
