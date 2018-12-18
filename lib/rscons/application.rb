@@ -51,6 +51,8 @@ module Rscons
         clean
       when "configure"
         configure(operation_options)
+      when "distclean"
+        distclean
       else
         $stderr.puts "Unknown operation: #{operation}"
         1
@@ -96,6 +98,19 @@ module Rscons
           Dir.rmdir(directory) rescue nil
         end
       end
+      cache.clear
+      0
+    end
+
+    # Remove the build directory and clear the cache.
+    #
+    # @return [Integer]
+    #   Exit code.
+    def distclean
+      cache = Cache.instance
+      build_dir = cache.configuration_data["build_dir"]
+      clean
+      FileUtils.rm_rf(build_dir)
       cache.clear
       0
     end

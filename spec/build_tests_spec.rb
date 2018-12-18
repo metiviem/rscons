@@ -1895,4 +1895,21 @@ EOF
     end
   end
 
+  context "distclean" do
+    it "removes built files and the build directory" do
+      test_dir "simple"
+      result = run_rscons(rsconscript: "distclean.rb")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exists?("simple.o")).to be_truthy
+      expect(File.exists?("build")).to be_truthy
+      result = run_rscons(rsconscript: "distclean.rb", op: "distclean")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exists?("simple.o")).to be_falsey
+      expect(File.exists?("build")).to be_falsey
+      expect(File.exists?(Rscons::Cache::CACHE_FILE)).to be_falsey
+    end
+  end
+
 end
