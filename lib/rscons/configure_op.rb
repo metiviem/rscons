@@ -312,13 +312,10 @@ module Rscons
     # @param options [Hash]
     #   Options.
     def store_merge(vars, options = {})
-      usename = options[:use] || "_default_"
-      cache = Cache.instance
-      cache.configuration_data["vars"] ||= {}
-      cache.configuration_data["vars"][usename] ||= {}
-      cache.configuration_data["vars"][usename]["merge"] ||= {}
+      store_vars = store_common(options)
+      store_vars["merge"] ||= {}
       vars.each_pair do |key, value|
-        cache.configuration_data["vars"][usename]["merge"][key] = value
+        store_vars["merge"][key] = value
       end
     end
 
@@ -329,16 +326,13 @@ module Rscons
     # @param options [Hash]
     #   Options.
     def store_append(vars, options = {})
-      usename = options[:use] || "_default_"
-      cache = Cache.instance
-      cache.configuration_data["vars"] ||= {}
-      cache.configuration_data["vars"][usename] ||= {}
-      cache.configuration_data["vars"][usename]["append"] ||= {}
+      store_vars = store_common(options)
+      store_vars["append"] ||= {}
       vars.each_pair do |key, value|
-        if cache.configuration_data["vars"][usename]["append"][key].is_a?(Array) and value.is_a?(Array)
-          cache.configuration_data["vars"][usename]["append"][key] += value
+        if store_vars["append"][key].is_a?(Array) and value.is_a?(Array)
+          store_vars["append"][key] += value
         else
-          cache.configuration_data["vars"][usename]["append"][key] = value
+          store_vars["append"][key] = value
         end
       end
     end
@@ -350,12 +344,23 @@ module Rscons
     # @param options [Hash]
     #   Options.
     def store_parse(flags, options = {})
+      store_vars = store_common(options)
+      store_vars["parse"] ||= []
+      store_vars["parse"] << flags
+    end
+
+    # Common functionality for all store methods.
+    #
+    # @param options [Hash]
+    #   Options.
+    #
+    # @return [Hash]
+    #   Configuration Hash for storing vars.
+    def store_common(options)
       usename = options[:use] || "_default_"
       cache = Cache.instance
       cache.configuration_data["vars"] ||= {}
       cache.configuration_data["vars"][usename] ||= {}
-      cache.configuration_data["vars"][usename]["parse"] ||= []
-      cache.configuration_data["vars"][usename]["parse"] << flags
     end
 
     # Perform processing common to several configure checks.
