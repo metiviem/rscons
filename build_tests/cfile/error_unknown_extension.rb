@@ -1,3 +1,5 @@
-Rscons::Environment.new do |env|
-  env.CFile("file.c", "foo.bar")
+build do
+  Rscons::Environment.new do |env|
+    env.CFile("file.c", "foo.bar")
+  end
 end

@@ -1,3 +1,5 @@
-Rscons::Environment.new do |env|
-  env.Program('header.exe', Dir['*.c'])
+build do
+  Rscons::Environment.new do |env|
+    env.Program('header.exe', Dir['*.c'])
+  end
 end

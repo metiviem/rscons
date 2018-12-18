@@ -8,15 +8,17 @@ class MyProgram < Rscons::Builder
   end
 end
 
-Rscons::Environment.new do |env|
-  env.add_builder(MyProgram.new)
-  env.Object("simple.o", "simple.c")
-  File.open("two.c", "wb") do |fh|
-    fh.puts <<-EOF
-      void two(void)
-      {
-      }
-    EOF
+build do
+  Rscons::Environment.new do |env|
+    env.add_builder(MyProgram.new)
+    env.Object("simple.o", "simple.c")
+    File.open("two.c", "wb") do |fh|
+      fh.puts <<-EOF
+        void two(void)
+        {
+        }
+      EOF
+    end
+    env.MyProgram("simple.exe", ["simple.o", "two.c"])
   end
-  env.MyProgram("simple.exe", ["simple.o", "two.c"])
 end

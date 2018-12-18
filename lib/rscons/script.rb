@@ -19,6 +19,11 @@ module Rscons
         @script.autoconf = autoconf
       end
 
+      # Enter build block.
+      def build(&block)
+        @script.operations["build"] = block
+      end
+
       # Enter configuration block.
       def configure(&block)
         @script.operations["configure"] = block
@@ -79,6 +84,13 @@ module Rscons
     def load(path)
       script_contents = File.read(path, mode: "rb")
       Dsl.new(self).instance_eval(script_contents, path, 1)
+    end
+
+    # Perform build operation.
+    def build
+      if build_proc = @operations["build"]
+        build_proc.call
+      end
     end
 
     # Perform configure operation.

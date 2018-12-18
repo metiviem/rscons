@@ -1,10 +1,12 @@
-debug = Rscons::Environment.new(echo: :command) do |env|
-  env['CFLAGS'] = '-O2'
-  env['CPPFLAGS'] = '-DSTRING="Debug Version"'
-  env.Program('program-debug.exe', Dir['src/*.c'])
-end
+build do
+  debug = Rscons::Environment.new(echo: :command) do |env|
+    env['CFLAGS'] = '-O2'
+    env['CPPFLAGS'] = '-DSTRING="Debug Version"'
+    env.Program('program-debug.exe', Dir['src/*.c'])
+  end
 
-release = debug.clone do |env|
-  env["CPPFLAGS"] = '-DSTRING="Release Version"'
-  env.Program('program-release.exe', Dir['src/*.c'])
+  release = debug.clone do |env|
+    env["CPPFLAGS"] = '-DSTRING="Release Version"'
+    env.Program('program-release.exe', Dir['src/*.c'])
+  end
 end

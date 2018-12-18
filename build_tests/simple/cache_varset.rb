@@ -14,7 +14,9 @@ class TestBuilder < Rscons::Builder
   end
 end
 
-Rscons::Environment.new do |env|
-  env.add_builder(TestBuilder.new)
-  env.TestBuilder("foo")
+build do
+  Rscons::Environment.new do |env|
+    env.add_builder(TestBuilder.new)
+    env.TestBuilder("foo")
+  end
 end

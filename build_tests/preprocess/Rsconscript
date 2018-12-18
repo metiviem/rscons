@@ -1,3 +1,5 @@
-Rscons::Environment.new do |env|
-  env.Preprocess("pp", "foo.h")
+build do
+  Rscons::Environment.new do |env|
+    env.Preprocess("pp", "foo.h")
+  end
 end

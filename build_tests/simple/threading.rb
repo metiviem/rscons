@@ -18,11 +18,13 @@ class NonThreadedTestBuilder < Rscons::Builder
   end
 end
 
-Rscons::Environment.new do |env|
-  env.add_builder(ThreadedTestBuilder.new)
-  env.add_builder(NonThreadedTestBuilder.new)
-  env.ThreadedTestBuilder("a")
-  env.ThreadedTestBuilder("b")
-  env.ThreadedTestBuilder("c")
-  env.NonThreadedTestBuilder("d")
+build do
+  Rscons::Environment.new do |env|
+    env.add_builder(ThreadedTestBuilder.new)
+    env.add_builder(NonThreadedTestBuilder.new)
+    env.ThreadedTestBuilder("a")
+    env.ThreadedTestBuilder("b")
+    env.ThreadedTestBuilder("c")
+    env.NonThreadedTestBuilder("d")
+  end
 end

@@ -6,8 +6,10 @@ class MyBuilder < Rscons::Builder
   end
 end
 
-Rscons::Environment.new do |env|
-  env.echo = :command
-  env.add_builder(MyBuilder.new)
-  env.MyBuilder("foo")
+build do
+  Rscons::Environment.new do |env|
+    env.echo = :command
+    env.add_builder(MyBuilder.new)
+    env.MyBuilder("foo")
+  end
 end

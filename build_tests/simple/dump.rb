@@ -1,5 +1,7 @@
-env = Rscons::Environment.new do |env|
-  env["CFLAGS"] += %w[-O2 -fomit-frame-pointer]
-  env[:foo] = :bar
+build do
+  env = Rscons::Environment.new do |env|
+    env["CFLAGS"] += %w[-O2 -fomit-frame-pointer]
+    env[:foo] = :bar
+  end
+  env.dump
 end
-env.dump

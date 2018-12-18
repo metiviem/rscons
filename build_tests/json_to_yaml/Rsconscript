@@ -1,15 +1,17 @@
-Rscons::Environment.new do |env|
-  require 'json'
-  require 'yaml'
-  env.add_builder(:JsonToYaml) do |target, sources, cache, env, vars|
-    unless cache.up_to_date?(target, :JsonToYaml, sources, env)
-      cache.mkdir_p(File.dirname(target))
-      File.open(target, 'w') do |f|
-        f.write(YAML.dump(JSON.load(IO.read(sources.first))))
+build do
+  Rscons::Environment.new do |env|
+    require 'json'
+    require 'yaml'
+    env.add_builder(:JsonToYaml) do |target, sources, cache, env, vars|
+      unless cache.up_to_date?(target, :JsonToYaml, sources, env)
+        cache.mkdir_p(File.dirname(target))
+        File.open(target, 'w') do |f|
+          f.write(YAML.dump(JSON.load(IO.read(sources.first))))
+        end
+        cache.register_build(target, :JsonToYaml, sources, env)
       end
-      cache.register_build(target, :JsonToYaml, sources, env)
+      target
     end
-    target
+    env.JsonToYaml('foo.yml', 'foo.json')
   end
-  env.JsonToYaml('foo.yml', 'foo.json')
 end

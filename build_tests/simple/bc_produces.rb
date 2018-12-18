@@ -12,10 +12,11 @@ class MyObject < Rscons::Builder
   end
 end
 
-Rscons::Environment.new do |env|
-  env.add_builder(MyObject.new)
-  File.open("test.xyz", "w") do |fh|
-    fh.puts <<EOF
+build do
+  Rscons::Environment.new do |env|
+    env.add_builder(MyObject.new)
+    File.open("test.xyz", "w") do |fh|
+      fh.puts <<EOF
 #include <stdio.h>
 int main(int argc, char * argv[])
 {
@@ -23,6 +24,7 @@ int main(int argc, char * argv[])
     return 0;
 }
 EOF
-  env.Program("test", "test.xyz")
+    env.Program("test", "test.xyz")
+    end
   end
 end

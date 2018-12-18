@@ -12,8 +12,10 @@ class CHGen < Rscons::Builder
   end
 end
 
-Rscons::Environment.new do |env|
-  env.add_builder(CHGen.new)
-  env.CHGen("inc.c", ["program.c"])
-  env.Program("program.exe", %w[program.c inc.c])
+build do
+  Rscons::Environment.new do |env|
+    env.add_builder(CHGen.new)
+    env.CHGen("inc.c", ["program.c"])
+    env.Program("program.exe", %w[program.c inc.c])
+  end
 end

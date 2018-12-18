@@ -15,6 +15,11 @@ module Rscons
       #   All Environments.
       attr_reader :environments
 
+      # Initialize class instance variables.
+      def class_init
+        @environments = []
+      end
+
       # Get an ID for a new Environment. This is a monotonically increasing
       # integer.
       #
@@ -77,8 +82,7 @@ module Rscons
         end
       end
       @echo = options[:echo] || :short
-      # TODO: remove the || "build" below when autoconf is turned on for build test specs
-      @build_root = "#{Cache.instance.configuration_data["build_dir"] || "build"}/e.#{@id}"
+      @build_root = "#{Cache.instance.configuration_data["build_dir"]}/e.#{@id}"
       load_configuration_data!
 
       if block_given?
@@ -273,6 +277,9 @@ module Rscons
     # @return [void]
     def process
       cache = Cache.instance
+      unless cache.configuration_data["configured"]
+        raise "Project must be configured before processing an Environment"
+      end
       failure = nil
       begin
         while @job_set.size > 0 or @threaded_commands.size > 0
@@ -1083,4 +1090,6 @@ module Rscons
     end
 
   end
+
+  Environment.class_init
 end

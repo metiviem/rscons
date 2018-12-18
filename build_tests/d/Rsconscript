@@ -1,3 +1,5 @@
-Rscons::Environment.new(echo: :command) do |env|
-  env.Program("hello-d.exe", Rscons.glob("*.d"))
+build do
+  Rscons::Environment.new(echo: :command) do |env|
+    env.Program("hello-d.exe", Rscons.glob("*.d"))
+  end
 end

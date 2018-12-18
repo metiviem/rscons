@@ -3,6 +3,8 @@ configure do
   check_c_header "stdio.h", set_define: "HAVE_STDIO_H"
 end
 
-Rscons::Environment.new(echo: :command) do |env|
-  env.Object("simple.o", "simple.c")
+build do
+  Rscons::Environment.new(echo: :command) do |env|
+    env.Object("simple.o", "simple.c")
+  end
 end

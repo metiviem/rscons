@@ -1886,6 +1886,13 @@ EOF
       expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
       expect(result.status).to_not eq 0
     end
+
+    it "exits with an error if configuration has not been performed before attempting to process an environment" do
+      test_dir "configure"
+      result = run_rscons(rsconscript: "error_env_process_before_configure.rb")
+      expect(result.stderr).to match /Project must be configured before processing an Environment/
+      expect(result.status).to_not eq 0
+    end
   end
 
 end

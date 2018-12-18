@@ -68,6 +68,7 @@ module Rscons
     #   Exit code.
     def build(options)
       begin
+        @script.build
         Environment.environments.each do |env|
           env.process
         end

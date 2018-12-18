@@ -10,10 +10,12 @@ class StrictBuilder < Rscons::Builder
   end
 end
 
-Rscons::Environment.new(echo: :command) do |env|
-  env.add_builder(StrictBuilder.new)
-  env.Object("one.o", "one.c", "CCFLAGS" => %w[-DONE])
-  env.Object("two.o", "two.c")
-  sources = File.read("sources", mode: "rb").split(" ")
-  env.StrictBuilder("program.exe", sources)
+build do
+  Rscons::Environment.new(echo: :command) do |env|
+    env.add_builder(StrictBuilder.new)
+    env.Object("one.o", "one.c", "CCFLAGS" => %w[-DONE])
+    env.Object("two.o", "two.c")
+    sources = File.read("sources", mode: "rb").split(" ")
+    env.StrictBuilder("program.exe", sources)
+  end
 end

@@ -25,10 +25,12 @@ class DebugBuilder < Rscons::Builder
   end
 end
 
-Rscons::Environment.new do |env|
-  env.add_builder(DebugBuilder.new)
-  if Rscons.vars["new_user_dep"]
-    env.depends("foo.o", "new_dep")
+build do
+  Rscons::Environment.new do |env|
+    env.add_builder(DebugBuilder.new)
+    if Rscons.vars["new_user_dep"]
+      env.depends("foo.o", "new_dep")
+    end
+    env.DebugBuilder("foo.o", "simple.c")
   end
-  env.DebugBuilder("foo.o", "simple.c")
 end
