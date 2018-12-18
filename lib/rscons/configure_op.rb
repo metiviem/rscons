@@ -178,6 +178,9 @@ module Rscons
       }
       command = Environment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
+      if status == 0
+        store_append({"LIBS" => [lib]}, options)
+      end
       common_config_checks(status, options)
     end
 

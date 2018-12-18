@@ -1773,6 +1773,15 @@ EOF
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for library 'mfoofoo'... not found/
       end
+
+      it "links against the checked library by default" do
+        test_dir "configure"
+        result = run_rscons(rsconscript: "check_lib_success.rb", op: "build")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for library 'm'... found/
+        expect(result.stdout).to match /gcc.*-lm/
+      end
     end
 
     context "check_program" do
