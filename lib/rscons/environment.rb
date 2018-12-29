@@ -69,7 +69,7 @@ module Rscons
       @threaded_commands = Set.new
       @registered_build_dependencies = {}
       @side_effects = {}
-      @varset = VarSet.new
+      @varset = VarSet.new(Rscons.application.default_varset)
       @job_set = JobSet.new(@registered_build_dependencies, @side_effects)
       @user_deps = {}
       @builders = {}
@@ -169,12 +169,6 @@ module Rscons
         builder = Rscons::Builders::SimpleBuilder.new(builder, &action)
       end
       @builders[builder.name] = builder
-      var_defs = builder.default_variables(self)
-      if var_defs
-        var_defs.each_pair do |var, val|
-          @varset[var] ||= val
-        end
-      end
     end
 
     # Add a build hook to the Environment.

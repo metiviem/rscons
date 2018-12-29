@@ -13,29 +13,22 @@ module Rscons
         "SHDC" => "DSUFFIX",
       }
 
-      # Return default construction variables for the builder.
-      #
-      # @param env [Environment] The Environment using the builder.
-      #
-      # @return [Hash] Default construction variables for the builder.
-      def default_variables(env)
-        pic_flags = (RUBY_PLATFORM =~ /mingw/ ? [] : ['-fPIC'])
-        {
-          'SHCCFLAGS' => ['${CCFLAGS}'] + pic_flags,
+      pic_flags = (RUBY_PLATFORM =~ /mingw/ ? [] : ['-fPIC'])
+      Rscons.application.default_varset.append(
+        'SHCCFLAGS' => ['${CCFLAGS}'] + pic_flags,
 
-          'SHCC' => '${CC}',
-          'SHCFLAGS' => ['${CFLAGS}'],
-          'SHCCCMD' => ['${SHCC}', '-c', '-o', '${_TARGET}', '${CCDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
+        'SHCC' => '${CC}',
+        'SHCFLAGS' => ['${CFLAGS}'],
+        'SHCCCMD' => ['${SHCC}', '-c', '-o', '${_TARGET}', '${CCDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
 
-          'SHCXX' => '${CXX}',
-          'SHCXXFLAGS' => ['${CXXFLAGS}'],
-          'SHCXXCMD' => ['${SHCXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCXXFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
+        'SHCXX' => '${CXX}',
+        'SHCXXFLAGS' => ['${CXXFLAGS}'],
+        'SHCXXCMD' => ['${SHCXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCXXFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
 
-          'SHDC' => 'gdc',
-          'SHDFLAGS' => ['${DFLAGS}'] + pic_flags,
-          'SHDCCMD' => ['${SHDC}', '-c', '-o', '${_TARGET}', '${INCPREFIX}${D_IMPORT_PATH}', '${SHDFLAGS}', '${_SOURCES}'],
-        }
-      end
+        'SHDC' => 'gdc',
+        'SHDFLAGS' => ['${DFLAGS}'] + pic_flags,
+        'SHDCCMD' => ['${SHDC}', '-c', '-o', '${_TARGET}', '${INCPREFIX}${D_IMPORT_PATH}', '${SHDFLAGS}', '${_SOURCES}'],
+      )
 
       # Return a set of build features that this builder provides.
       #

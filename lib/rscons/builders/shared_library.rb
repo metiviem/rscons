@@ -4,22 +4,15 @@ module Rscons
     # shared library.
     class SharedLibrary < Builder
 
-      # Return default construction variables for the builder.
-      #
-      # @param env [Environment] The Environment using the builder.
-      #
-      # @return [Hash] Default construction variables for the builder.
-      def default_variables(env)
-        {
-          'SHLIBPREFIX' => (RUBY_PLATFORM =~ /mingw/ ? '' : 'lib'),
-          'SHLIBSUFFIX' => (RUBY_PLATFORM =~ /mingw/ ? '.dll' : '.so'),
-          'SHLDFLAGS' => ['${LDFLAGS}', '-shared'],
-          'SHLD' => nil,
-          'SHLIBDIRPREFIX' => '-L',
-          'SHLIBLINKPREFIX' => '-l',
-          'SHLDCMD' => ['${SHLD}', '-o', '${_TARGET}', '${SHLDFLAGS}', '${_SOURCES}', '${SHLIBDIRPREFIX}${LIBPATH}', '${SHLIBLINKPREFIX}${LIBS}']
-        }
-      end
+      Rscons.application.default_varset.append(
+        'SHLIBPREFIX' => (RUBY_PLATFORM =~ /mingw/ ? '' : 'lib'),
+        'SHLIBSUFFIX' => (RUBY_PLATFORM =~ /mingw/ ? '.dll' : '.so'),
+        'SHLDFLAGS' => ['${LDFLAGS}', '-shared'],
+        'SHLD' => nil,
+        'SHLIBDIRPREFIX' => '-L',
+        'SHLIBLINKPREFIX' => '-l',
+        'SHLDCMD' => ['${SHLD}', '-o', '${_TARGET}', '${SHLDFLAGS}', '${_SOURCES}', '${SHLIBDIRPREFIX}${LIBPATH}', '${SHLIBLINKPREFIX}${LIBS}']
+      )
 
       # Return a set of build features that this builder provides.
       #

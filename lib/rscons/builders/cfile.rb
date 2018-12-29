@@ -8,23 +8,16 @@ module Rscons
     #   env.CFile("lex.yy.cc", "parser.ll")
     class CFile < Builder
 
-      # Return default construction variables for the builder.
-      #
-      # @param env [Environment] The Environment using the builder.
-      #
-      # @return [Hash] Default construction variables for the builder.
-      def default_variables(env)
-        {
-          "YACC" => "bison",
-          "YACC_FLAGS" => ["-d"],
-          "YACC_CMD" => ["${YACC}", "${YACC_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"],
-          "YACCSUFFIX" => [".y", ".yy"],
-          "LEX" => "flex",
-          "LEX_FLAGS" => [],
-          "LEX_CMD" => ["${LEX}", "${LEX_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"],
-          "LEXSUFFIX" => [".l", ".ll"],
-        }
-      end
+      Rscons.application.default_varset.append(
+        "YACC" => "bison",
+        "YACC_FLAGS" => ["-d"],
+        "YACC_CMD" => ["${YACC}", "${YACC_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"],
+        "YACCSUFFIX" => [".y", ".yy"],
+        "LEX" => "flex",
+        "LEX_FLAGS" => [],
+        "LEX_CMD" => ["${LEX}", "${LEX_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"],
+        "LEXSUFFIX" => [".l", ".ll"],
+      )
 
       # Run the builder to produce a build target.
       #

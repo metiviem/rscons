@@ -15,15 +15,6 @@ module Rscons
       self.class.name.split(":").last
     end
 
-    # Return a set of default construction variables for the builder.
-    #
-    # @param env [Environment] The Environment.
-    #
-    # @return [Hash] Default construction variables.
-    def default_variables(env)
-      {}
-    end
-
     # Return a set of build features that this builder provides.
     #
     # @return [Array<String>]

@@ -4,25 +4,18 @@ module Rscons
     # executable program.
     class Program < Builder
 
-      # Return default construction variables for the builder.
-      #
-      # @param env [Environment] The Environment using the builder.
-      #
-      # @return [Hash] Default construction variables for the builder.
-      def default_variables(env)
-        {
-          'OBJSUFFIX' => '.o',
-          'PROGSUFFIX' => (Object.const_get("RUBY_PLATFORM") =~ /mingw|cygwin/ ? ".exe" : ""),
-          'LD' => nil,
-          'LIBSUFFIX' => '.a',
-          'LDFLAGS' => [],
-          'LIBPATH' => [],
-          'LIBDIRPREFIX' => '-L',
-          'LIBLINKPREFIX' => '-l',
-          'LIBS' => [],
-          'LDCMD' => ['${LD}', '-o', '${_TARGET}', '${LDFLAGS}', '${_SOURCES}', '${LIBDIRPREFIX}${LIBPATH}', '${LIBLINKPREFIX}${LIBS}']
-        }
-      end
+      Rscons.application.default_varset.append(
+        'OBJSUFFIX' => '.o',
+        'PROGSUFFIX' => (Object.const_get("RUBY_PLATFORM") =~ /mingw|cygwin/ ? ".exe" : ""),
+        'LD' => nil,
+        'LIBSUFFIX' => '.a',
+        'LDFLAGS' => [],
+        'LIBPATH' => [],
+        'LIBDIRPREFIX' => '-L',
+        'LIBLINKPREFIX' => '-l',
+        'LIBS' => [],
+        'LDCMD' => ['${LD}', '-o', '${_TARGET}', '${LDFLAGS}', '${_SOURCES}', '${LIBDIRPREFIX}${LIBPATH}', '${LIBLINKPREFIX}${LIBS}']
+      )
 
       # Create a BuildTarget object for this build target.
       #

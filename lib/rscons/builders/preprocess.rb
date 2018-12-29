@@ -5,18 +5,11 @@ module Rscons
     # The Preprocess builder invokes the C preprocessor
     class Preprocess < Builder
 
-      # Return default construction variables for the builder.
-      #
-      # @param env [Environment] The Environment using the builder.
-      #
-      # @return [Hash] Default construction variables for the builder.
-      def default_variables(env)
-        {
-          "CPP_CMD" => %w[
-            ${_PREPROCESS_CC} -E ${_PREPROCESS_DEPGEN}
-            -o ${_TARGET} ${INCPREFIX}${CPPPATH} ${CPPFLAGS} ${_SOURCES}],
-        }
-      end
+      Rscons.application.default_varset.append(
+        "CPP_CMD" => %w[
+          ${_PREPROCESS_CC} -E ${_PREPROCESS_DEPGEN}
+          -o ${_TARGET} ${INCPREFIX}${CPPPATH} ${CPPFLAGS} ${_SOURCES}],
+      )
 
       # Run the builder to produce a build target.
       #

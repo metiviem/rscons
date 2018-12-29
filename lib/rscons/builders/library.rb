@@ -3,19 +3,12 @@ module Rscons
     # A default Rscons builder that produces a static library archive.
     class Library < Builder
 
-      # Return default construction variables for the builder.
-      #
-      # @param env [Environment] The Environment using the builder.
-      #
-      # @return [Hash] Default construction variables for the builder.
-      def default_variables(env)
-        {
-          'AR' => 'ar',
-          'LIBSUFFIX' => '.a',
-          'ARFLAGS' => ['rcs'],
-          'ARCMD' => ['${AR}', '${ARFLAGS}', '${_TARGET}', '${_SOURCES}']
-        }
-      end
+      Rscons.application.default_varset.append(
+        'AR' => 'ar',
+        'LIBSUFFIX' => '.a',
+        'ARFLAGS' => ['rcs'],
+        'ARCMD' => ['${AR}', '${ARFLAGS}', '${_TARGET}', '${_SOURCES}']
+      )
 
       # Set up a build operation using this builder.
       #

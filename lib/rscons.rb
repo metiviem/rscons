@@ -12,20 +12,6 @@ require_relative "rscons/util"
 require_relative "rscons/varset"
 require_relative "rscons/version"
 
-# default builders
-require_relative "rscons/builders/cfile"
-require_relative "rscons/builders/command"
-require_relative "rscons/builders/directory"
-require_relative "rscons/builders/disassemble"
-require_relative "rscons/builders/install"
-require_relative "rscons/builders/library"
-require_relative "rscons/builders/object"
-require_relative "rscons/builders/preprocess"
-require_relative "rscons/builders/program"
-require_relative "rscons/builders/shared_library"
-require_relative "rscons/builders/shared_object"
-require_relative "rscons/builders/simple_builder"
-
 # Namespace module for rscons classes
 module Rscons
 
@@ -176,6 +162,20 @@ module Rscons
   end
 
 end
+
+# default builders
+require_relative "rscons/builders/cfile"
+require_relative "rscons/builders/command"
+require_relative "rscons/builders/directory"
+require_relative "rscons/builders/disassemble"
+require_relative "rscons/builders/install"
+require_relative "rscons/builders/library"
+require_relative "rscons/builders/object"
+require_relative "rscons/builders/preprocess"
+require_relative "rscons/builders/program"
+require_relative "rscons/builders/shared_library"
+require_relative "rscons/builders/shared_object"
+require_relative "rscons/builders/simple_builder"
 
 # Unbuffer $stdout
 $stdout.sync = true
