@@ -113,7 +113,7 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.c",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = Environment.new.build_command("${LDCMD}", vars)
+      command = BasicEnvironment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -134,7 +134,7 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.cxx",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = Environment.new.build_command("${LDCMD}", vars)
+      command = BasicEnvironment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -155,7 +155,7 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.d",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = Environment.new.build_command("${LDCMD}", vars)
+      command = BasicEnvironment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -176,7 +176,7 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.c",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = Environment.new.build_command("${LDCMD}", vars)
+      command = BasicEnvironment.new.build_command("${LDCMD}", vars)
       _, _, status = log_and_test_command(command)
       if status == 0
         store_append({"LIBS" => [lib]}, options)
@@ -276,7 +276,7 @@ module Rscons
           merge = {"DC" => dc}
         when :ldc2
           command = %W[#{dc} -of #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
-          env = Environment.new
+          env = BasicEnvironment.new
           merge = {
             "DC" => dc,
             "DCCMD" => env["DCCMD"].map {|e| if e == "-o"; "-of"; else; e; end},

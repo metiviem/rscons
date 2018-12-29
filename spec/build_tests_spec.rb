@@ -1902,6 +1902,18 @@ EOF
       expect(result.stderr).to match /Project must be configured before processing an Environment/
       expect(result.status).to_not eq 0
     end
+
+    it "does not rebuild after building with auto-configuration" do
+      test_dir "configure"
+      result = run_rscons(rsconscript: "autoconf_rebuild.rb")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exists?("simple.exe")).to be_truthy
+      result = run_rscons(rsconscript: "autoconf_rebuild.rb")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to eq ""
+    end
   end
 
   context "distclean" do

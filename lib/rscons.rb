@@ -1,5 +1,6 @@
 require_relative "rscons/ansi"
 require_relative "rscons/application"
+require_relative "rscons/basic_environment"
 require_relative "rscons/build_target"
 require_relative "rscons/builder"
 require_relative "rscons/cache"
