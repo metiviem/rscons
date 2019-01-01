@@ -8,6 +8,7 @@ Global options:
   --version                   Show rscons version and exit
   -h, --help                  Show rscons help and exit
   -r COLOR, --color=COLOR     Set color mode (off, auto, force)
+  -v, --verbose               Run verbosely
 
 Operations:
   configure                   Configure the project
@@ -76,6 +77,10 @@ module Rscons
             when "force"
               Rscons.application.do_ansi_color = true
             end
+          end
+
+          opts.on("-v", "--verbose") do
+            Rscons.application.verbose = true
           end
 
           opts.on("--version") do

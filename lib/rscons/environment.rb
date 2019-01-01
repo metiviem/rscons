@@ -81,7 +81,14 @@ module Rscons
           add_builder(builder_class.new)
         end
       end
-      @echo = options[:echo] || :short
+      @echo =
+        if options[:echo]
+          options[:echo]
+        elsif Rscons.application.verbose
+          :command
+        else
+          :short
+        end
       @build_root = "#{Cache.instance.configuration_data["build_dir"]}/e.#{@id}"
 
       if block_given?

@@ -11,6 +11,10 @@ module Rscons
     #   The number of threads to use when scheduling subprocesses.
     attr_accessor :n_threads
 
+    # @return [Boolean]
+    #   Whether to run verbosely.
+    attr_accessor :verbose
+
     # @return [VarSet]
     #   Access any variables set on the rscons command-line.
     attr_reader :vars

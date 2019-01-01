@@ -1957,4 +1957,27 @@ EOF
     end
   end
 
+  context "verbose option" do
+    it "does not echo commands when verbose options not given" do
+      test_dir('simple')
+      result = run_rscons
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match /CC .*simple\.o/
+    end
+
+    it "echoes commands by default with -v" do
+      test_dir('simple')
+      result = run_rscons(rscons_args: %w[-v])
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match /gcc.*-o.*simple/
+    end
+
+    it "echoes commands by default with --verbose" do
+      test_dir('simple')
+      result = run_rscons(rscons_args: %w[--verbose])
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match /gcc.*-o.*simple/
+    end
+  end
+
 end
