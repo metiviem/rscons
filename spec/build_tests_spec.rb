@@ -1782,6 +1782,16 @@ EOF
         expect(result.stdout).to match /Checking for library 'm'... found/
         expect(result.stdout).to match /gcc.*-lm/
       end
+
+      it "does not link against the checked library by default if :use is specified" do
+        test_dir "configure"
+        result = run_rscons(rsconscript: "check_lib_use.rb", op: "build")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for library 'm'... found/
+        expect(result.stdout).to_not match /gcc.*test1.*-lm/
+        expect(result.stdout).to match /gcc.*test2.*-lm/
+      end
     end
 
     context "check_program" do
@@ -1831,6 +1841,20 @@ EOF
           expect(result.stderr).to eq ""
           expect(result.status).to_not eq 0
           expect(result.stdout).to match /Checking 'my-config'\.\.\. not found/
+        end
+
+        it "does not use the flags found by default if :use is specified" do
+          test_dir "configure"
+          create_exe "pkg-config", "echo '-DMYPACKAGE'"
+          result = run_rscons(rsconscript: "check_cfg_use.rb", op: "configure")
+          expect(result.stderr).to eq ""
+          expect(result.status).to eq 0
+          expect(result.stdout).to match /Checking for package 'mypackage'\.\.\. found/
+          result = run_rscons(rsconscript: "check_cfg_use.rb", op: "build")
+          expect(result.stderr).to eq ""
+          expect(result.status).to eq 0
+          expect(result.stdout).to_not match /gcc.*-o.*myconfigtest1.*-DMYPACKAGE/
+          expect(result.stdout).to match /gcc.*-o.*myconfigtest2.*-DMYPACKAGE/
         end
       end
 

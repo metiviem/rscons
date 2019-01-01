@@ -64,7 +64,7 @@ module Rscons
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
-      super()
+      super(options)
       @id = self.class.get_id
       self.class.register(self)
       @threaded_commands = Set.new
@@ -83,7 +83,6 @@ module Rscons
       end
       @echo = options[:echo] || :short
       @build_root = "#{Cache.instance.configuration_data["build_dir"]}/e.#{@id}"
-      load_configuration_data!
 
       if block_given?
         yield self

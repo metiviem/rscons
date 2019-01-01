@@ -3,8 +3,14 @@ module Rscons
   class BasicEnvironment
 
     # Create a BasicEnvironment object.
-    def initialize
+    #
+    # @api private
+    #
+    # @param options [Hash]
+    #   Construction options.
+    def initialize(options = {})
       @varset = VarSet.new(Rscons.application.default_varset)
+      load_configuration_data!(options)
     end
 
     # Get a construction variable's value.
@@ -185,15 +191,24 @@ module Rscons
       end
     end
 
-    # Load construction variables saved from the configure operation.
-    def load_configuration_data!
+    # Load all construction variables saved from the configure operation.
+    def load_configuration_data!(options)
       if vars = Cache.instance.configuration_data["vars"]
         if default_vars = vars["_default_"]
           apply_configuration_data!(default_vars)
         end
+        if options[:use]
+          Array(options[:use]).each do |use|
+            if use_vars = vars[use]
+              apply_configuration_data!(use_vars)
+            end
+          end
+        end
       end
     end
 
+    # Load a specific set of construction variables saved from the configure
+    # operation.
     def apply_configuration_data!(vars)
       if merge_vars = vars["merge"]
         append(merge_vars)
