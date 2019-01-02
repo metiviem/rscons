@@ -33,6 +33,7 @@ module Rscons
                           "_SOURCES" => sources,
                           "_DEPFILE" => Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars)))
         command = env.build_command("${CPP_CMD}", vars)
+        env.produces(target, vars['_DEPFILE'])
         # Store vars back into options so new keys are accessible in #finalize.
         options[:vars] = vars
         standard_threaded_build("#{name} #{target}", target, command, sources, env, cache)
@@ -49,7 +50,6 @@ module Rscons
           target, deps, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
           if File.exists?(vars['_DEPFILE'])
             deps += Environment.parse_makefile_deps(vars['_DEPFILE'])
-            FileUtils.rm_f(vars['_DEPFILE'])
           end
           cache.register_build(target, options[:tc].command, deps.uniq, env)
           target

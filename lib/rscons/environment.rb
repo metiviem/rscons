@@ -594,6 +594,12 @@ module Rscons
         rv = builder.run(build_operation)
       end
 
+      (@side_effects[build_operation[:target]] || []).each do |side_effect_file|
+        # Register side-effect files as build targets so that a Cache clean
+        # operation will remove them.
+        cache.register_build(side_effect_file, nil, [], self)
+      end
+
       if rv.is_a?(ThreadedCommand)
         # Store the build operation so the post-build hooks can be called
         # with it when the threaded command completes.
