@@ -55,32 +55,35 @@ module Rscons
 
       private
 
+      def add_global_options(opts)
+        opts.on("-j NTHREADS") do |n_threads|
+          Rscons.application.n_threads = n_threads.to_i
+        end
+
+        opts.on("-r", "--color MODE") do |color_mode|
+          case color_mode
+          when "off"
+            Rscons.application.do_ansi_color = false
+          when "force"
+            Rscons.application.do_ansi_color = true
+          end
+        end
+
+        opts.on("-v", "--verbose") do
+          Rscons.application.verbose = true
+        end
+      end
+
       def run_toplevel(argv)
         rsconscript = nil
         do_help = false
 
         OptionParser.new do |opts|
-          opts.banner = "Usage: #{$0} [options]"
+
+          add_global_options(opts)
 
           opts.on("-f FILE") do |f|
             rsconscript = f
-          end
-
-          opts.on("-j NTHREADS") do |n_threads|
-            Rscons.application.n_threads = n_threads.to_i
-          end
-
-          opts.on("-r", "--color MODE") do |color_mode|
-            case color_mode
-            when "off"
-              Rscons.application.do_ansi_color = false
-            when "force"
-              Rscons.application.do_ansi_color = true
-            end
-          end
-
-          opts.on("-v", "--verbose") do
-            Rscons.application.verbose = true
           end
 
           opts.on("--version") do
@@ -133,26 +136,25 @@ module Rscons
       end
 
       def parse_operation_args(operation, argv)
-        case operation
-        when "configure"
-          parse_configure_args(argv)
-        end
-      end
-
-      def parse_configure_args(argv)
         options = {}
         OptionParser.new do |opts|
-          opts.banner = "Usage: #{$0} [options]"
-
-          opts.on("-b", "--build DIR") do |build_dir|
-            options[:build_dir] = build_dir
-          end
-
-          opts.on("--prefix PREFIX") do |prefix|
-            options[:prefix] = prefix
+          add_global_options(opts)
+          case operation
+          when "configure"
+            parse_configure_args(opts, argv, options)
           end
         end.order!(argv)
         options
+      end
+
+      def parse_configure_args(opts, argv, options)
+        opts.on("-b", "--build DIR") do |build_dir|
+          options[:build_dir] = build_dir
+        end
+
+        opts.on("--prefix PREFIX") do |prefix|
+          options[:prefix] = prefix
+        end
       end
 
     end

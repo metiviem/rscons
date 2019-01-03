@@ -1978,6 +1978,13 @@ EOF
       expect(result.stderr).to eq ""
       expect(result.stdout).to match /gcc.*-o.*simple/
     end
+
+    it "echoes commands by default with -v after build operation" do
+      test_dir('simple')
+      result = run_rscons(op: %w[build -v])
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match /gcc.*-o.*simple/
+    end
   end
 
 end
