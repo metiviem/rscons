@@ -16,12 +16,15 @@ class DebugBuilder < Rscons::Builder
       sources = ["extra"] + sources
       strict_deps = true
     end
-    unless cache.up_to_date?(target, command, sources, env, debug: true, strict_deps: strict_deps)
-      desc = "#{name} #{target}"
-      return false unless env.execute(desc, command)
-      cache.register_build(target, command, sources, env)
+    if cache.up_to_date?(target, command, sources, env, debug: true, strict_deps: strict_deps)
+      target
+    else
+      ThreadedCommand.new(command, short_description: "#{name} #{target}")
     end
-    target
+  end
+
+  def finalize(options)
+    standard_finalize(options)
   end
 end
 

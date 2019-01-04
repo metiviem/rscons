@@ -336,27 +336,6 @@ module Rscons
       @job_set.clear!
     end
 
-    # Execute a builder command.
-    #
-    # @param short_desc [String] Message to print if the Environment's echo
-    #   mode is set to :short
-    # @param command [Array] The command to execute.
-    # @param options [Hash] Optional options, possible keys:
-    #   - :env - environment Hash to pass to Kernel#system.
-    #   - :options - options Hash to pass to Kernel#system.
-    #
-    # @return [true,false,nil] Return value from Kernel.system().
-    def execute(short_desc, command, options = {})
-      print_builder_run_message(short_desc, command)
-      env_args = options[:env] ? [options[:env]] : []
-      options_args = options[:options] ? [options[:options]] : []
-      system(*env_args, *Rscons.command_executer, *command, *options_args).tap do |result|
-        unless result or @echo == :command
-          print_failed_command(command)
-        end
-      end
-    end
-
     # Define a build target.
     #
     # @param method [Symbol] Method name.
@@ -466,39 +445,6 @@ module Rscons
     #   specified.
     def get_user_deps(target)
       @user_deps[target]
-    end
-
-    # Build a list of source files into files containing one of the suffixes
-    # given by suffixes.
-    #
-    # This method is used internally by Rscons builders.
-    #
-    # @deprecated Use {#register_builds} instead.
-    #
-    # @param sources [Array<String>] List of source files to build.
-    # @param suffixes [Array<String>]
-    #   List of suffixes to try to convert source files into.
-    # @param cache [Cache] The Cache.
-    # @param vars [Hash] Extra variables to pass to the builder.
-    #
-    # @return [Array<String>] List of the converted file name(s).
-    def build_sources(sources, suffixes, cache, vars)
-      sources.map do |source|
-        if source.end_with?(*suffixes)
-          source
-        else
-          converted = nil
-          suffixes.each do |suffix|
-            converted_fname = get_build_fname(source, suffix)
-            if builder = find_builder_for(converted_fname, source, [])
-              converted = run_builder(builder, converted_fname, [source], cache, vars)
-              return nil unless converted
-              break
-            end
-          end
-          converted or raise "Could not find a builder to handle #{source.inspect}."
-        end
-      end
     end
 
     # Find and register builders to build source files into files containing

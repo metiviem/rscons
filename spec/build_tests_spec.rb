@@ -842,32 +842,6 @@ EOF
       ]
     end
 
-    it "allows a builder to call Environment#build_sources in a non-threaded manner" do
-      test_dir("simple")
-      result = run_rscons(rsconscript: "build_sources.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *[
-        "CC simple.o",
-        "CC build/e.1/two.o",
-        "MyProgram simple.exe",
-      ]
-    end
-
-    it "prints the failed build command for a non-threaded builder" do
-      test_dir("simple")
-      File.open("simple.c", "wb") do |fh|
-        fh.write(<<EOF)
-void one()
-{
-}
-EOF
-      end
-      result = run_rscons(rsconscript: "build_sources.rb")
-      expect(result.status).to_not eq 0
-      expect(result.stderr).to match /main/
-      expect(result.stdout).to match /Failed command was: gcc/
-    end
-
     it "prints the failed build command for a threaded builder when called via Environment#run_builder without delayed execution" do
       test_dir("simple")
       File.open("simple.c", "wb") do |fh|
@@ -876,19 +850,6 @@ EOF
       result = run_rscons(rsconscript: "run_builder.rb")
       expect(result.stderr).to match /Failed to build/
       expect(result.stdout).to match /Failed command was: gcc/
-    end
-
-    it "supports builders that call Builder#standard_build" do
-      test_dir("simple")
-      result = run_rscons(rsconscript: "standard_build.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["MyCommand simple.o"]
-    end
-
-    it "supports the old 3-parameter signature to Builder#produces?" do
-      test_dir("simple")
-      result = run_rscons(rsconscript: "bc_produces.rb")
-      expect(result.stderr).to eq ""
     end
 
     it 'supports build hooks to override construction variables' do

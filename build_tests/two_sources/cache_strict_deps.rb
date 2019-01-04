@@ -2,11 +2,15 @@ class StrictBuilder < Rscons::Builder
   def run(options)
     target, sources, cache, env = options.values_at(:target, :sources, :cache, :env)
     command = %W[gcc -o #{target}] + sources.sort
-    unless cache.up_to_date?(target, command, sources, env, strict_deps: true)
-      return false unless env.execute("StrictBuilder #{target}", command)
-      cache.register_build(target, command, sources, env)
+    if cache.up_to_date?(target, command, sources, env, strict_deps: true)
+      target
+    else
+      ThreadedCommand.new(command, short_description: "#{name} #{target}")
     end
-    target
+  end
+
+  def finalize(options)
+    standard_finalize(options)
   end
 end
 

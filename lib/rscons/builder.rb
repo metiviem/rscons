@@ -180,33 +180,6 @@ module Rscons
     def finalize(options)
     end
 
-    # Check if the cache is up to date for the target and if not execute the
-    # build command. This method does not support parallelization.
-    #
-    # @param short_cmd_string [String]
-    #   Short description of build action to be printed when env.echo ==
-    #   :short.
-    # @param target [String] Name of the target file.
-    # @param command [Array<String>]
-    #   The command to execute to build the target.
-    # @param sources [Array<String>] Source file name(s).
-    # @param env [Environment] The Environment executing the builder.
-    # @param cache [Cache] The Cache object.
-    #
-    # @return [String,false]
-    #   The name of the target on success or false on failure.
-    def standard_build(short_cmd_string, target, command, sources, env, cache)
-      unless cache.up_to_date?(target, command, sources, env)
-        unless Rscons.phony_target?(target)
-          cache.mkdir_p(File.dirname(target))
-          FileUtils.rm_f(target)
-        end
-        return false unless env.execute(short_cmd_string, command)
-        cache.register_build(target, command, sources, env)
-      end
-      target
-    end
-
     # Check if the cache is up to date for the target and if not create a
     # {ThreadedCommand} object to execute the build command in a thread.
     #
