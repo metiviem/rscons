@@ -72,13 +72,14 @@ module Rscons
       @side_effects = {}
       @job_set = JobSet.new(@registered_build_dependencies, @side_effects)
       @user_deps = {}
+      # Hash of builder name (String) => builder class (Class).
       @builders = {}
       @build_hooks = {pre: [], post: []}
       unless options[:exclude_builders]
         DEFAULT_BUILDERS.each do |builder_class_name|
           builder_class = Builders.const_get(builder_class_name)
           builder_class or raise "Could not find builder class #{builder_class_name}"
-          add_builder(builder_class.new)
+          add_builder(builder_class)
         end
       end
       @echo =
@@ -146,22 +147,22 @@ module Rscons
       env
     end
 
-    # Add a {Builder} object to the Environment.
+    # Add a {Builder} to the Environment.
     #
-    # @overload add_builder(builder)
+    # @overload add_builder(builder_class)
     #
     #   Add the given builder to the Environment.
     #
-    #   @param builder [Builder] An instance of the builder to register.
+    #   @param builder_class [Class] A builder class to register.
     #
-    # @overload add_builder(builder,&action)
+    # @overload add_builder(name,&action)
     #
     #   Create a new {Builders::SimpleBuilder} instance and add it to the
     #   environment.
     #
     #   @since 1.8.0
     #
-    #   @param builder [String,Symbol]
+    #   @param name [String,Symbol]
     #     The name of the builder to add.
     #
     #   @param action [Block]
@@ -170,11 +171,11 @@ module Rscons
     #     {Rscons::Builder#run}.
     #
     # @return [void]
-    def add_builder(builder, &action)
-      if not builder.is_a? Rscons::Builder
-        builder = Rscons::Builders::SimpleBuilder.new(builder, &action)
+    def add_builder(builder_class, &action)
+      if builder_class.is_a?(String) or builder_class.is_a?(Symbol)
+        builder_class = BuilderBuilder.new(builder_class.to_s, Rscons::Builders::SimpleBuilder, &action)
       end
-      @builders[builder.name] = builder
+      @builders[builder_class.name] = builder_class
     end
 
     # Add a build hook to the Environment.
@@ -351,7 +352,7 @@ module Rscons
         unless vars.is_a?(Hash) or vars.is_a?(VarSet)
           raise "Unexpected construction variable set: #{vars.inspect}"
         end
-        builder = @builders[method.to_s]
+        builder = @builders[method.to_s].new
         target = expand_path(expand_varref(target))
         sources = Array(sources).map do |source|
           expand_path(expand_varref(source))
@@ -789,22 +790,22 @@ module Rscons
     # @return [Builder, nil]
     #   The builder found, if any.
     def find_builder_for(target, source, features)
-      @builders.values.find do |builder|
-        features_met?(builder, features) and builder.produces?(target, source, self)
+      @builders.values.find do |builder_class|
+        features_met?(builder_class, features) and builder_class.produces?(target, source, self)
       end
     end
 
     # Determine if a builder meets the requested features.
     #
-    # @param builder [Builder]
+    # @param builder_class [Class]
     #   The builder.
     # @param features [Array<String>]
     #   See {#register_builds}.
     #
     # @return [Boolean]
     #   Whether the builder meets the requested features.
-    def features_met?(builder, features)
-      builder_features = builder.features
+    def features_met?(builder_class, features)
+      builder_features = builder_class.features
       features.all? do |feature|
         want_feature = true
         if feature =~ /^-(.*)$/

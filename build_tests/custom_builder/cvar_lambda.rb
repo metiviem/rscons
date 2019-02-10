@@ -11,7 +11,7 @@ end
 
 build do
   e1 = Environment.new do |env|
-    env.add_builder(MySource.new)
+    env.add_builder(MySource)
     env["one"] = "5"
     env[:cfg] = {val: "9"}
     env["two"] = lambda do |args|

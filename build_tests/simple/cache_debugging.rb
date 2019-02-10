@@ -30,7 +30,7 @@ end
 
 build do
   Environment.new do |env|
-    env.add_builder(DebugBuilder.new)
+    env.add_builder(DebugBuilder)
     if Rscons.vars["new_user_dep"]
       env.depends("foo.o", "new_dep")
     end

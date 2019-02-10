@@ -14,7 +14,7 @@ end
 
 build do
   Environment.new do |env|
-    env.add_builder(CHGen.new)
+    env.add_builder(CHGen)
     env.CHGen("inc.c", ["program.c"])
     env.Program("program.exe", %w[program.c inc.c])
   end

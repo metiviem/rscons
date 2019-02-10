@@ -14,12 +14,14 @@ module Rscons
         'SHLDCMD' => ['${SHLD}', '-o', '${_TARGET}', '${SHLDFLAGS}', '${_SOURCES}', '${SHLIBDIRPREFIX}${LIBPATH}', '${SHLIBLINKPREFIX}${LIBS}']
       )
 
-      # Return a set of build features that this builder provides.
-      #
-      # @return [Array<String>]
-      #   Set of build features that this builder provides.
-      def features
-        %w[shared]
+      class << self
+        # Return a set of build features that this builder provides.
+        #
+        # @return [Array<String>]
+        #   Set of build features that this builder provides.
+        def features
+          %w[shared]
+        end
       end
 
       # Create a BuildTarget object for this build target.

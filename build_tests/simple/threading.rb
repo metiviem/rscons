@@ -20,8 +20,8 @@ end
 
 build do
   Environment.new do |env|
-    env.add_builder(ThreadedTestBuilder.new)
-    env.add_builder(NonThreadedTestBuilder.new)
+    env.add_builder(ThreadedTestBuilder)
+    env.add_builder(NonThreadedTestBuilder)
     env.ThreadedTestBuilder("a")
     env.ThreadedTestBuilder("b")
     env.ThreadedTestBuilder("c")

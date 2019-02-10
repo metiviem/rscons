@@ -6,21 +6,49 @@ module Rscons
 
   # Class to hold an object that knows how to build a certain type of file.
   class Builder
+    class << self
+      # Return the name of the builder.
+      #
+      # If not overridden this defaults to the last component of the class name.
+      #
+      # @return [String] The name of the builder.
+      def name
+        super.split(":").last
+      end
+
+      # Return a set of build features that this builder provides.
+      #
+      # @return [Array<String>]
+      #   Set of build features that this builder provides.
+      def features
+        []
+      end
+
+      # Return whether this builder object is capable of producing a given target
+      # file name from a given source file name.
+      #
+      # @param target [String]
+      #   The target file name.
+      # @param source [String]
+      #   The source file name.
+      # @param env [Environment]
+      #   The Environment.
+      #
+      # @return [Boolean]
+      #   Whether this builder object is capable of producing a given target
+      #   file name from a given source file name.
+      def produces?(target, source, env)
+        false
+      end
+    end
+
     # Return the name of the builder.
     #
     # If not overridden this defaults to the last component of the class name.
     #
     # @return [String] The name of the builder.
     def name
-      self.class.name.split(":").last
-    end
-
-    # Return a set of build features that this builder provides.
-    #
-    # @return [Array<String>]
-    #   Set of build features that this builder provides.
-    def features
-      []
+      self.class.name
     end
 
     # Create a BuildTarget object for this build target.
@@ -41,23 +69,6 @@ module Rscons
     # @return [BuildTarget]
     def create_build_target(options)
       BuildTarget.new(options)
-    end
-
-    # Return whether this builder object is capable of producing a given target
-    # file name from a given source file name.
-    #
-    # @param target [String]
-    #   The target file name.
-    # @param source [String]
-    #   The source file name.
-    # @param env [Environment]
-    #   The Environment.
-    #
-    # @return [Boolean]
-    #   Whether this builder object is capable of producing a given target
-    #   file name from a given source file name.
-    def produces?(target, source, env)
-      false
     end
 
     # Set up a build operation using this builder.

@@ -2,7 +2,8 @@ build do
   Environment.new do |env|
     require 'json'
     require 'yaml'
-    env.add_builder(:JsonToYaml) do |target, sources, cache, env, vars|
+    env.add_builder(:JsonToYaml) do |params|
+      target, sources, cache, env, vars = params.values_at(:target, :sources, :cache, :env, :vars)
       unless cache.up_to_date?(target, :JsonToYaml, sources, env)
         cache.mkdir_p(File.dirname(target))
         File.open(target, 'w') do |f|

@@ -43,7 +43,7 @@ module Rscons
           # Check the cache and copy if necessary
           unless cache.up_to_date?(dest, :Copy, [src], env)
             unless printed_message
-              env.print_builder_run_message("#{name} #{target}", nil)
+              env.print_builder_run_message("#{self.class.name} #{target}", nil)
               printed_message = true
             end
             cache.mkdir_p(File.dirname(dest))

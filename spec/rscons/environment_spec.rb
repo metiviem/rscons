@@ -4,7 +4,7 @@ module Rscons
       it "adds the default builders when they are not excluded" do
         env = Environment.new
         expect(env.builders.size).to be > 0
-        expect(env.builders.map {|name, builder| builder.is_a?(Builder)}.all?).to be_truthy
+        expect(env.builders.map {|name, builder| builder.is_a?(Class)}.all?).to be_truthy
         expect(env.builders.find {|name, builder| name == "Object"}).to_not be_nil
         expect(env.builders.find {|name, builder| name == "Program"}).to_not be_nil
         expect(env.builders.find {|name, builder| name == "Library"}).to_not be_nil
@@ -52,7 +52,7 @@ module Rscons
       it "adds the builder to the list of builders" do
         env = Environment.new(exclude_builders: true)
         expect(env.builders.keys).to eq []
-        env.add_builder(Rscons::Builders::Object.new)
+        env.add_builder(Rscons::Builders::Object)
         expect(env.builders.keys).to eq ["Object"]
       end
 

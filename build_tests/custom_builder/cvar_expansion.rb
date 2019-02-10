@@ -13,7 +13,7 @@ build do
   env = Environment.new do |env|
     env["hdr"] = "inc.h"
     env["src"] = "program.c"
-    env.add_builder(MySource.new)
+    env.add_builder(MySource)
     env.MySource('${hdr}')
     env.Program('program.exe', "${src}")
   end

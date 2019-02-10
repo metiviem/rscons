@@ -13,7 +13,7 @@ end
 
 build do
   Environment.new do |env|
-    env.add_builder(Fail.new)
+    env.add_builder(Fail)
     4.times do |i|
       wait_time = i + 1
       env.Fail("foo_#{wait_time}", [], "wait_time" => wait_time.to_s)

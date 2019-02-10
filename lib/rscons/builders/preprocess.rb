@@ -36,7 +36,7 @@ module Rscons
         env.produces(target, vars['_DEPFILE'])
         # Store vars back into options so new keys are accessible in #finalize.
         options[:vars] = vars
-        standard_threaded_build("#{name} #{target}", target, command, sources, env, cache)
+        standard_threaded_build("#{self.class.name} #{target}", target, command, sources, env, cache)
       end
 
       # Finalize the build operation.

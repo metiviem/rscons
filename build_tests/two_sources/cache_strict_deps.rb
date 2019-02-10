@@ -16,7 +16,7 @@ end
 
 build do
   Environment.new(echo: :command) do |env|
-    env.add_builder(StrictBuilder.new)
+    env.add_builder(StrictBuilder)
     env.Object("one.o", "one.c", "CCFLAGS" => %w[-DONE])
     env.Object("two.o", "two.c")
     sources = File.read("sources", mode: "rb").split(" ")

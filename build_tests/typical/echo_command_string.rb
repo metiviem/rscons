@@ -9,7 +9,7 @@ end
 build do
   Environment.new do |env|
     env.echo = :command
-    env.add_builder(MyBuilder.new)
+    env.add_builder(MyBuilder)
     env.MyBuilder("foo")
   end
 end
