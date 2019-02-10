@@ -24,47 +24,31 @@ module Rscons
         end
       end
 
-      # Create a BuildTarget object for this build target.
-      #
-      # The build target filename is given a platform-dependent suffix if no
-      # other suffix is given.
+      # Create an instance of the Builder to build a target.
       #
       # @param options [Hash]
-      #   Options to create the BuildTarget with.
-      # @option options [Environment] :env
-      #   The Environment.
+      #   Options.
       # @option options [String] :target
-      #   The user-supplied target name.
+      #   Target file name.
       # @option options [Array<String>] :sources
-      #   The user-supplied source file name(s).
-      #
-      # @return [BuildTarget]
-      def create_build_target(options)
-        env, target, vars = options.values_at(:env, :target, :vars)
-        my_options = options.dup
-        libprefix = env.expand_varref("${SHLIBPREFIX}", vars)
-        unless File.basename(target).start_with?(libprefix)
-          my_options[:target].sub!(%r{^(.*/)?([^/]+)$}, "\\1#{libprefix}\\2")
+      #   Source file name(s).
+      # @option options [Environment] :env
+      #   The Environment executing the builder.
+      # @option options [Hash,VarSet] :vars
+      #   Extra construction variables.
+      def initialize(options)
+        super(options)
+        libprefix = @env.expand_varref("${SHLIBPREFIX}", @vars)
+        unless File.basename(@target).start_with?(libprefix)
+          @target = @target.sub!(%r{^(.*/)?([^/]+)$}, "\\1#{libprefix}\\2")
         end
-        unless File.basename(target)["."]
-          my_options[:target] += env.expand_varref("${SHLIBSUFFIX}", vars)
+        unless File.basename(@target)["."]
+          @target += @env.expand_varref("${SHLIBSUFFIX}", @vars)
         end
-        super(my_options)
-      end
-
-      # Set up a build operation using this builder.
-      #
-      # @param options [Hash] Builder setup options.
-      #
-      # @return [Object]
-      #   Any object that the builder author wishes to be saved and passed back
-      #   in to the {#run} method.
-      def setup(options)
-        target, sources, env, vars = options.values_at(:target, :sources, :env, :vars)
-        suffixes = env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], vars)
+        suffixes = @env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], @vars)
         # Register builders to build each source to an object file or library.
-        env.register_builds(target, sources, suffixes, vars,
-                            features: %w[shared])
+        @objects = @env.register_builds(@target, @sources, suffixes, @vars,
+                                        features: %w[shared])
       end
 
       # Run the builder to produce a build target.
@@ -74,7 +58,7 @@ module Rscons
       # @return [String,false]
       #   Name of the target file on success or false on failure.
       def run(options)
-        target, sources, cache, env, vars, objects = options.values_at(:target, :sources, :cache, :env, :vars, :setup_info)
+        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
         ld = env.expand_varref("${SHLD}", vars)
         ld = if ld != ""
                ld
@@ -87,12 +71,12 @@ module Rscons
              end
         vars = vars.merge({
           '_TARGET' => target,
-          '_SOURCES' => objects,
+          '_SOURCES' => @objects,
           'SHLD' => ld,
         })
-        options[:sources] = objects
+        options[:sources] = @objects
         command = env.build_command("${SHLDCMD}", vars)
-        standard_threaded_build("SHLD #{target}", target, command, objects, env, cache)
+        standard_threaded_build("SHLD #{target}", target, command, @objects, env, cache)
       end
 
       # Finalize a build.

@@ -1,6 +1,6 @@
 class MyObject < Rscons::Builder
   def run(target, sources, cache, env, vars)
-    env.run_builder(env.builders["Object"].new, target, sources, cache, vars)
+    env.run_builder(env.builders["Object"].new(target: target, sources: sources, cache: cache, env: env, vars: vars), target, sources, cache, vars)
   end
 end
 

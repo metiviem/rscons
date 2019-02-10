@@ -42,6 +42,29 @@ module Rscons
       end
     end
 
+    # @return [String, Symbol]
+    #   Target file name.
+    attr_reader :target
+
+    # Create an instance of the Builder to build a target.
+    #
+    # @param options [Hash]
+    #   Options.
+    # @option options [String, Symbol] :target
+    #   Target file name.
+    # @option options [Array<String>] :sources
+    #   Source file name(s).
+    # @option options [Environment] :env
+    #   The Environment executing the builder.
+    # @option options [Hash,VarSet] :vars
+    #   Extra construction variables.
+    def initialize(options)
+      @target = options[:target]
+      @sources = options[:sources]
+      @env = options[:env]
+      @vars = options[:vars]
+    end
+
     # Return the name of the builder.
     #
     # If not overridden this defaults to the last component of the class name.
@@ -51,55 +74,14 @@ module Rscons
       self.class.name
     end
 
-    # Create a BuildTarget object for this build target.
+    # Manually record a given build target as depending on the specified files.
     #
-    # Builder sub-classes can override this method to manipulate parameters
-    # (for example, add a suffix to the user-given target file name).
+    # @param user_deps [Array<String>]
+    #   Dependency files.
     #
-    # @param options [Hash] Options to create the BuildTarget with.
-    # @option options [Environment] :env
-    #   The Environment.
-    # @option options [String] :target
-    #   The user-supplied target name.
-    # @option options [Array<String>] :sources
-    #   The user-supplied source file name(s).
-    # @option options [Hash,VarSet] :vars
-    #   Extra construction variables.
-    #
-    # @return [BuildTarget]
-    def create_build_target(options)
-      BuildTarget.new(options)
-    end
-
-    # Set up a build operation using this builder.
-    #
-    # This method is called when a build target is registered using this
-    # builder. This method should not do any building, but should perform any
-    # setup needed and register any prerequisite build targets that need to be
-    # built before the target being requested here.
-    #
-    # If the builder needs no special setup, it does not need to override this
-    # method. If there is any information produced in this method that will be
-    # needed later in the build, it can be stored in the return value from this
-    # method, which will be passed to the {#run} method.
-    #
-    # @since 1.10.0
-    #
-    # @param options [Hash]
-    #   Options.
-    # @option options [String] :target
-    #   Target file name.
-    # @option options [Array<String>] :sources
-    #   Source file name(s).
-    # @option options [Environment] :env
-    #   The Environment executing the builder.
-    # @option options [Hash,VarSet] :vars
-    #   Extra construction variables.
-    #
-    # @return [Object]
-    #   Any object that the builder author wishes to be saved and passed back
-    #   in to the {#run} method.
-    def setup(options)
+    # @return [void]
+    def depends(*user_deps)
+      @env.depends(@target, *user_deps)
     end
 
     # Run the builder to produce a build target.
@@ -139,8 +121,6 @@ module Rscons
     #     The Environment executing the builder.
     #   @option options [Hash,VarSet] :vars
     #     Extra construction variables.
-    #   @option options [Object] :setup_info
-    #     Whatever value was returned from this builder's {#setup} method call.
     #
     # @return [ThreadedCommand,String,false]
     #   Name of the target file on success or false on failure.
@@ -177,8 +157,6 @@ module Rscons
     #   The Environment executing the builder.
     # @option options [Hash,VarSet] :vars
     #   Extra construction variables.
-    # @option options [Object] :setup_info
-    #   Whatever value was returned from this builder's {#setup} method call.
     # @option options [true,false,nil] :command_status
     #   If the {#run} method returns a {ThreadedCommand}, this field will
     #   contain the return value from executing the command with

@@ -6,7 +6,7 @@ build do
                 Rscons.glob("src/*.cc"),
                 "LIBPATH" => %w[.],
                 "LIBS" => %w[mine])
-    env.build_after("test-shared.exe", libmine.to_s)
+    env.build_after("test-shared.exe", libmine)
     env.Program("test-static.exe",
                 Rscons.glob("src/**/*.cc"))
   end

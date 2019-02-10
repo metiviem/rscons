@@ -6,6 +6,6 @@ build do
                 Rscons.glob("src/*.c"),
                 "LIBPATH" => %w[.],
                 "LIBS" => %w[mine])
-    env.build_after("test-shared.exe", libmine.to_s)
+    env.build_after("test-shared.exe", libmine)
   end
 end

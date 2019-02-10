@@ -17,41 +17,26 @@ module Rscons
         'LDCMD' => ['${LD}', '-o', '${_TARGET}', '${LDFLAGS}', '${_SOURCES}', '${LIBDIRPREFIX}${LIBPATH}', '${LIBLINKPREFIX}${LIBS}']
       )
 
-      # Create a BuildTarget object for this build target.
+      # Create an instance of the Builder to build a target.
       #
-      # The build target filename is given a ".exe" suffix if Rscons is
-      # executing on a Windows platform and no other suffix is given.
-      #
-      # @param options [Hash] Options to create the BuildTarget with.
-      # @option options [Environment] :env
-      #   The Environment.
+      # @param options [Hash]
+      #   Options.
       # @option options [String] :target
-      #   The user-supplied target name.
+      #   Target file name.
       # @option options [Array<String>] :sources
-      #   The user-supplied source file name(s).
-      #
-      # @return [BuildTarget]
-      def create_build_target(options)
-        env, target, vars = options.values_at(:env, :target, :vars)
-        my_options = options.dup
-        unless File.basename(target)["."]
-          my_options[:target] += env.expand_varref("${PROGSUFFIX}", vars)
+      #   Source file name(s).
+      # @option options [Environment] :env
+      #   The Environment executing the builder.
+      # @option options [Hash,VarSet] :vars
+      #   Extra construction variables.
+      def initialize(options)
+        super(options)
+        unless File.basename(@target)["."]
+          @target += @env.expand_varref("${PROGSUFFIX}", @vars)
         end
-        super(my_options)
-      end
-
-      # Set up a build operation using this builder.
-      #
-      # @param options [Hash] Builder setup options.
-      #
-      # @return [Object]
-      #   Any object that the builder author wishes to be saved and passed back
-      #   in to the {#run} method.
-      def setup(options)
-        target, sources, env, vars = options.values_at(:target, :sources, :env, :vars)
-        suffixes = env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], vars)
+        suffixes = @env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], @vars)
         # Register builders to build each source to an object file or library.
-        env.register_builds(target, sources, suffixes, vars)
+        @objects = @env.register_builds(@target, @sources, suffixes, @vars)
       end
 
       # Run the builder to produce a build target.
@@ -61,7 +46,7 @@ module Rscons
       # @return [String,false]
       #   Name of the target file on success or false on failure.
       def run(options)
-        target, sources, cache, env, vars, objects = options.values_at(:target, :sources, :cache, :env, :vars, :setup_info)
+        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
         ld = env.expand_varref("${LD}", vars)
         ld = if ld != ""
                ld
@@ -74,12 +59,12 @@ module Rscons
              end
         vars = vars.merge({
           '_TARGET' => target,
-          '_SOURCES' => objects,
+          '_SOURCES' => @objects,
           'LD' => ld,
         })
-        options[:sources] = objects
+        options[:sources] = @objects
         command = env.build_command("${LDCMD}", vars)
-        standard_threaded_build("LD #{target}", target, command, objects, env, cache)
+        standard_threaded_build("LD #{target}", target, command, @objects, env, cache)
       end
 
       # Finalize a build.

@@ -17,8 +17,8 @@ end
 build do
   Environment.new do |env|
     env.add_builder(TestBuilder)
-    env.TestBuilder("one", [], "wait_time" => "3")
-    env.TestBuilder("two", [], "wait_time" => "0")
-    env.depends("two", "one")
+    one = env.TestBuilder("one", [], "wait_time" => "3")
+    two = env.TestBuilder("two", [], "wait_time" => "0")
+    env.depends(two, one)
   end
 end

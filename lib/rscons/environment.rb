@@ -282,8 +282,7 @@ module Rscons
                                  job[:sources],
                                  cache,
                                  job[:vars],
-                                 allow_delayed_execution: true,
-                                 setup_info: job[:setup_info])
+                                 allow_delayed_execution: true)
             unless result
               failure = "Failed to build #{job[:target]}"
               Ansi.write($stderr, :red, failure, :reset, "\n")
@@ -342,9 +341,9 @@ module Rscons
     # @param method [Symbol] Method name.
     # @param args [Array] Method arguments.
     #
-    # @return [BuildTarget]
-    #   The {BuildTarget} object registered, if the method called is a
-    #   {Builder}.
+    # @return [Builder]
+    #   The {Builder} object registered, if the method called is the name of a
+    #   registered {Builder}.
     def method_missing(method, *args)
       if @builders.has_key?(method.to_s)
         target, sources, vars, *rest = args
@@ -352,14 +351,13 @@ module Rscons
         unless vars.is_a?(Hash) or vars.is_a?(VarSet)
           raise "Unexpected construction variable set: #{vars.inspect}"
         end
-        builder = @builders[method.to_s].new
         target = expand_path(expand_varref(target))
         sources = Array(sources).map do |source|
           expand_path(expand_varref(source))
         end.flatten
-        build_target = builder.create_build_target(env: self, target: target, sources: sources, vars: vars)
-        add_target(build_target.to_s, builder, sources, vars, rest)
-        build_target
+        builder = @builders[method.to_s].new(env: self, target: target, sources: sources, vars: vars)
+        add_target(builder.target, builder, sources, vars, rest)
+        builder
       else
         super
       end
@@ -367,13 +365,21 @@ module Rscons
 
     # Manually record a given target as depending on the specified files.
     #
-    # @param target [String,BuildTarget] Target file.
-    # @param user_deps [Array<String>] Dependency files.
+    # @param target [String, Builder] Target file.
+    # @param user_deps [Array<String, Builder>] Dependency files.
     #
     # @return [void]
     def depends(target, *user_deps)
+      if target.is_a?(Builder)
+        target = target.target
+      end
       target = expand_varref(target.to_s)
-      user_deps = user_deps.map {|ud| expand_varref(ud)}
+      user_deps = user_deps.map do |ud|
+        if ud.is_a?(Builder)
+          ud = ud.target
+        end
+        expand_varref(ud)
+      end
       @user_deps[target] ||= []
       @user_deps[target] = (@user_deps[target] + user_deps).uniq
       build_after(target, user_deps)
@@ -400,7 +406,7 @@ module Rscons
     # @param targets [String, Array<String>]
     #   Target files to wait to build until the prerequisites are finished
     #   building.
-    # @param prerequisites [String, Array<String>]
+    # @param prerequisites [String, Builder, Array<String, Builder>]
     #   Files that must be built before building the specified targets.
     #
     # @return [void]
@@ -411,6 +417,9 @@ module Rscons
         target = expand_path(expand_varref(target))
         @registered_build_dependencies[target] ||= Set.new
         prerequisites.each do |prerequisite|
+          if prerequisite.is_a?(Builder)
+            prerequisite = prerequisite.target
+          end
           prerequisite = expand_path(expand_varref(prerequisite))
           @registered_build_dependencies[target] << prerequisite
         end
@@ -451,8 +460,8 @@ module Rscons
     # Find and register builders to build source files into files containing
     # one of the suffixes given by suffixes.
     #
-    # This method is used internally by Rscons builders. It should be called
-    # from the builder's #setup method.
+    # This method is used internally by Rscons builders. It can be called
+    # from the builder's #initialize method.
     #
     # @since 1.10.0
     #
@@ -510,8 +519,6 @@ module Rscons
     #   @since 1.10.0
     #   Allow a threaded command to be scheduled but not yet completed before
     #   this method returns.
-    # @option options [Object] :setup_info
-    #   Arbitrary builder info returned by Builder#setup.
     #
     # @return [String,false] Return value from the {Builder}'s +run+ method.
     def run_builder(builder, target, sources, cache, vars, options = {})
@@ -523,7 +530,6 @@ module Rscons
         cache: cache,
         env: self,
         vars: vars,
-        setup_info: options[:setup_info]
       }
       call_build_hooks = lambda do |sec|
         @build_hooks[sec].each do |build_hook_block|
@@ -672,17 +678,11 @@ module Rscons
     #
     # @return [void]
     def add_target(target, builder, sources, vars, args)
-      setup_info = builder.setup(
-        target: target,
-        sources: sources,
-        env: self,
-        vars: vars)
       @job_set.add_job(
         builder: builder,
         target: target,
         sources: sources,
-        vars: vars,
-        setup_info: setup_info)
+        vars: vars)
     end
 
     # Start a threaded command in a new thread.
