@@ -402,6 +402,18 @@ EOF
     expect(`./build_hook.exe`).to eq "Hello from two()\n"
   end
 
+  it 'supports build hooks to override the entire vars hash' do
+    test_dir("typical")
+    result = run_rscons(rsconscript: "build_hooks_override_vars.rb")
+    expect(result.stderr).to eq ""
+    expect(lines(result.stdout)).to include *[
+      'gcc -c -o one.o -MMD -MF one.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c',
+      'gcc -c -o two.o -MMD -MF two.mf -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c'
+    ]
+    expect(File.exists?('one.o')).to be_truthy
+    expect(File.exists?('two.o')).to be_truthy
+  end
+
   it 'rebuilds when user-specified dependencies change' do
     test_dir('simple')
 
@@ -850,18 +862,6 @@ EOF
       result = run_rscons(rsconscript: "run_builder.rb")
       expect(result.stderr).to match /Failed to build/
       expect(result.stdout).to match /Failed command was: gcc/
-    end
-
-    it 'supports build hooks to override construction variables' do
-      test_dir("typical")
-      result = run_rscons(rsconscript: "backward_compatible_build_hooks.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *[
-        'gcc -c -o one.o -MMD -MF one.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c',
-        'gcc -c -o two.o -MMD -MF two.mf -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c'
-      ]
-      expect(File.exists?('one.o')).to be_truthy
-      expect(File.exists?('two.o')).to be_truthy
     end
   end
 
