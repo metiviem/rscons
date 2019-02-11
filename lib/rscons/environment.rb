@@ -355,7 +355,7 @@ module Rscons
           expand_path(expand_varref(source))
         end.flatten
         builder = @builders[method.to_s].new(env: self, target: target, sources: sources, vars: vars)
-        add_target(builder.target, builder, sources, vars, rest)
+        add_target(builder.target, builder, sources, vars)
         builder
       else
         super
@@ -652,10 +652,9 @@ module Rscons
     # @param builder [Builder] The {Builder} to use to build the target.
     # @param sources [Array<String>] Source file name(s).
     # @param vars [Hash] Construction variable overrides.
-    # @param args [Object] Deprecated; unused.
     #
     # @return [void]
-    def add_target(target, builder, sources, vars, args)
+    def add_target(target, builder, sources, vars)
       @job_set.add_job(
         builder: builder,
         target: target,
