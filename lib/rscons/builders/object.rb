@@ -111,7 +111,7 @@ module Rscons
         if options[:command_status]
           target, deps, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
           if File.exists?(vars['_DEPFILE'])
-            deps += Environment.parse_makefile_deps(vars['_DEPFILE'])
+            deps += Util.parse_makefile_deps(vars['_DEPFILE'])
           end
           cache.register_build(target, options[:tc].command, deps.uniq, env)
           target

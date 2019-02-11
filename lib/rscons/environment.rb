@@ -806,31 +806,6 @@ module Rscons
       end
     end
 
-    # Parse dependencies from a Makefile.
-    #
-    # This method is used internally by Rscons builders.
-    #
-    # @param mf_fname [String] File name of the Makefile to read.
-    #
-    # @return [Array<String>] Paths of dependency files.
-    def self.parse_makefile_deps(mf_fname)
-      deps = []
-      buildup = ''
-      File.read(mf_fname).each_line do |line|
-        if line =~ /^(.*)\\\s*$/
-          buildup += ' ' + $1
-        else
-          buildup += ' ' + line
-          if buildup =~ /^.*: (.*)$/
-            mf_deps = $1
-            deps += mf_deps.split(' ').map(&:strip)
-          end
-          buildup = ''
-        end
-      end
-      deps
-    end
-
   end
 
   Environment.class_init

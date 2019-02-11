@@ -111,5 +111,24 @@ module Rscons
       end
     end
 
+    describe ".parse_makefile_deps" do
+      it 'handles dependencies on one line' do
+        expect(File).to receive(:read).with('makefile').and_return(<<EOS)
+module.o: source.cc
+EOS
+        expect(Util.parse_makefile_deps('makefile')).to eq ['source.cc']
+      end
+
+      it 'handles dependencies split across many lines' do
+        expect(File).to receive(:read).with('makefile').and_return(<<EOS)
+module.o: module.c \\
+  module.h \\
+  other.h
+EOS
+        expect(Util.parse_makefile_deps('makefile')).to eq [
+          'module.c', 'module.h', 'other.h']
+      end
+    end
+
   end
 end
