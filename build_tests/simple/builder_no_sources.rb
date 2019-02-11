@@ -1,5 +1,5 @@
 class TestBuilder < Rscons::Builder
-  def run(target, sources, cache, env, vars)
+  def run(options)
     target
   end
 end

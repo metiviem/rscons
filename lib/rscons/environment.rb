@@ -541,11 +541,7 @@ module Rscons
       call_build_hooks[:pre]
 
       # Call the builder's #run method.
-      if builder.method(:run).arity == 5
-        rv = builder.run(*build_operation.values_at(:target, :sources, :cache, :env, :vars))
-      else
-        rv = builder.run(build_operation)
-      end
+      rv = builder.run(build_operation)
 
       (@side_effects[build_operation[:target]] || []).each do |side_effect_file|
         # Register side-effect files as build targets so that a Cache clean

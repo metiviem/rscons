@@ -1,11 +1,11 @@
 class MySource < Rscons::Builder
-  def run(target, sources, cache, env, vars)
-    File.open(target, 'w') do |fh|
+  def run(options)
+    File.open(@target, 'w') do |fh|
       fh.puts <<EOF
-#define THE_VALUE #{env.expand_varref("${the_value}")}
+#define THE_VALUE #{@env.expand_varref("${the_value}")}
 EOF
     end
-    target
+    @target
   end
 end
 

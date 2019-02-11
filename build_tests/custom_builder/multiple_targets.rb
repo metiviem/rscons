@@ -1,5 +1,6 @@
 class CHGen < Rscons::Builder
-  def run(target, sources, cache, env, vars)
+  def run(options)
+    target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
     c_fname = target
     h_fname = target.sub(/\.c$/, ".h")
     unless cache.up_to_date?([c_fname, h_fname], "", sources, env)

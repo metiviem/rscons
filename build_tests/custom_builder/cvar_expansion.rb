@@ -1,11 +1,11 @@
 class MySource < Rscons::Builder
-  def run(target, sources, cache, env, vars)
-    File.open(target, 'w') do |fh|
+  def run(options)
+    File.open(@target, 'w') do |fh|
       fh.puts <<EOF
 #define THE_VALUE 678
 EOF
     end
-    target
+    @target
   end
 end
 

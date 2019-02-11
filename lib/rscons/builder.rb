@@ -86,41 +86,18 @@ module Rscons
 
     # Run the builder to produce a build target.
     #
-    # The run method supports two different signatures - an older signature
-    # with five separate arguments, and a newer one with one Hash argument. A
-    # builder author can use either signature, and Rscons will automatically
-    # determine which arguments to pass when invoking the run method based on
-    # the method's arity.
-    #
-    # @overload run(target, sources, cache, env, vars)
-    #
-    #   @param target [String]
-    #     Target file name.
-    #   @param sources [Array<String>]
-    #     Source file name(s).
-    #   @param cache [Cache]
-    #     The Cache object.
-    #   @param env [Environment]
-    #     The Environment executing the builder.
-    #   @param vars [Hash,VarSet]
-    #     Extra construction variables.
-    #
-    # @overload run(options)
-    #
-    #   @since 1.10.0
-    #
-    #   @param options [Hash]
-    #     Run options.
-    #   @option options [String] :target
-    #     Target file name.
-    #   @option options [Array<String>] :sources
-    #     Source file name(s).
-    #   @option options [Cache] :cache
-    #     The Cache object.
-    #   @option options [Environment] :env
-    #     The Environment executing the builder.
-    #   @option options [Hash,VarSet] :vars
-    #     Extra construction variables.
+    # @param options [Hash]
+    #   Run options.
+    # @option options [String] :target
+    #   Target file name.
+    # @option options [Array<String>] :sources
+    #   Source file name(s).
+    # @option options [Cache] :cache
+    #   The Cache object.
+    # @option options [Environment] :env
+    #   The Environment executing the builder.
+    # @option options [Hash,VarSet] :vars
+    #   Extra construction variables.
     #
     # @return [ThreadedCommand,String,false]
     #   Name of the target file on success or false on failure.
