@@ -26,25 +26,6 @@ module Rscons
         command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
       end
 
-      # Make a relative path corresponding to a possibly absolute one.
-      #
-      # @param path [String]
-      #   Input path that is possibly absolute.
-      #
-      # @return [String]
-      #   Relative path.
-      def make_relative_path(path)
-        if absolute_path?(path)
-          if path =~ %r{^(\w):(.*)$}
-            "_#{$1}#{$2}"
-          else
-            "_#{path}"
-          end
-        else
-          path
-        end
-      end
-
       # Look for an executable.
       #
       # @return [String, nil]
@@ -61,6 +42,25 @@ module Rscons
               return path
             end
           end
+        end
+      end
+
+      # Make a relative path corresponding to a possibly absolute one.
+      #
+      # @param path [String]
+      #   Input path that is possibly absolute.
+      #
+      # @return [String]
+      #   Relative path.
+      def make_relative_path(path)
+        if absolute_path?(path)
+          if path =~ %r{^(\w):(.*)$}
+            "_#{$1}#{$2}"
+          else
+            "_#{path}"
+          end
+        else
+          path
         end
       end
 

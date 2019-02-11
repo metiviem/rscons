@@ -29,32 +29,6 @@ module Rscons
       end
     end
 
-    describe ".make_relative_path" do
-      context "when passed a relative path" do
-        it "returns the path itself" do
-          expect(Util.make_relative_path("foo/bar")).to eq "foo/bar"
-        end
-      end
-
-      context "when passed an absolute path" do
-        before(:each) do
-          expect(Util).to receive(:absolute_path?).and_return(true)
-        end
-
-        context "on Windows" do
-          it "returns a relative path corresponding to an absolute one" do
-            expect(Util.make_relative_path("D:/foo/bar")).to eq "_D/foo/bar"
-          end
-        end
-
-        context "on non-Windows" do
-          it "returns a relative path corresponding to an absolute one" do
-            expect(Util.make_relative_path("/foo/bar")).to eq "_/foo/bar"
-          end
-        end
-      end
-    end
-
     describe ".find_executable" do
       context "when given a path with directory components" do
         it "returns the path if it is executable" do
@@ -106,6 +80,32 @@ module Rscons
 
           it "returns nil when nothing is found" do
             expect(Util.find_executable("notthere")).to be_nil
+          end
+        end
+      end
+    end
+
+    describe ".make_relative_path" do
+      context "when passed a relative path" do
+        it "returns the path itself" do
+          expect(Util.make_relative_path("foo/bar")).to eq "foo/bar"
+        end
+      end
+
+      context "when passed an absolute path" do
+        before(:each) do
+          expect(Util).to receive(:absolute_path?).and_return(true)
+        end
+
+        context "on Windows" do
+          it "returns a relative path corresponding to an absolute one" do
+            expect(Util.make_relative_path("D:/foo/bar")).to eq "_D/foo/bar"
+          end
+        end
+
+        context "on non-Windows" do
+          it "returns a relative path corresponding to an absolute one" do
+            expect(Util.make_relative_path("/foo/bar")).to eq "_/foo/bar"
           end
         end
       end
