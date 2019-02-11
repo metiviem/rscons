@@ -15,6 +15,17 @@ module Rscons
         end
       end
 
+      # Return a string representation of a command.
+      #
+      # @param command [Array<String>]
+      #   The command.
+      #
+      # @return [String]
+      #   The string representation of the command.
+      def command_to_s(command)
+        command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
+      end
+
       # Make a relative path corresponding to a possibly absolute one.
       #
       # @param path [String]

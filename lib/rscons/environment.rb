@@ -644,7 +644,7 @@ module Rscons
       case @echo
       when :command
         if command.is_a?(Array)
-          message = command_to_s(command)
+          message = Util.command_to_s(command)
         elsif command.is_a?(String)
           message = command
         elsif short_description.is_a?(String)
@@ -663,7 +663,7 @@ module Rscons
     #
     # @return [void]
     def print_failed_command(command)
-      Ansi.write($stdout, :red, "Failed command was: #{command_to_s(command)}", :reset, "\n")
+      Ansi.write($stdout, :red, "Failed command was: #{Util.command_to_s(command)}", :reset, "\n")
     end
 
     private
@@ -750,17 +750,6 @@ module Rscons
         end
         ThreadsWait.new(*threads).next_wait
       end
-    end
-
-    # Return a string representation of a command.
-    #
-    # @param command [Array<String>]
-    #   The command.
-    #
-    # @return [String]
-    #   The string representation of the command.
-    def command_to_s(command)
-      command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
     end
 
     # Call a builder's #finalize method after a ThreadedCommand terminates.
