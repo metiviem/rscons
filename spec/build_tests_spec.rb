@@ -843,28 +843,6 @@ EOF
     end
   end
 
-  context "backward compatibility" do
-    it "allows a builder to call Environment#run_builder in a non-threaded manner" do
-      test_dir("simple")
-      result = run_rscons(rsconscript: "run_builder.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *[
-        "CC simple.o",
-        "LD simple.exe",
-      ]
-    end
-
-    it "prints the failed build command for a threaded builder when called via Environment#run_builder without delayed execution" do
-      test_dir("simple")
-      File.open("simple.c", "wb") do |fh|
-        fh.write("FOOBAR")
-      end
-      result = run_rscons(rsconscript: "run_builder.rb")
-      expect(result.stderr).to match /Failed to build/
-      expect(result.stdout).to match /Failed command was: gcc/
-    end
-  end
-
   context "CFile builder" do
     it "builds a .c file using flex and bison" do
       test_dir("cfile")

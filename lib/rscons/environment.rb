@@ -281,8 +281,7 @@ module Rscons
                                  job[:target],
                                  job[:sources],
                                  cache,
-                                 job[:vars],
-                                 allow_delayed_execution: true)
+                                 job[:vars])
             unless result
               failure = "Failed to build #{job[:target]}"
               Ansi.write($stderr, :red, failure, :reset, "\n")
@@ -515,10 +514,6 @@ module Rscons
     # @param options [Hash]
     #   @since 1.10.0
     #   Options.
-    # @option options [Boolean] :allow_delayed_execution
-    #   @since 1.10.0
-    #   Allow a threaded command to be scheduled but not yet completed before
-    #   this method returns.
     #
     # @return [String,false] Return value from the {Builder}'s +run+ method.
     def run_builder(builder, target, sources, cache, vars, options = {})
@@ -554,19 +549,6 @@ module Rscons
         # with it when the threaded command completes.
         rv.build_operation = build_operation
         start_threaded_command(rv)
-        unless options[:allow_delayed_execution]
-          # Delayed command execution is not allowed, so we need to execute
-          # the command and finalize the builder now.
-          tc = wait_for_threaded_commands(which: [rv])
-          rv = finalize_builder(tc)
-          if rv
-            call_build_hooks[:post]
-          else
-            unless @echo == :command
-              print_failed_command(tc.command)
-            end
-          end
-        end
       else
         call_build_hooks[:post] if rv
       end
