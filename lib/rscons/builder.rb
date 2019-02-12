@@ -44,7 +44,23 @@ module Rscons
 
     # @return [String, Symbol]
     #   Target file name.
-    attr_reader :target
+    attr_accessor :target
+
+    # @return [Array<String>]
+    #   Source file name(s).
+    attr_accessor :sources
+
+    # @return [Cache]
+    #   Cache instance.
+    attr_accessor :cache
+
+    # @return [Environment]
+    #   The {Environment} performing the build operation.
+    attr_accessor :env
+
+    # @return [Hash, VarSet]
+    #   Construction variables used to perform the build operation.
+    attr_accessor :vars
 
     # Create an instance of the Builder to build a target.
     #
@@ -54,6 +70,8 @@ module Rscons
     #   Target file name.
     # @option options [Array<String>] :sources
     #   Source file name(s).
+    # @option options [Cache] :cache
+    #   The Cache object.
     # @option options [Environment] :env
     #   The Environment executing the builder.
     # @option options [Hash,VarSet] :vars
@@ -61,6 +79,7 @@ module Rscons
     def initialize(options)
       @target = options[:target]
       @sources = options[:sources]
+      @cache = options[:cache]
       @env = options[:env]
       @vars = options[:vars]
     end
@@ -88,16 +107,6 @@ module Rscons
     #
     # @param options [Hash]
     #   Run options.
-    # @option options [String] :target
-    #   Target file name.
-    # @option options [Array<String>] :sources
-    #   Source file name(s).
-    # @option options [Cache] :cache
-    #   The Cache object.
-    # @option options [Environment] :env
-    #   The Environment executing the builder.
-    # @option options [Hash,VarSet] :vars
-    #   Extra construction variables.
     #
     # @return [ThreadedCommand,String,false]
     #   Name of the target file on success or false on failure.

@@ -7,15 +7,14 @@ module Rscons
 
       # Run the builder to produce a build target.
       def run(options)
-        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-        target_is_dir = (sources.length > 1) ||
-                        Dir.exists?(sources.first) ||
-                        Dir.exists?(target)
-        outdir = target_is_dir ? target : File.dirname(target)
+        target_is_dir = (@sources.length > 1) ||
+                        Dir.exists?(@sources.first) ||
+                        Dir.exists?(@target)
+        outdir = target_is_dir ? @target : File.dirname(@target)
         # Collect the list of files to copy over.
         file_map = {}
         if target_is_dir
-          sources.each do |src|
+          @sources.each do |src|
             if Dir.exists? src
               Dir.glob("#{src}/**/*", File::FNM_DOTMATCH).select do |f|
                 File.file?(f)
@@ -33,19 +32,18 @@ module Rscons
         printed_message = false
         file_map.each do |src, dest|
           # Check the cache and copy if necessary
-          unless cache.up_to_date?(dest, :Copy, [src], env)
+          unless @cache.up_to_date?(dest, :Copy, [src], @env)
             unless printed_message
-              env.print_builder_run_message("#{self.class.name} #{target}", nil)
+              @env.print_builder_run_message("#{name} #{@target}", nil)
               printed_message = true
             end
-            cache.mkdir_p(File.dirname(dest))
+            @cache.mkdir_p(File.dirname(dest))
             FileUtils.cp(src, dest, :preserve => true)
           end
-          cache.register_build(dest, :Copy, [src], env)
+          @cache.register_build(dest, :Copy, [src], @env)
         end
-        target if (target_is_dir ? Dir.exists?(target) : File.exists?(target))
+        @target if (target_is_dir ? Dir.exists?(@target) : File.exists?(@target))
       end
-
 
     end
 

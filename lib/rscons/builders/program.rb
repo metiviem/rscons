@@ -46,25 +46,22 @@ module Rscons
       # @return [String,false]
       #   Name of the target file on success or false on failure.
       def run(options)
-        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-        ld = env.expand_varref("${LD}", vars)
+        ld = @env.expand_varref("${LD}", @vars)
         ld = if ld != ""
                ld
-             elsif sources.find {|s| s.end_with?(*env.expand_varref("${DSUFFIX}", vars))}
+             elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${DSUFFIX}", @vars))}
                "${DC}"
-             elsif sources.find {|s| s.end_with?(*env.expand_varref("${CXXSUFFIX}", vars))}
+             elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${CXXSUFFIX}", @vars))}
                "${CXX}"
              else
                "${CC}"
              end
-        vars = vars.merge({
-          '_TARGET' => target,
-          '_SOURCES' => @objects,
-          'LD' => ld,
-        })
+        @vars["_TARGET"] = @target
+        @vars["_SOURCES"] = @objects
+        @vars["LD"] = ld
         options[:sources] = @objects
-        command = env.build_command("${LDCMD}", vars)
-        standard_threaded_build("LD #{target}", target, command, @objects, env, cache)
+        command = @env.build_command("${LDCMD}", @vars)
+        standard_threaded_build("LD #{@target}", @target, command, @objects, @env, @cache)
       end
 
       # Finalize a build.

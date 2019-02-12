@@ -58,25 +58,22 @@ module Rscons
       # @return [String,false]
       #   Name of the target file on success or false on failure.
       def run(options)
-        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-        ld = env.expand_varref("${SHLD}", vars)
+        ld = @env.expand_varref("${SHLD}", @vars)
         ld = if ld != ""
                ld
-             elsif sources.find {|s| s.end_with?(*env.expand_varref("${DSUFFIX}", vars))}
+             elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${DSUFFIX}", @vars))}
                "${SHDC}"
-             elsif sources.find {|s| s.end_with?(*env.expand_varref("${CXXSUFFIX}", vars))}
+             elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${CXXSUFFIX}", @vars))}
                "${SHCXX}"
              else
                "${SHCC}"
              end
-        vars = vars.merge({
-          '_TARGET' => target,
-          '_SOURCES' => @objects,
-          'SHLD' => ld,
-        })
+        @vars["_TARGET"] = @target
+        @vars["_SOURCES"] = @objects
+        @vars["SHLD"] = ld
         options[:sources] = @objects
-        command = env.build_command("${SHLDCMD}", vars)
-        standard_threaded_build("SHLD #{target}", target, command, @objects, env, cache)
+        command = @env.build_command("${SHLDCMD}", @vars)
+        standard_threaded_build("SHLD #{@target}", @target, command, @objects, @env, @cache)
       end
 
       # Finalize a build.

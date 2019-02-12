@@ -29,7 +29,7 @@ module Rscons
       #
       # Method signature described by {Builder#run}.
       def run(*args)
-        @run_proc.call(*args)
+        instance_exec(*args, &@run_proc)
       end
 
     end

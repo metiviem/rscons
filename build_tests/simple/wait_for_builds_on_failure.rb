@@ -1,10 +1,9 @@
 class Fail < Rscons::Builder
   def run(options)
-    target, cache, env, vars = options.values_at(:target, :cache, :env, :vars)
-    wait_time = env.expand_varref("${wait_time}", vars)
+    wait_time = @env.expand_varref("${wait_time}", @vars)
     ruby_command = %[sleep #{wait_time}; exit 2]
     command = %W[ruby -e #{ruby_command}]
-    standard_threaded_build("Fail #{target}", target, command, [], env, cache)
+    standard_threaded_build("Fail #{@target}", @target, command, [], @env, @cache)
   end
   def finalize(options)
     standard_finalize(options)

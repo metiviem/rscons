@@ -19,24 +19,23 @@ module Rscons
       #   Target file name if target is up to date or a {ThreadedCommand}
       #   to execute to build the target.
       def run(options)
-        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-        if sources.find {|s| s.end_with?(*env.expand_varref("${CXXSUFFIX}", vars))}
+        if @sources.find {|s| s.end_with?(*@env.expand_varref("${CXXSUFFIX}", @vars))}
           pp_cc = "${CXX}"
           depgen = "${CXXDEPGEN}"
         else
           pp_cc = "${CC}"
           depgen = "${CCDEPGEN}"
         end
-        vars = vars.merge("_PREPROCESS_CC" => pp_cc,
-                          "_PREPROCESS_DEPGEN" => depgen,
-                          "_TARGET" => target,
-                          "_SOURCES" => sources,
-                          "_DEPFILE" => Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars)))
-        command = env.build_command("${CPP_CMD}", vars)
-        env.produces(target, vars['_DEPFILE'])
+        @vars["_PREPROCESS_CC"] = pp_cc
+        @vars["_PREPROCESS_DEPGEN"] = depgen
+        @vars["_TARGET"] = @target
+        @vars["_SOURCES"] = @sources
+        @vars["_DEPFILE"] = Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars))
+        command = @env.build_command("${CPP_CMD}", @vars)
+        @env.produces(@target, @vars["_DEPFILE"])
         # Store vars back into options so new keys are accessible in #finalize.
         options[:vars] = vars
-        standard_threaded_build("#{self.class.name} #{target}", target, command, sources, env, cache)
+        standard_threaded_build("#{name} #{@target}", @target, command, @sources, @env, @cache)
       end
 
       # Finalize the build operation.

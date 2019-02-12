@@ -11,17 +11,16 @@ module Rscons
 
       # Run the builder to produce a build target.
       def run(options)
-        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-        vars = vars.merge("_SOURCES" => sources)
-        command = env.build_command("${DISASM_CMD}", vars)
-        if cache.up_to_date?(target, command, sources, env)
-          target
+        @vars["_SOURCES"] = sources
+        command = @env.build_command("${DISASM_CMD}", @vars)
+        if @cache.up_to_date?(@target, command, @sources, @env)
+          @target
         else
-          cache.mkdir_p(File.dirname(target))
+          @cache.mkdir_p(File.dirname(@target))
           ThreadedCommand.new(
             command,
-            short_description: "Disassemble #{target}",
-            system_options: {out: target})
+            short_description: "Disassemble #{@target}",
+            system_options: {out: @target})
         end
       end
 

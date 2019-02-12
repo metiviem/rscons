@@ -354,7 +354,12 @@ module Rscons
         sources = Array(sources).map do |source|
           expand_path(expand_varref(source))
         end.flatten
-        builder = @builders[method.to_s].new(env: self, target: target, sources: sources, vars: vars)
+        builder = @builders[method.to_s].new(
+          target: target,
+          sources: sources,
+          cache: Cache.instance,
+          env: self,
+          vars: vars)
         add_target(builder.target, builder, sources, vars)
         builder
       else
@@ -534,6 +539,10 @@ module Rscons
 
       # Invoke pre-build hooks.
       call_build_hooks[:pre]
+
+      # TODO: remove build_operation fields and just pass in the Builder.
+      builder.sources = build_operation[:sources]
+      builder.vars = build_operation[:vars]
 
       # Call the builder's #run method.
       rv = builder.run(build_operation)

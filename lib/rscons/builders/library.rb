@@ -36,14 +36,11 @@ module Rscons
       # @return [String,false]
       #   Name of the target file on success or false on failure.
       def run(options)
-        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-        vars = vars.merge({
-          '_TARGET' => target,
-          '_SOURCES' => @objects,
-        })
+        @vars["_TARGET"] = @target
+        @vars["_SOURCES"] = @objects
         options[:sources] = @objects
-        command = env.build_command("${ARCMD}", vars)
-        standard_threaded_build("AR #{target}", target, command, @objects, env, cache)
+        command = @env.build_command("${ARCMD}", @vars)
+        standard_threaded_build("AR #{@target}", @target, command, @objects, @env, @cache)
       end
 
       # Finalize a build.

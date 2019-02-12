@@ -18,18 +18,15 @@ module Rscons
       #   Target file name if target is up to date or a {ThreadedCommand}
       #   to execute to build the target.
       def run(options)
-        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-        vars = vars.merge({
-          "_TARGET" => target,
-          "_SOURCES" => sources,
-        })
-        command = env.build_command("${CMD}", vars)
-        cmd_desc = vars["CMD_DESC"] || "Command"
+        @vars["_TARGET"] = @target
+        @vars["_SOURCES"] = @sources
+        command = @env.build_command("${CMD}", @vars)
+        cmd_desc = @vars["CMD_DESC"] || "Command"
         options = {}
-        if vars["CMD_STDOUT"]
-          options[:stdout] = env.expand_varref("${CMD_STDOUT}", vars)
+        if @vars["CMD_STDOUT"]
+          options[:stdout] = @env.expand_varref("${CMD_STDOUT}", @vars)
         end
-        standard_threaded_build("#{cmd_desc} #{target}", target, command, sources, env, cache, options)
+        standard_threaded_build("#{cmd_desc} #{@target}", @target, command, @sources, @env, @cache, options)
       end
 
       # Finalize a build.

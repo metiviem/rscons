@@ -1,15 +1,14 @@
 class CHGen < Rscons::Builder
   def run(options)
-    target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-    c_fname = target
-    h_fname = target.sub(/\.c$/, ".h")
-    unless cache.up_to_date?([c_fname, h_fname], "", sources, env)
+    c_fname = @target
+    h_fname = @target.sub(/\.c$/, ".h")
+    unless @cache.up_to_date?([c_fname, h_fname], "", @sources, @env)
       puts "CHGen #{c_fname}"
       File.open(c_fname, "w") {|fh| fh.puts "int THE_VALUE = 42;"}
       File.open(h_fname, "w") {|fh| fh.puts "extern int THE_VALUE;"}
-      cache.register_build([c_fname, h_fname], "", sources, env)
+      @cache.register_build([c_fname, h_fname], "", @sources, @env)
     end
-    target
+    @target
   end
 end
 

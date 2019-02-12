@@ -21,22 +21,19 @@ module Rscons
 
       # Run the builder to produce a build target.
       def run(options)
-        target, sources, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-        vars = vars.merge({
-          "_TARGET" => target,
-          "_SOURCES" => sources,
-        })
+        @vars["_TARGET"] = @target
+        @vars["_SOURCES"] = @sources
         cmd =
           case
-          when sources.first.end_with?(*env.expand_varref("${LEXSUFFIX}"))
+          when @sources.first.end_with?(*@env.expand_varref("${LEXSUFFIX}"))
             "LEX"
-          when sources.first.end_with?(*env.expand_varref("${YACCSUFFIX}"))
+          when @sources.first.end_with?(*@env.expand_varref("${YACCSUFFIX}"))
             "YACC"
           else
-            raise "Unknown source file #{sources.first.inspect} for CFile builder"
+            raise "Unknown source file #{@sources.first.inspect} for CFile builder"
           end
-        command = env.build_command("${#{cmd}_CMD}", vars)
-        standard_threaded_build("#{cmd} #{target}", target, command, sources, env, cache)
+        command = @env.build_command("${#{cmd}_CMD}", @vars)
+        standard_threaded_build("#{cmd} #{@target}", @target, command, @sources, @env, @cache)
       end
 
       # Finalize a build.
