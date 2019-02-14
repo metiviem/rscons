@@ -267,7 +267,7 @@ module Rscons
             job = nil
           else
             targets_still_building = @threaded_commands.map do |tc|
-              tc.build_operation[:target]
+              tc.builder.target
             end
             job = @job_set.get_next_job_to_run(targets_still_building)
           end
@@ -280,8 +280,7 @@ module Rscons
             result = run_builder(job[:builder],
                                  job[:target],
                                  job[:sources],
-                                 cache,
-                                 job[:vars])
+                                 cache)
             unless result
               failure = "Failed to build #{job[:target]}"
               Ansi.write($stderr, :red, failure, :reset, "\n")
@@ -307,13 +306,13 @@ module Rscons
             result = finalize_builder(tc)
             if result
               @build_hooks[:post].each do |build_hook_block|
-                build_hook_block.call(tc.build_operation)
+                build_hook_block.call(tc.builder)
               end
             else
               unless @echo == :command
                 print_failed_command(tc.command)
               end
-              failure = "Failed to build #{tc.build_operation[:target]}"
+              failure = "Failed to build #{tc.builder.target}"
               Ansi.write($stderr, :red, failure, :reset, "\n")
               break
             end
@@ -515,39 +514,34 @@ module Rscons
     # @param target [String] The target output file.
     # @param sources [Array<String>] List of source files.
     # @param cache [Cache] The Cache.
-    # @param vars [Hash] Extra variables to pass to the builder.
     # @param options [Hash]
     #   @since 1.10.0
     #   Options.
     #
     # @return [String,false] Return value from the {Builder}'s +run+ method.
-    def run_builder(builder, target, sources, cache, vars, options = {})
-      vars = @varset.merge(vars)
+    def run_builder(builder, target, sources, cache, options = {})
+      builder.vars = @varset.merge(builder.vars)
       build_operation = {
         builder: builder,
         target: target,
         sources: sources,
         cache: cache,
         env: self,
-        vars: vars,
+        vars: builder.vars,
       }
       call_build_hooks = lambda do |sec|
         @build_hooks[sec].each do |build_hook_block|
-          build_hook_block.call(build_operation)
+          build_hook_block.call(builder)
         end
       end
 
       # Invoke pre-build hooks.
       call_build_hooks[:pre]
 
-      # TODO: remove build_operation fields and just pass in the Builder.
-      builder.sources = build_operation[:sources]
-      builder.vars = build_operation[:vars]
-
       # Call the builder's #run method.
       rv = builder.run(build_operation)
 
-      (@side_effects[build_operation[:target]] || []).each do |side_effect_file|
+      (@side_effects[builder.target] || []).each do |side_effect_file|
         # Register side-effect files as build targets so that a Cache clean
         # operation will remove them.
         cache.register_build(side_effect_file, nil, [], self)
@@ -556,6 +550,8 @@ module Rscons
       if rv.is_a?(ThreadedCommand)
         # Store the build operation so the post-build hooks can be called
         # with it when the threaded command completes.
+        rv.builder = builder
+        # TODO: remove
         rv.build_operation = build_operation
         start_threaded_command(rv)
       else
@@ -746,7 +742,7 @@ module Rscons
     # @return [String, false]
     #   Result of Builder#finalize.
     def finalize_builder(tc)
-      tc.build_operation[:builder].finalize(
+      tc.builder.finalize(
         tc.build_operation.merge(
           command_status: tc.thread.value,
           tc: tc))

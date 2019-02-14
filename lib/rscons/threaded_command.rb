@@ -8,11 +8,6 @@ module Rscons
     #   The command to execute.
     attr_reader :command
 
-    # @return [Object]
-    #   Arbitrary object to store builder-specific info. This object value will
-    #   be passed back into the builder's #finalize method.
-    attr_reader :builder_info
-
     # @return [String]
     #   Short description of the command. This will be printed to standard
     #   output if the Environment's echo mode is :short.
@@ -30,6 +25,10 @@ module Rscons
     #   Field for Rscons to store the build operation while this threaded
     #   command is executing.
     attr_accessor :build_operation
+
+    # @return [Builder]
+    #   {Builder} executing this command.
+    attr_accessor :builder
 
     # @return [Thread]
     #   The thread waiting on this command to terminate.
@@ -53,7 +52,6 @@ module Rscons
     #   Options Hash to pass to Kernel#system.
     def initialize(command, options = {})
       @command = command
-      @builder_info = options[:builder_info]
       @short_description = options[:short_description]
       @system_env = options[:system_env]
       @system_options = options[:system_options]

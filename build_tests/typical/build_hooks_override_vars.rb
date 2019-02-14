@@ -1,14 +1,14 @@
 build do
   Environment.new(echo: :command) do |env|
     env.append('CPPPATH' => Rscons.glob('src/**'))
-    env.add_build_hook do |build_op|
-      if build_op[:builder].name == "Object" && build_op[:sources].first =~ %r{one\.c}
-        build_op[:vars]["CFLAGS"] << "-O1"
-        build_op[:sources] = ['src/two/two.c']
-      elsif build_op[:builder].name == "Object" && build_op[:target] =~ %r{two\.o}
-        new_vars = build_op[:vars].clone
+    env.add_build_hook do |builder|
+      if builder.name == "Object" && builder.sources.first =~ %r{one\.c}
+        builder.vars["CFLAGS"] << "-O1"
+        builder.sources = ['src/two/two.c']
+      elsif builder.name == "Object" && builder.target =~ %r{two\.o}
+        new_vars = builder.vars.clone
         new_vars["CFLAGS"] << "-O2"
-        build_op[:vars] = new_vars
+        builder.vars = new_vars
       end
     end
     env.Object('one.o', 'src/one/one.c')

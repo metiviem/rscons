@@ -1,11 +1,11 @@
 build do
   env1 = Environment.new(echo: :command) do |env|
     env['CFLAGS'] = '-O2'
-    env.add_build_hook do |build_op|
-      build_op[:vars]['CPPFLAGS'] = '-DSTRING="Hello"'
+    env.add_build_hook do |builder|
+      builder.vars['CPPFLAGS'] = '-DSTRING="Hello"'
     end
-    env.add_post_build_hook do |build_op|
-      $stdout.puts "post #{build_op[:target]}"
+    env.add_post_build_hook do |builder|
+      $stdout.puts "post #{builder.target}"
     end
     env.Program('program.exe', Dir['src/*.c'])
   end
