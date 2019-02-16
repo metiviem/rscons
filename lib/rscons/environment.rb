@@ -662,17 +662,13 @@ module Rscons
     #
     # @param options [Hash]
     #   Options.
-    # @option options [Set<ThreadedCommand>, Array<ThreadedCommand>] :which
-    #   Which {ThreadedCommand} objects to wait for. If not specified, this
-    #   method will wait for any.
     # @option options [Boolean] :nonblock
     #   Set to true to not block.
     #
     # @return [ThreadedCommand, nil]
     #   The {ThreadedCommand} object that is finished.
     def wait_for_threaded_commands(options = {})
-      options[:which] ||= @threaded_commands
-      threads = options[:which].map(&:thread)
+      threads = @threaded_commands.map(&:thread)
       if finished_thread = find_finished_thread(threads, options[:nonblock])
         threaded_command = @threaded_commands.find do |tc|
           tc.thread == finished_thread
