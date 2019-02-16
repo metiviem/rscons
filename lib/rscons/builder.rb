@@ -203,9 +203,8 @@ module Rscons
     #   The target name on success or nil on failure.
     def standard_finalize(options)
       if options[:command_status]
-        target, sources, cache, env = options.values_at(:target, :sources, :cache, :env)
-        cache.register_build(target, options[:tc].command, sources, env)
-        target
+        @cache.register_build(@target, options[:tc].command, @sources, @env)
+        @target
       end
     end
   end

@@ -3,7 +3,7 @@ class ThreadedTestBuilder < Rscons::Builder
     command = ["ruby", "-e", %[sleep 1]]
     Rscons::ThreadedCommand.new(
       command,
-      short_description: "ThreadedTestBuilder #{options[:target]}")
+      short_description: "ThreadedTestBuilder #{@target}")
   end
   def finalize(options)
     true
@@ -12,9 +12,9 @@ end
 
 class NonThreadedTestBuilder < Rscons::Builder
   def run(options)
-    puts "NonThreadedTestBuilder #{options[:target]}"
+    puts "NonThreadedTestBuilder #{@target}"
     sleep 1
-    options[:target]
+    @target
   end
 end
 

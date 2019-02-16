@@ -38,7 +38,6 @@ module Rscons
       def run(options)
         @vars["_TARGET"] = @target
         @vars["_SOURCES"] = @objects
-        options[:sources] = @objects
         command = @env.build_command("${ARCMD}", @vars)
         standard_threaded_build("AR #{@target}", @target, command, @objects, @env, @cache)
       end
@@ -51,7 +50,10 @@ module Rscons
       # @return [String, nil]
       #   The target name on success or nil on failure.
       def finalize(options)
-        standard_finalize(options)
+        if options[:command_status]
+          @cache.register_build(@target, options[:tc].command, @objects, @env)
+          @target
+        end
       end
 
     end

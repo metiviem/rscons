@@ -515,11 +515,7 @@ module Rscons
       builder.vars = @varset.merge(builder.vars)
       build_operation = {
         builder: builder,
-        target: builder.target,
-        sources: builder.sources,
         cache: cache,
-        env: self,
-        vars: builder.vars,
       }
       call_build_hooks = lambda do |sec|
         @build_hooks[sec].each do |build_hook_block|
