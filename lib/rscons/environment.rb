@@ -264,25 +264,22 @@ module Rscons
 
           if failure
             @job_set.clear!
-            job = nil
+            builder = nil
           else
             targets_still_building = @threaded_commands.map do |tc|
               tc.builder.target
             end
-            job = @job_set.get_next_job_to_run(targets_still_building)
+            builder = @job_set.get_next_job_to_run(targets_still_building)
           end
 
           # TODO: have Cache determine when checksums may be invalid based on
           # file size and/or timestamp.
           cache.clear_checksum_cache!
 
-          if job
-            result = run_builder(job[:builder],
-                                 job[:target],
-                                 job[:sources],
-                                 cache)
+          if builder
+            result = run_builder(builder, cache)
             unless result
-              failure = "Failed to build #{job[:target]}"
+              failure = "Failed to build #{builder.target}"
               Ansi.write($stderr, :red, failure, :reset, "\n")
               next
             end
@@ -297,7 +294,7 @@ module Rscons
 
           # If needed, do a blocking wait.
           if (@threaded_commands.size > 0) and
-             ((completed_tcs.empty? and job.nil?) or (@threaded_commands.size >= n_threads))
+             ((completed_tcs.empty? and builder.nil?) or (@threaded_commands.size >= n_threads))
             completed_tcs << wait_for_threaded_commands
           end
 
@@ -359,7 +356,7 @@ module Rscons
           cache: Cache.instance,
           env: self,
           vars: vars)
-        add_target(builder.target, builder, sources, vars)
+        @job_set.add_job(builder)
         builder
       else
         super
@@ -511,20 +508,15 @@ module Rscons
     # Invoke a builder to build the given target based on the given sources.
     #
     # @param builder [Builder] The Builder to use.
-    # @param target [String] The target output file.
-    # @param sources [Array<String>] List of source files.
     # @param cache [Cache] The Cache.
-    # @param options [Hash]
-    #   @since 1.10.0
-    #   Options.
     #
     # @return [String,false] Return value from the {Builder}'s +run+ method.
-    def run_builder(builder, target, sources, cache, options = {})
+    def run_builder(builder, cache)
       builder.vars = @varset.merge(builder.vars)
       build_operation = {
         builder: builder,
-        target: target,
-        sources: sources,
+        target: builder.target,
+        sources: builder.sources,
         cache: cache,
         env: self,
         vars: builder.vars,
@@ -650,22 +642,6 @@ module Rscons
     end
 
     private
-
-    # Add a build target.
-    #
-    # @param target [String] Build target file name.
-    # @param builder [Builder] The {Builder} to use to build the target.
-    # @param sources [Array<String>] Source file name(s).
-    # @param vars [Hash] Construction variable overrides.
-    #
-    # @return [void]
-    def add_target(target, builder, sources, vars)
-      @job_set.add_job(
-        builder: builder,
-        target: target,
-        sources: sources,
-        vars: vars)
-    end
 
     # Start a threaded command in a new thread.
     #

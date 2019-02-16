@@ -21,23 +21,15 @@ module Rscons
 
     # Add a job to the JobSet.
     #
-    # @param options [Hash]
-    #   Options.
-    # @option options [Symbol, String] :target
-    #   Build target name.
-    # @option options [Builder] :builder
-    #   The {Builder} to use to build the target.
-    # @option options [Array<String>] :sources
-    #   Source file name(s).
-    # @option options [Hash] :vars
-    #   Construction variable overrides.
-    def add_job(options)
+    # @param builder [Builder]
+    #   The {Builder} that will produce the target.
+    def add_job(builder)
       # We allow multiple jobs to be registered per target for cases like:
       #   env.Directory("dest")
       #   env.Install("dest", "bin")
       #   env.Install("dest", "share")
-      @jobs[options[:target]] ||= []
-      @jobs[options[:target]] << options
+      @jobs[builder.target] ||= []
+      @jobs[builder.target] << builder
     end
 
     # Get the next job that is ready to run from the JobSet.
@@ -60,7 +52,7 @@ module Rscons
 
       @jobs.keys.each do |target|
         skip = false
-        (@jobs[target][0][:sources] + (@build_dependencies[target] || []).to_a).each do |src|
+        (@jobs[target][0].sources + (@build_dependencies[target] || []).to_a).each do |src|
           if targets_not_built_yet.include?(src)
             skip = true
             break
