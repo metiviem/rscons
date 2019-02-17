@@ -1,5 +1,3 @@
-require "set"
-
 module Rscons
   # Class to keep track of a set of jobs that need to be performed.
   class JobSet
@@ -41,31 +39,27 @@ module Rscons
     #   a job as available to run if it depends on one of the targets that are
     #   still building as a source.
     #
-    # @return [nil, Hash]
+    # @return [nil, Builder]
     #   The next job to run.
     def get_next_job_to_run(targets_still_building)
-      targets_not_built_yet = targets_still_building + @jobs.keys
-      side_effects = targets_not_built_yet.map do |target|
-        @side_effects[target] || []
-      end.flatten
-      targets_not_built_yet += side_effects
+      not_built_yet = targets_still_building + @jobs.keys
+      not_built_yet += not_built_yet.reduce([]) do |result, target|
+        result + (@side_effects[target] || [])
+      end
 
-      @jobs.keys.each do |target|
-        skip = false
-        (@jobs[target][0].sources + (@build_dependencies[target] || []).to_a).each do |src|
-          if targets_not_built_yet.include?(src)
-            skip = true
-            break
-          end
-        end
-        next if skip
-        job = @jobs[target][0]
-        if @jobs[target].size > 1
-          @jobs[target].slice!(0)
+      target_to_build = @jobs.keys.find do |target|
+        deps = @jobs[target][0].sources + (@build_dependencies[target] || []).to_a
+        !deps.find {|dep| not_built_yet.include?(dep)}
+      end
+
+      if target_to_build
+        builder = @jobs[target_to_build][0]
+        if @jobs[target_to_build].size > 1
+          @jobs[target_to_build].slice!(0)
         else
-          @jobs.delete(target)
+          @jobs.delete(target_to_build)
         end
-        return job
+        return builder
       end
 
       # If there is a job to run, and nothing is still building, but we did
