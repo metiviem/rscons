@@ -513,10 +513,7 @@ module Rscons
     # @return [String,false] Return value from the {Builder}'s +run+ method.
     def run_builder(builder, cache)
       builder.vars = @varset.merge(builder.vars)
-      build_operation = {
-        builder: builder,
-        cache: cache,
-      }
+      build_operation = {}
       call_build_hooks = lambda do |sec|
         @build_hooks[sec].each do |build_hook_block|
           build_hook_block.call(builder)
