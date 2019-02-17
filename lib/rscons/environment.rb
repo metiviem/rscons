@@ -70,7 +70,7 @@ module Rscons
       @threaded_commands = Set.new
       @registered_build_dependencies = {}
       @side_effects = {}
-      @job_set = JobSet.new(@registered_build_dependencies, @side_effects)
+      @builder_set = BuilderSet.new(@registered_build_dependencies, @side_effects)
       @user_deps = {}
       # Hash of builder name (String) => builder class (Class).
       @builders = {}
@@ -260,16 +260,16 @@ module Rscons
       end
       failure = nil
       begin
-        while @job_set.size > 0 or @threaded_commands.size > 0
+        while @builder_set.size > 0 or @threaded_commands.size > 0
 
           if failure
-            @job_set.clear!
+            @builder_set.clear
             builder = nil
           else
             targets_still_building = @threaded_commands.map do |tc|
               tc.builder.target
             end
-            builder = @job_set.get_next_job_to_run(targets_still_building)
+            builder = @builder_set.get_next_builder_to_run(targets_still_building)
           end
 
           # TODO: have Cache determine when checksums may be invalid based on
@@ -328,7 +328,7 @@ module Rscons
     #
     # @return [void]
     def clear_targets
-      @job_set.clear!
+      @builder_set.clear
     end
 
     # Define a build target.
@@ -356,7 +356,7 @@ module Rscons
           cache: Cache.instance,
           env: self,
           vars: vars)
-        @job_set.add_job(builder)
+        @builder_set << builder
         builder
       else
         super
