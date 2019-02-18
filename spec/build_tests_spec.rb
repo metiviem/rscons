@@ -350,6 +350,16 @@ EOF
     expect(File.exists?("foo")).to be_truthy
   end
 
+  it 'supports a Builder waiting for another Builder' do
+    test_dir "simple"
+    result = run_rscons(rsconscript: "builder_wait_for_builder.rb")
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(lines(result.stdout)).to include "MyObject simple.o"
+    expect(File.exists?("simple.o")).to be_truthy
+    expect(File.exists?("simple.exe")).to be_truthy
+  end
+
   it 'allows cloning Environment objects' do
     test_dir('clone_env')
     result = run_rscons
