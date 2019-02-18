@@ -21,30 +21,23 @@ module Rscons
 
       # Run the builder to produce a build target.
       def run(options)
-        @vars["_TARGET"] = @target
-        @vars["_SOURCES"] = @sources
-        cmd =
-          case
-          when @sources.first.end_with?(*@env.expand_varref("${LEXSUFFIX}"))
-            "LEX"
-          when @sources.first.end_with?(*@env.expand_varref("${YACCSUFFIX}"))
-            "YACC"
-          else
-            raise "Unknown source file #{@sources.first.inspect} for CFile builder"
-          end
-        command = @env.build_command("${#{cmd}_CMD}", @vars)
-        standard_threaded_build("#{cmd} #{@target}", @target, command, @sources, @env, @cache)
-      end
-
-      # Finalize a build.
-      #
-      # @param options [Hash]
-      #   Finalize options.
-      #
-      # @return [String, nil]
-      #   The target name on success or nil on failure.
-      def finalize(options)
-        standard_finalize(options)
+        if @command
+          finalize_command
+        else
+          @vars["_TARGET"] = @target
+          @vars["_SOURCES"] = @sources
+          cmd =
+            case
+            when @sources.first.end_with?(*@env.expand_varref("${LEXSUFFIX}"))
+              "LEX"
+            when @sources.first.end_with?(*@env.expand_varref("${YACCSUFFIX}"))
+              "YACC"
+            else
+              raise "Unknown source file #{@sources.first.inspect} for CFile builder"
+            end
+          command = @env.build_command("${#{cmd}_CMD}", @vars)
+          standard_command("#{cmd} #{@target}", command)
+        end
       end
 
     end

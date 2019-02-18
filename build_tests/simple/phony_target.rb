@@ -5,7 +5,7 @@ build do
         puts "Checker #{@sources.first}" if @env.echo != :off
         @cache.register_build(@target, :Checker, @sources, @env)
       end
-      @target
+      true
     end
     env.Program("simple.exe", "simple.c")
     env.Checker(:checker, "simple.exe")

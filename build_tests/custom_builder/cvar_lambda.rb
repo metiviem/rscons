@@ -5,7 +5,7 @@ class MySource < Rscons::Builder
 #define THE_VALUE #{@env.expand_varref("${the_value}")}
 EOF
     end
-    @target
+    true
   end
 end
 

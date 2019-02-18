@@ -1,15 +1,15 @@
 class StrictBuilder < Rscons::Builder
   def run(options)
-    command = %W[gcc -o #{@target}] + @sources.sort
-    if @cache.up_to_date?(@target, command, @sources, @env, strict_deps: true)
-      @target
+    if @command
+      finalize_command
     else
-      ThreadedCommand.new(command, short_description: "#{name} #{@target}")
+      @command = %W[gcc -o #{@target}] + @sources.sort
+      if @cache.up_to_date?(@target, @command, @sources, @env, strict_deps: true)
+        true
+      else
+        register_command("#{name} #{@target}", @command)
+      end
     end
-  end
-
-  def finalize(options)
-    standard_finalize(options)
   end
 end
 

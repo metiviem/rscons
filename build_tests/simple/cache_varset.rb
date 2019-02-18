@@ -9,7 +9,7 @@ class TestBuilder < Rscons::Builder
       @env.print_builder_run_message(msg, msg)
       @cache.register_build(@target, command, @sources, @env)
     end
-    @target
+    true
   end
 end
 

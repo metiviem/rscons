@@ -230,7 +230,7 @@ module Rscons
     describe "#find_finished_thread" do
       it "raises an error if called with nonblock=false and no threads to wait for" do
         env = Environment.new
-        expect {env.__send__(:find_finished_thread, [], false)}.to raise_error /No threads to wait for/
+        expect {env.__send__(:find_finished_thread, false)}.to raise_error /No threads to wait for/
       end
     end
 

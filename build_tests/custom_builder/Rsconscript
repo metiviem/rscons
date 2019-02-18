@@ -5,7 +5,7 @@ class MySource < Rscons::Builder
 #define THE_VALUE 5678
 EOF
     end
-    @target
+    true
   end
 end
 

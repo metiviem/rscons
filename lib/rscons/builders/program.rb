@@ -40,40 +40,26 @@ module Rscons
       end
 
       # Run the builder to produce a build target.
-      #
-      # @param options [Hash] Builder run options.
-      #
-      # @return [String,false]
-      #   Name of the target file on success or false on failure.
       def run(options)
-        ld = @env.expand_varref("${LD}", @vars)
-        ld = if ld != ""
-               ld
-             elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${DSUFFIX}", @vars))}
-               "${DC}"
-             elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${CXXSUFFIX}", @vars))}
-               "${CXX}"
-             else
-               "${CC}"
-             end
-        @vars["_TARGET"] = @target
-        @vars["_SOURCES"] = @objects
-        @vars["LD"] = ld
-        command = @env.build_command("${LDCMD}", @vars)
-        standard_threaded_build("LD #{@target}", @target, command, @objects, @env, @cache)
-      end
-
-      # Finalize a build.
-      #
-      # @param options [Hash]
-      #   Finalize options.
-      #
-      # @return [String, nil]
-      #   The target name on success or nil on failure.
-      def finalize(options)
-        if options[:command_status]
-          @cache.register_build(@target, options[:tc].command, @objects, @env)
-          @target
+        if @command
+          finalize_command(sources: @objects)
+          true
+        else
+          ld = @env.expand_varref("${LD}", @vars)
+          ld = if ld != ""
+                 ld
+               elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${DSUFFIX}", @vars))}
+                 "${DC}"
+               elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${CXXSUFFIX}", @vars))}
+                 "${CXX}"
+               else
+                 "${CC}"
+               end
+          @vars["_TARGET"] = @target
+          @vars["_SOURCES"] = @objects
+          @vars["LD"] = ld
+          command = @env.build_command("${LDCMD}", @vars)
+          standard_command("LD #{@target}", command, sources: @objects)
         end
       end
 

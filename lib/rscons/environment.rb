@@ -48,10 +48,9 @@ module Rscons
     attr_reader :build_root
 
     # @return [Integer]
-    #   The number of threads to use for this Environment. If nil (the
-    #   default), the global Rscons.application.n_threads default value will be
-    #   used.
-    attr_writer :n_threads
+    #   The number of threads to use for this Environment. Defaults to the
+    #   global Rscons.application.n_threads value.
+    attr_accessor :n_threads
 
     # Create an Environment object.
     #
@@ -67,7 +66,8 @@ module Rscons
       super(options)
       @id = self.class.get_id
       self.class.register(self)
-      @threaded_commands = Set.new
+      # Hash of Thread object => {Command} or {Builder}.
+      @threads = {}
       @registered_build_dependencies = {}
       @side_effects = {}
       @builder_set = BuilderSet.new(@registered_build_dependencies, @side_effects)
@@ -91,6 +91,7 @@ module Rscons
           :short
         end
       @build_root = "#{Cache.instance.configuration_data["build_dir"]}/e.#{@id}"
+      @n_threads = Rscons.application.n_threads
 
       if block_given?
         yield self
@@ -173,9 +174,12 @@ module Rscons
     # @return [void]
     def add_builder(builder_class, &action)
       if builder_class.is_a?(String) or builder_class.is_a?(Symbol)
-        builder_class = BuilderBuilder.new(builder_class.to_s, Rscons::Builders::SimpleBuilder, &action)
+        name = builder_class.to_s
+        builder_class = BuilderBuilder.new(Rscons::Builders::SimpleBuilder, name, &action)
+      else
+        name = builder_class.name
       end
-      @builders[builder_class.name] = builder_class
+      @builders[name] = builder_class
     end
 
     # Add a build hook to the Environment.
@@ -254,73 +258,29 @@ module Rscons
     #
     # @return [void]
     def process
-      cache = Cache.instance
-      unless cache.configuration_data["configured"]
+      unless Cache.instance.configuration_data["configured"]
         raise "Project must be configured before processing an Environment"
       end
-      failure = nil
+      @process_failure = nil
+      @process_blocking_wait = false
+      @process_commands_waiting_to_run = []
+      @process_builder_waits = {}
+      @process_builders_to_run = []
       begin
-        while @builder_set.size > 0 or @threaded_commands.size > 0
-
-          if failure
+        while @builder_set.size > 0 or @threads.size > 0 or @process_commands_waiting_to_run.size > 0
+          process_step
+          if @process_failure
+            # On a build failure, do not start any more builders or commands,
+            # but let the threads that have already been started complete.
             @builder_set.clear
-            builder = nil
-          else
-            targets_still_building = @threaded_commands.map do |tc|
-              tc.builder.target
-            end
-            builder = @builder_set.get_next_builder_to_run(targets_still_building)
+            @process_commands_waiting_to_run.clear
           end
-
-          # TODO: have Cache determine when checksums may be invalid based on
-          # file size and/or timestamp.
-          cache.clear_checksum_cache!
-
-          if builder
-            result = run_builder(builder, cache)
-            unless result
-              failure = "Failed to build #{builder.target}"
-              Ansi.write($stderr, :red, failure, :reset, "\n")
-              next
-            end
-          end
-
-          completed_tcs = Set.new
-          # First do a non-blocking wait to pick up any threads that have
-          # completed since last time.
-          while tc = wait_for_threaded_commands(nonblock: true)
-            completed_tcs << tc
-          end
-
-          # If needed, do a blocking wait.
-          if (@threaded_commands.size > 0) and
-             ((completed_tcs.empty? and builder.nil?) or (@threaded_commands.size >= n_threads))
-            completed_tcs << wait_for_threaded_commands
-          end
-
-          # Process all completed {ThreadedCommand} objects.
-          completed_tcs.each do |tc|
-            result = finalize_builder(tc)
-            if result
-              @build_hooks[:post].each do |build_hook_block|
-                build_hook_block.call(tc.builder)
-              end
-            else
-              unless @echo == :command
-                print_failed_command(tc.command)
-              end
-              failure = "Failed to build #{tc.builder.target}"
-              Ansi.write($stderr, :red, failure, :reset, "\n")
-              break
-            end
-          end
-
         end
       ensure
-        cache.write
+        Cache.instance.write
       end
-      if failure
-        raise BuildError.new(failure)
+      if @process_failure
+        raise BuildError.new(@process_failure)
       end
     end
 
@@ -505,47 +465,6 @@ module Rscons
       end
     end
 
-    # Invoke a builder to build the given target based on the given sources.
-    #
-    # @param builder [Builder] The Builder to use.
-    # @param cache [Cache] The Cache.
-    #
-    # @return [String,false] Return value from the {Builder}'s +run+ method.
-    def run_builder(builder, cache)
-      builder.vars = @varset.merge(builder.vars)
-      build_operation = {}
-      call_build_hooks = lambda do |sec|
-        @build_hooks[sec].each do |build_hook_block|
-          build_hook_block.call(builder)
-        end
-      end
-
-      # Invoke pre-build hooks.
-      call_build_hooks[:pre]
-
-      # Call the builder's #run method.
-      rv = builder.run(build_operation)
-
-      (@side_effects[builder.target] || []).each do |side_effect_file|
-        # Register side-effect files as build targets so that a Cache clean
-        # operation will remove them.
-        cache.register_build(side_effect_file, nil, [], self)
-      end
-
-      if rv.is_a?(ThreadedCommand)
-        # Store the build operation so the post-build hooks can be called
-        # with it when the threaded command completes.
-        rv.builder = builder
-        # TODO: remove
-        rv.build_operation = build_operation
-        start_threaded_command(rv)
-      else
-        call_build_hooks[:post] if rv
-      end
-
-      rv
-    end
-
     # Expand a path to be relative to the Environment's build root.
     #
     # Paths beginning with "^/" are expanded by replacing "^" with the
@@ -591,15 +510,6 @@ module Rscons
       end
     end
 
-    # Get the number of threads to use for parallelized builds in this
-    # Environment.
-    #
-    # @return [Integer]
-    #   Number of threads to use for parallelized builds in this Environment.
-    def n_threads
-      @n_threads || Rscons.application.n_threads
-    end
-
     # Print the builder run message, depending on the Environment's echo mode.
     #
     # @param short_description [String]
@@ -636,49 +546,146 @@ module Rscons
 
     private
 
-    # Start a threaded command in a new thread.
+    # Signal a build failure to the {#process} method.
     #
-    # @param tc [ThreadedCommand]
-    #   The ThreadedCommand to start.
+    # @param target [String]
+    #   Build target name.
     #
     # @return [void]
-    def start_threaded_command(tc)
-      print_builder_run_message(tc.short_description, tc.command)
-
-      env_args = tc.system_env ? [tc.system_env] : []
-      options_args = tc.system_options ? [tc.system_options] : []
-      system_args = [*env_args, *Rscons.command_executer, *tc.command, *options_args]
-
-      tc.thread = Thread.new do
-        system(*system_args)
-      end
-      @threaded_commands << tc
+    def process_failure(target)
+      @process_failure = "Failed to build #{target}"
+      Ansi.write($stderr, :red, @process_failure, :reset, "\n")
     end
 
-    # Wait for threaded commands to complete.
+    # Run a builder and process its return value.
     #
-    # @param options [Hash]
-    #   Options.
-    # @option options [Boolean] :nonblock
-    #   Set to true to not block.
+    # @param builder [Builder]
+    #   The builder.
     #
-    # @return [ThreadedCommand, nil]
-    #   The {ThreadedCommand} object that is finished.
-    def wait_for_threaded_commands(options = {})
-      threads = @threaded_commands.map(&:thread)
-      if finished_thread = find_finished_thread(threads, options[:nonblock])
-        threaded_command = @threaded_commands.find do |tc|
-          tc.thread == finished_thread
+    # @return [void]
+    def run_builder(builder)
+      # TODO: have Cache determine when checksums may be invalid based on
+      # file size and/or timestamp.
+      Cache.instance.clear_checksum_cache!
+      case result = builder.run({})
+      when Array
+        result.each do |waititem|
+          @process_builder_waits[builder] ||= Set.new
+          @process_builder_waits[builder] << waititem
+          case waititem
+          when Thread
+            @threads[waititem] = builder
+          when Command
+            @process_commands_waiting_to_run << waititem
+          when Builder
+            # No action needed.
+          else
+            raise "Unrecognized #{builder.name} builder return item: #{waititem.inspect}"
+          end
         end
-        @threaded_commands.delete(threaded_command)
-        threaded_command
+      when false
+        process_failure(builder.target)
+      when true
+        # Register side-effect files as build targets so that a Cache
+        # clean operation will remove them.
+        (@side_effects[builder.target] || []).each do |side_effect_file|
+          Cache.instance.register_build(side_effect_file, nil, [], self)
+        end
+        @build_hooks[:post].each do |build_hook_block|
+          build_hook_block.call(builder)
+        end
+        process_remove_wait(builder)
+      else
+        raise "Unrecognized #{builder.name} builder return value: #{result.inspect}"
       end
     end
 
-    # Check if any of the requested threads are finished.
+    # Remove an item that a builder may have been waiting on.
     #
-    # @param threads [Array<Thread>]
-    #   The threads to check.
+    # @param waititem [Object]
+    #   Item that a builder may be waiting on.
+    #
+    # @return [void]
+    def process_remove_wait(waititem)
+      @process_builder_waits.to_a.each do |builder, waits|
+        if waits.include?(waititem)
+          waits.delete(waititem)
+        end
+        if waits.empty?
+          @process_builder_waits.delete(builder)
+          @process_builders_to_run << builder
+        end
+      end
+    end
+
+    # Broken out from {#process} to perform a single operation.
+    #
+    # @return [void]
+    def process_step
+      # Check if a thread has completed since last time.
+      thread = find_finished_thread(true)
+
+      # Check if we need to do a blocking wait for a thread to complete.
+      if thread.nil? and (@threads.size >= n_threads or @process_blocking_wait)
+        thread = find_finished_thread(false)
+        @process_blocking_wait = false
+      end
+
+      if thread
+        # We found a completed thread.
+        process_remove_wait(thread)
+        builder = builder_for_thread(thread)
+        completed_command = @threads[thread]
+        @threads.delete(thread)
+        if completed_command.is_a?(Command)
+          process_remove_wait(completed_command)
+          completed_command.status = thread.value
+          unless completed_command.status
+            unless @echo == :command
+              print_failed_command(completed_command.command)
+            end
+            return process_failure(builder.target)
+          end
+        end
+      end
+
+      if @threads.size < n_threads and @process_commands_waiting_to_run.size > 0
+        # There is a command waiting to run and a thread free to run it.
+        command = @process_commands_waiting_to_run.slice!(0)
+        @threads[command.run] = command
+        return
+      end
+
+      unless @process_builders_to_run.empty?
+        # There is a builder waiting to run that was unblocked by its wait
+        # items completing.
+        return run_builder(@process_builders_to_run.slice!(0))
+      end
+
+      # If no builder was found to run yet and there are threads available, try
+      # to get a runnable builder from the builder set.
+      targets_still_building = @threads.reduce([]) do |result, (thread, obj)|
+        result << builder_for_thread(thread).target
+      end
+      builder = @builder_set.get_next_builder_to_run(targets_still_building)
+
+      if builder
+        builder.vars = @varset.merge(builder.vars)
+        @build_hooks[:pre].each do |build_hook_block|
+          build_hook_block.call(builder)
+        end
+        return run_builder(builder)
+      end
+
+      if @threads.size > 0
+        # A runnable builder was not found but there is a thread running,
+        # so next time do a blocking wait for a thread to complete.
+        @process_blocking_wait = true
+      end
+    end
+
+    # Find a finished thread.
+    #
     # @param nonblock [Boolean]
     #   Whether to be non-blocking. If true, nil will be returned if no thread
     #   is finished. If false, the method will wait until one of the threads
@@ -686,31 +693,32 @@ module Rscons
     #
     # @return [Thread, nil]
     #   The finished thread, if any.
-    def find_finished_thread(threads, nonblock)
+    def find_finished_thread(nonblock)
       if nonblock
-        threads.find do |thread|
+        @threads.keys.find do |thread|
           !thread.alive?
         end
       else
-        if threads.empty?
+        if @threads.empty?
           raise "No threads to wait for"
         end
-        ThreadsWait.new(*threads).next_wait
+        ThreadsWait.new(*@threads.keys).next_wait
       end
     end
 
-    # Call a builder's #finalize method after a ThreadedCommand terminates.
+    # Get the {Builder} waiting on the given Thread.
     #
-    # @param tc [ThreadedCommand]
-    #   The ThreadedCommand returned from the builder's #run method.
+    # @param thread [Thread]
+    #   The thread.
     #
-    # @return [String, false]
-    #   Result of Builder#finalize.
-    def finalize_builder(tc)
-      tc.builder.finalize(
-        tc.build_operation.merge(
-          command_status: tc.thread.value,
-          tc: tc))
+    # @return [Builder]
+    #   The {Builder} waiting on the given thread.
+    def builder_for_thread(thread)
+      if @threads[thread].is_a?(Command)
+        @threads[thread].builder
+      else
+        @threads[thread]
+      end
     end
 
     # Find a builder that meets the requested features and produces a target

@@ -327,6 +327,29 @@ EOF
     expect(`./program.exe`).to eq "The value is 42\n"
   end
 
+  it 'raises an error when a custom builder returns an invalid value from #run' do
+    test_dir("custom_builder")
+    result = run_rscons(rsconscript: "error_run_return_value.rb")
+    expect(result.stderr).to match /Unrecognized MyBuilder builder return value: "hi"/
+    expect(result.status).to_not eq 0
+  end
+
+  it 'raises an error when a custom builder returns an invalid value using Builder#wait_for' do
+    test_dir("custom_builder")
+    result = run_rscons(rsconscript: "error_wait_for.rb")
+    expect(result.stderr).to match /Unrecognized MyBuilder builder return item: 1/
+    expect(result.status).to_not eq 0
+  end
+
+  it 'supports a Builder waiting for a custom Thread object' do
+    test_dir "custom_builder"
+    result = run_rscons(rsconscript: "wait_for_thread.rb")
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(lines(result.stdout)).to include "MyBuilder foo"
+    expect(File.exists?("foo")).to be_truthy
+  end
+
   it 'allows cloning Environment objects' do
     test_dir('clone_env')
     result = run_rscons

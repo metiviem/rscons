@@ -6,14 +6,14 @@ module Rscons
       # Run the builder to produce a build target.
       def run(options)
         if File.directory?(@target)
-          @target
+          true
         elsif File.exists?(@target)
           Ansi.write($stderr, :red, "Error: `#{@target}' already exists and is not a directory", :reset, "\n")
           false
         else
           @env.print_builder_run_message("Directory #{@target}", nil)
           @cache.mkdir_p(@target)
-          @target
+          true
         end
       end
 

@@ -1,6 +1,6 @@
 class TestBuilder < Rscons::Builder
   def run(options)
-    target
+    true
   end
 end
 build do

@@ -25,17 +25,6 @@ module Rscons
       end
 
       # Create an instance of the Builder to build a target.
-      #
-      # @param options [Hash]
-      #   Options.
-      # @option options [String] :target
-      #   Target file name.
-      # @option options [Array<String>] :sources
-      #   Source file name(s).
-      # @option options [Environment] :env
-      #   The Environment executing the builder.
-      # @option options [Hash,VarSet] :vars
-      #   Extra construction variables.
       def initialize(options)
         super(options)
         libprefix = @env.expand_varref("${SHLIBPREFIX}", @vars)
@@ -52,40 +41,26 @@ module Rscons
       end
 
       # Run the builder to produce a build target.
-      #
-      # @param options [Hash] Builder run options.
-      #
-      # @return [String,false]
-      #   Name of the target file on success or false on failure.
       def run(options)
-        ld = @env.expand_varref("${SHLD}", @vars)
-        ld = if ld != ""
-               ld
-             elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${DSUFFIX}", @vars))}
-               "${SHDC}"
-             elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${CXXSUFFIX}", @vars))}
-               "${SHCXX}"
-             else
-               "${SHCC}"
-             end
-        @vars["_TARGET"] = @target
-        @vars["_SOURCES"] = @objects
-        @vars["SHLD"] = ld
-        command = @env.build_command("${SHLDCMD}", @vars)
-        standard_threaded_build("SHLD #{@target}", @target, command, @objects, @env, @cache)
-      end
-
-      # Finalize a build.
-      #
-      # @param options [Hash]
-      #   Finalize options.
-      #
-      # @return [String, nil]
-      #   The target name on success or nil on failure.
-      def finalize(options)
-        if options[:command_status]
-          @cache.register_build(@target, options[:tc].command, @objects, @env)
-          @target
+        if @command
+          finalize_command(sources: @objects)
+          true
+        else
+          ld = @env.expand_varref("${SHLD}", @vars)
+          ld = if ld != ""
+                 ld
+               elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${DSUFFIX}", @vars))}
+                 "${SHDC}"
+               elsif @sources.find {|s| s.end_with?(*@env.expand_varref("${CXXSUFFIX}", @vars))}
+                 "${SHCXX}"
+               else
+                 "${SHCC}"
+               end
+          @vars["_TARGET"] = @target
+          @vars["_SOURCES"] = @objects
+          @vars["SHLD"] = ld
+          command = @env.build_command("${SHLDCMD}", @vars)
+          standard_command("SHLD #{@target}", command, sources: @objects)
         end
       end
 

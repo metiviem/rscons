@@ -10,7 +10,7 @@ build do
         end
         @cache.register_build(@target, :JsonToYaml, @sources, @env)
       end
-      @target
+      true
     end
     env.JsonToYaml('foo.yml', 'foo.json')
   end

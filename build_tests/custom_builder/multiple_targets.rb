@@ -8,7 +8,7 @@ class CHGen < Rscons::Builder
       File.open(h_fname, "w") {|fh| fh.puts "extern int THE_VALUE;"}
       @cache.register_build([c_fname, h_fname], "", @sources, @env)
     end
-    @target
+    true
   end
 end
 

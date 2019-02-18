@@ -5,8 +5,14 @@ module Rscons
     # @since 1.8.0
     class SimpleBuilder < Builder
 
+      # @return [String]
+      #   User-provided builder name.
+      attr_reader :name
+
       # Create an instance of the Builder to build a target.
       #
+      # @param name [String]
+      #   User-provided builder name.
       # @param options [Hash]
       #   Options.
       # @option options [String] :target
@@ -20,7 +26,8 @@ module Rscons
       # @param run_proc [Proc]
       #   A Proc to execute when the builder runs. The provided block must
       #   provide the have the same signature as {Builder#run}.
-      def initialize(options, &run_proc)
+      def initialize(name, options, &run_proc)
+        @name = name
         super(options)
         @run_proc = run_proc
       end

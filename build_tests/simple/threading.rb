@@ -1,12 +1,11 @@
 class ThreadedTestBuilder < Rscons::Builder
   def run(options)
-    command = ["ruby", "-e", %[sleep 1]]
-    Rscons::ThreadedCommand.new(
-      command,
-      short_description: "ThreadedTestBuilder #{@target}")
-  end
-  def finalize(options)
-    true
+    if @command
+      true
+    else
+      @command = ["ruby", "-e", %[sleep 1]]
+      register_command("ThreadedTestBuilder #{@target}", @command)
+    end
   end
 end
 
@@ -14,7 +13,7 @@ class NonThreadedTestBuilder < Rscons::Builder
   def run(options)
     puts "NonThreadedTestBuilder #{@target}"
     sleep 1
-    @target
+    true
   end
 end
 

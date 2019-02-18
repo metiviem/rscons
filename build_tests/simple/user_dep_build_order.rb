@@ -1,15 +1,15 @@
 class TestBuilder < Rscons::Builder
   def run(options)
-    if @target == "two"
-      return false unless File.exists?("one")
+    if @command
+      true
+    else
+      if @target == "two"
+        return false unless File.exists?("one")
+      end
+      wait_time = @env.expand_varref("${wait_time}", @vars)
+      @command = ["ruby", "-e", "require 'fileutils'; sleep #{wait_time}; FileUtils.touch('#{@target}');"]
+      register_command("TestBuilder", @command)
     end
-    wait_time = @env.expand_varref("${wait_time}", @vars)
-    command = ["ruby", "-e", "require 'fileutils'; sleep #{wait_time}; FileUtils.touch('#{@target}');"]
-    standard_threaded_build("TestBuilder", @target, command, [], @env, @cache)
-  end
-
-  def finalize(options)
-    standard_finalize(options)
   end
 end
 

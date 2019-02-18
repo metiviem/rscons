@@ -42,7 +42,7 @@ module Rscons
           end
           @cache.register_build(dest, :Copy, [src], @env)
         end
-        @target if (target_is_dir ? Dir.exists?(@target) : File.exists?(@target))
+        (target_is_dir ? Dir.exists?(@target) : File.exists?(@target)) ? true : false
       end
 
     end

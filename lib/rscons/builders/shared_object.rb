@@ -61,40 +61,26 @@ module Rscons
       end
 
       # Run the builder to produce a build target.
-      #
-      # @param options [Hash] Builder run options.
-      #
-      # @return [String, ThreadedCommand]
-      #   Target file name if target is up to date or a {ThreadedCommand}
-      #   to execute to build the target.
       def run(options)
-        @vars["_TARGET"] = @target
-        @vars["_SOURCES"] = @sources
-        @vars["_DEPFILE"] = Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars))
-        com_prefix = KNOWN_SUFFIXES.find do |compiler, suffix_var|
-          @sources.first.end_with?(*@env.expand_varref("${#{suffix_var}}", @vars))
-        end.tap do |v|
-          v.nil? and raise "Error: unknown input file type: #{@sources.first.inspect}"
-        end.first
-        command = @env.build_command("${#{com_prefix}CMD}", @vars)
-        @env.produces(@target, @vars["_DEPFILE"])
-        standard_threaded_build("#{com_prefix} #{@target}", @target, command, @sources, @env, @cache)
-      end
-
-      # Finalize the build operation.
-      #
-      # @param options [Hash] Builder finalize options.
-      #
-      # @return [String, nil]
-      #   Name of the target file on success or nil on failure.
-      def finalize(options)
-        if options[:command_status]
+        if @command
           deps = @sources
-          if File.exists?(@vars['_DEPFILE'])
-            deps += Util.parse_makefile_deps(@vars['_DEPFILE'])
+          if File.exists?(@vars["_DEPFILE"])
+            deps += Util.parse_makefile_deps(@vars["_DEPFILE"])
           end
-          @cache.register_build(@target, options[:tc].command, deps.uniq, @env)
-          @target
+          @cache.register_build(@target, @command, deps.uniq, @env)
+          true
+        else
+          @vars["_TARGET"] = @target
+          @vars["_SOURCES"] = @sources
+          @vars["_DEPFILE"] = Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars))
+          com_prefix = KNOWN_SUFFIXES.find do |compiler, suffix_var|
+            @sources.first.end_with?(*@env.expand_varref("${#{suffix_var}}", @vars))
+          end.tap do |v|
+            v.nil? and raise "Error: unknown input file type: #{@sources.first.inspect}"
+          end.first
+          command = @env.build_command("${#{com_prefix}CMD}", @vars)
+          @env.produces(@target, @vars["_DEPFILE"])
+          standard_command("#{com_prefix} #{@target}", command)
         end
       end
 
