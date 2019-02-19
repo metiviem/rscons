@@ -95,7 +95,9 @@ module Rscons
           end.first
           command = @env.build_command("${#{com_prefix}CMD}", @vars)
           @env.produces(@target, @vars["_DEPFILE"])
-          standard_command("#{com_prefix} #{@target}", command)
+          verb = com_prefix == "AS" ? "Assembling" : "Compiling"
+          message = "#{verb} #{Util.short_format_paths(@sources)}"
+          standard_command(message, command)
         end
       end
 

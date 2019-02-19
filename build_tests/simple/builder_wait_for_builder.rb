@@ -7,7 +7,7 @@ class MyObject < Rscons::Builder
         false
       end
     else
-      @env.print_builder_run_message("#{name} #{@target}", nil)
+      print_run_message("#{name} #{@target}", nil)
       @builder = @env.Object(@target, @sources, @vars)
       wait_for(@builder)
     end

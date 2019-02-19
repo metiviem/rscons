@@ -1,6 +1,6 @@
 class MyBuilder < Rscons::Builder
   def run(options)
-    @env.print_builder_run_message("MyBuilder #{@target}", "MyBuilder #{@target} command")
+    print_run_message("MyBuilder #{@target}", "MyBuilder #{@target} command")
     true
   end
 end

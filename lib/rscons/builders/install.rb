@@ -34,7 +34,8 @@ module Rscons
           # Check the cache and copy if necessary
           unless @cache.up_to_date?(dest, :Copy, [src], @env)
             unless printed_message
-              @env.print_builder_run_message("#{name} #{@target}", nil)
+              message = "#{name} #{Util.short_format_paths(@sources)} => #{@target}"
+              print_run_message(message, nil)
               printed_message = true
             end
             @cache.mkdir_p(File.dirname(dest))

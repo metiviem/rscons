@@ -26,17 +26,18 @@ module Rscons
         else
           @vars["_TARGET"] = @target
           @vars["_SOURCES"] = @sources
-          cmd =
-            case
-            when @sources.first.end_with?(*@env.expand_varref("${LEXSUFFIX}"))
-              "LEX"
-            when @sources.first.end_with?(*@env.expand_varref("${YACCSUFFIX}"))
-              "YACC"
-            else
-              raise "Unknown source file #{@sources.first.inspect} for CFile builder"
-            end
+          case
+          when @sources.first.end_with?(*@env.expand_varref("${LEXSUFFIX}"))
+            cmd = "LEX"
+            message = "Generating lexer"
+          when @sources.first.end_with?(*@env.expand_varref("${YACCSUFFIX}"))
+            cmd = "YACC"
+            message = "Generating parser"
+          else
+            raise "Unknown source file #{@sources.first.inspect} for CFile builder"
+          end
           command = @env.build_command("${#{cmd}_CMD}", @vars)
-          standard_command("#{cmd} #{@target}", command)
+          standard_command("#{message} from #{Util.short_format_paths(@sources)} => #{@target}", command)
         end
       end
 

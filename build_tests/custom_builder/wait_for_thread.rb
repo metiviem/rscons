@@ -3,7 +3,7 @@ class MyBuilder < Rscons::Builder
     if @thread
       true
     else
-      @env.print_builder_run_message("#{name} #{target}", nil)
+      print_run_message("#{name} #{target}", nil)
       @thread = Thread.new do
         sleep 2
         FileUtils.touch(@target)

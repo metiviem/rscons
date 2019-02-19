@@ -512,13 +512,16 @@ module Rscons
 
     # Print the builder run message, depending on the Environment's echo mode.
     #
+    # @param builder [Builder]
+    #   The {Builder} that is executing.
     # @param short_description [String]
-    #   Builder short description, printed if the echo mode is :short.
+    #   Builder short description, printed if the echo mode is :short, or if
+    #   there is no command.
     # @param command [Array<String>]
     #   Builder command, printed if the echo mode is :command.
     #
     # @return [void]
-    def print_builder_run_message(short_description, command)
+    def print_builder_run_message(builder, short_description, command)
       case @echo
       when :command
         if command.is_a?(Array)

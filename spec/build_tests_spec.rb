@@ -188,8 +188,8 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      'CC build/e.1/header.o',
-      "LD header.exe",
+      "Compiling header.c",
+      "Linking => header.exe",
     ]
   end
 
@@ -217,8 +217,8 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      'CC build/e.1/header.o',
-      "LD header.exe",
+      "Compiling header.c",
+      "Linking => header.exe",
     ]
     expect(`./header.exe`).to eq "The value is 2\n"
     result = run_rscons
@@ -231,8 +231,8 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      'CC build/e.1/header.o',
-      "LD header.exe",
+      "Compiling header.c",
+      "Linking => header.exe",
     ]
     expect(`./header.exe`).to eq "The value is 2\n"
     sleep 0.05
@@ -305,7 +305,7 @@ EOF
     test_dir('custom_builder')
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *["CC build/e.1/program.o", "LD program.exe"]
+    expect(lines(result.stdout)).to include *["Compiling program.c", "Linking => program.exe"]
     expect(File.exists?('inc.h')).to be_truthy
     expect(`./program.exe`).to eq "The value is 5678\n"
   end
@@ -315,7 +315,7 @@ EOF
     result = run_rscons(rsconscript: "multiple_targets.rb")
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    expect(slines).to include("CHGen inc.c", "CC build/e.1/program.o", "CC build/e.1/inc.o", "LD program.exe")
+    expect(slines).to include("CHGen inc.c", "Compiling program.c", "Compiling inc.c", "Linking => program.exe")
     expect(File.exists?("inc.c")).to be_truthy
     expect(File.exists?("inc.h")).to be_truthy
     expect(`./program.exe`).to eq "The value is 42\n"
@@ -453,19 +453,19 @@ EOF
     File.open("program.ld", "w") {|fh| fh.puts("1")}
     result = run_rscons(rsconscript: "user_dependencies.rb")
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *["CC build/e.1/simple.o", "LD simple.exe"]
+    expect(lines(result.stdout)).to include *["Compiling simple.c", "Linking => simple.exe"]
     expect(File.exists?('build/e.1/simple.o')).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
 
     File.open("program.ld", "w") {|fh| fh.puts("2")}
     result = run_rscons(rsconscript: "user_dependencies.rb")
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *["LD simple.exe"]
+    expect(lines(result.stdout)).to include *["Linking => simple.exe"]
 
     File.unlink("program.ld")
     result = run_rscons(rsconscript: "user_dependencies.rb")
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *["LD simple.exe"]
+    expect(lines(result.stdout)).to include *["Linking => simple.exe"]
 
     result = run_rscons(rsconscript: "user_dependencies.rb")
     expect(result.stderr).to eq ""
@@ -515,9 +515,9 @@ EOF
       #expect(result.stderr).to eq ""
       slines = lines(result.stdout)
       if RUBY_PLATFORM =~ /mingw/
-        expect(slines).to include("SHLD mine.dll")
+        expect(slines).to include("Linking => mine.dll")
       else
-        expect(slines).to include("SHLD libmine.so")
+        expect(slines).to include("Linking => libmine.so")
       end
     end
   end
@@ -561,7 +561,7 @@ EOF
     test_dir('custom_builder')
     result = run_rscons(rsconscript: "cvar_expansion.rb")
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *["CC build/e.1/program.o", "LD program.exe"]
+    expect(lines(result.stdout)).to include *["Compiling program.c", "Linking => program.exe"]
     expect(File.exists?('inc.h')).to be_truthy
     expect(`./program.exe`).to eq "The value is 678\n"
   end
@@ -625,11 +625,11 @@ EOF
     result = run_rscons(rsconscript: "assuffix.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      "CC one.ssss",
-      "CC two.sss",
-      "AS build/e.1/one.o",
-      "AS build/e.1/two.o",
-      "LD two_sources.exe",
+      "Compiling one.c",
+      "Compiling two.c",
+      "Assembling one.ssss",
+      "Assembling two.sss",
+      "Linking => two_sources.exe",
     ]
     expect(File.exists?("two_sources.exe")).to be_truthy
     expect(`./two_sources.exe`).to eq "This is a C program with two sources.\n"
@@ -650,7 +650,7 @@ EOF
 
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include "Preprocess pp"
+    expect(lines(result.stdout)).to include "Preprocessing foo.h => pp"
     expect(File.read("pp")).to match(%r{xyz42abc}m)
 
     result = run_rscons
@@ -662,7 +662,7 @@ EOF
     end
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include "Preprocess pp"
+    expect(lines(result.stdout)).to include "Preprocessing foo.h => pp"
     expect(File.read("pp")).to match(%r{abc88xyz}m)
   end
 
@@ -680,8 +680,8 @@ EOF
     expect(result.stderr).to eq ""
     expect(File.exists?("one.o")).to be_truthy
     expect(lines(result.stdout)).to include *[
-      "CC one.o",
-      "CC one.o",
+      "Compiling src/one/one.c",
+      "Compiling src/two/two.c",
     ]
   end
 
@@ -692,8 +692,8 @@ EOF
     expect(File.exists?("one.o")).to be_truthy
     expect(File.exists?("two.o")).to be_truthy
     expect(lines(result.stdout)).to include *[
-      "CC one.o",
-      "CC two.o",
+      "Compiling src/one/one.c",
+      "Compiling src/two/two.c",
     ]
   end
 
@@ -713,7 +713,7 @@ EOF
                       rscons_args: %w[-j1])
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      "CC two.o",
+      "Compiling two.c",
     ]
   end
 
@@ -722,8 +722,8 @@ EOF
     result = run_rscons(rsconscript: "progsuffix.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      "CC build/e.1/simple.o",
-      "LD simple.out",
+      "Compiling simple.c",
+      "Linking => simple.out",
     ]
   end
 
@@ -732,8 +732,8 @@ EOF
     result = run_rscons(rsconscript: "progsuffix2.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      "CC build/e.1/simple.o",
-      "LD simple.out",
+      "Compiling simple.c",
+      "Linking => simple.out",
     ]
   end
 
@@ -742,8 +742,8 @@ EOF
     result = run_rscons(rsconscript: "progsuffix3.rb")
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to include *[
-      "CC build/e.1/simple.o",
-      "LD simple.xyz",
+      "Compiling simple.c",
+      "Linking => simple.xyz",
     ]
   end
 
@@ -752,8 +752,8 @@ EOF
     result = run_rscons(rsconscript: "absolute_source_path.rb")
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    expect(slines).to include a_string_matching %r{^CC build/e.1/.*/abs\.o$}
-    expect(slines).to include "LD abs.exe"
+    expect(slines).to include a_string_matching %r{build/e.1/.*/abs\.o$}
+    expect(slines).to include a_string_matching %r{\babs.exe\b}
   end
 
   it "creates shared libraries" do
@@ -763,10 +763,10 @@ EOF
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     if RUBY_PLATFORM =~ /mingw/
-      expect(slines).to include("SHLD mine.dll")
+      expect(slines).to include("Linking => mine.dll")
       expect(File.exists?("mine.dll")).to be_truthy
     else
-      expect(slines).to include("SHLD libmine.so")
+      expect(slines).to include("Linking => libmine.so")
       expect(File.exists?("libmine.so")).to be_truthy
     end
 
@@ -786,9 +786,9 @@ EOF
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     if RUBY_PLATFORM =~ /mingw/
-      expect(slines).to include("SHLD mine.dll")
+      expect(slines).to include("Linking => mine.dll")
     else
-      expect(slines).to include("SHLD libmine.so")
+      expect(slines).to include("Linking => libmine.so")
     end
 
     result = run_rscons(rsconscript: "shared_library_cxx.rb")
@@ -842,7 +842,7 @@ EOF
 
     result = run_rscons(rsconscript: "echo_command_ruby_builder.rb")
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *["Install inst.exe"]
+    expect(lines(result.stdout)).to include *["Install install.rb => inst.exe"]
   end
 
   it "supports a string for a builder's echoed 'command' with Environment#print_builder_run_message" do
@@ -883,8 +883,8 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "LEX lexer.c",
-        "YACC parser.c",
+        "Generating lexer from lexer.l => lexer.c",
+        "Generating parser from parser.y => parser.c",
       ]
 
       result = run_rscons
@@ -906,7 +906,7 @@ EOF
 
       result = run_rscons(rsconscript: "command_builder.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["BuildIt simple.exe"]
+      expect(lines(result.stdout)).to include *["BuildIt => simple.exe"]
       expect(`./simple.exe`).to eq "This is a simple C program\n"
 
       result = run_rscons(rsconscript: "command_builder.rb")
@@ -920,8 +920,8 @@ EOF
       result = run_rscons(rsconscript: "command_redirect.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "CC simple.o",
-        "My Disassemble simple.txt",
+        "Compiling simple.c",
+        "My Disassemble => simple.txt",
       ]
       expect(File.read("simple.txt")).to match /Disassembly of section .text:/
     end
@@ -932,7 +932,7 @@ EOF
       test_dir("simple")
       result = run_rscons(rsconscript: "directory.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Directory teh_dir"]
+      expect(lines(result.stdout)).to include *["Creating directory => teh_dir"]
       expect(File.directory?("teh_dir")).to be_truthy
     end
 
@@ -941,7 +941,7 @@ EOF
       FileUtils.mkdir("teh_dir")
       result = run_rscons(rsconscript: "directory.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to_not include a_string_matching /Directory/
+      expect(lines(result.stdout)).to_not include a_string_matching /Creating directory/
       expect(File.directory?("teh_dir")).to be_truthy
     end
 
@@ -959,7 +959,7 @@ EOF
 
       result = run_rscons(rsconscript: "install.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Install inst.exe"]
+      expect(lines(result.stdout)).to include *["Install install.rb => inst.exe"]
 
       result = run_rscons(rsconscript: "install.rb")
       expect(result.stderr).to eq ""
@@ -971,7 +971,7 @@ EOF
       FileUtils.rm("inst.exe")
       result = run_rscons(rsconscript: "install.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Install inst.exe"]
+      expect(lines(result.stdout)).to include *["Install install.rb => inst.exe"]
     end
 
     it "operates the same as a Copy builder" do
@@ -979,7 +979,7 @@ EOF
 
       result = run_rscons(rsconscript: "copy.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Copy inst.exe"]
+      expect(lines(result.stdout)).to include *["Copy copy.rb => inst.exe"]
 
       result = run_rscons(rsconscript: "copy.rb")
       expect(result.stderr).to eq ""
@@ -991,7 +991,7 @@ EOF
       FileUtils.rm("inst.exe")
       result = run_rscons(rsconscript: "copy.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Copy inst.exe"]
+      expect(lines(result.stdout)).to include *["Copy copy.rb => inst.exe"]
     end
 
     it "copies a file to the target directory name" do
@@ -999,7 +999,7 @@ EOF
 
       result = run_rscons(rsconscript: "install_directory.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include("Install inst")
+      expect(lines(result.stdout)).to include("Install install_directory.rb => inst")
       expect(File.exists?("inst/install_directory.rb")).to be_truthy
       expect(File.read("inst/install_directory.rb", mode: "rb")).to eq(File.read("install_directory.rb", mode: "rb"))
 
@@ -1012,7 +1012,7 @@ EOF
       test_dir("typical")
       result = run_rscons(rsconscript: "install_directory.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include("Install noexist/src")
+      expect(lines(result.stdout)).to include("Install src => noexist/src")
       %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
         expect(File.exists?("noexist/#{f}")).to be_truthy
         expect(File.read("noexist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
@@ -1023,7 +1023,7 @@ EOF
       test_dir("typical")
       result = run_rscons(rsconscript: "install_directory.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include("Install exist/src")
+      expect(lines(result.stdout)).to include("Install src => exist/src")
       %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
         expect(File.exists?("exist/#{f}")).to be_truthy
         expect(File.read("exist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
@@ -1038,8 +1038,8 @@ EOF
       result = run_rscons(rsconscript: "phony_target.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "CC build/e.1/simple.o",
-        "LD simple.exe",
+        "Compiling simple.c",
+        "Linking => simple.exe",
         "Checker simple.exe",
       ]
 
@@ -1065,7 +1065,7 @@ EOF
       test_dir("simple")
       result = run_rscons(rsconscript: "clear_targets.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to_not include a_string_matching %r{LD}
+      expect(lines(result.stdout)).to_not include a_string_matching %r{Linking}
     end
   end
 
@@ -1128,14 +1128,14 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "CC build/e.1/simple.o",
-        "LD simple.exe",
+        "Compiling simple.c",
+        "Linking => simple.exe",
       ]
 
       result = run_rscons(rsconscript: "cache_command_change.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "LD simple.exe",
+        "Linking => simple.exe",
       ]
     end
 
@@ -1145,14 +1145,14 @@ EOF
       result = run_rscons(rsconscript: "cache_new_dep1.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "CC simple.o",
-        "LD simple.exe",
+        "Compiling simple.c",
+        "Linking => simple.exe",
       ]
 
       result = run_rscons(rsconscript: "cache_new_dep2.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "LD simple.exe",
+        "Linking => simple.exe",
       ]
     end
 
@@ -1161,14 +1161,14 @@ EOF
 
       result = run_rscons(rsconscript: "cache_dep_checksum_change.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Copy simple.copy"]
+      expect(lines(result.stdout)).to include *["Copy simple.c => simple.copy"]
       File.open("simple.c", "wb") do |fh|
         fh.write("hi")
       end
 
       result = run_rscons(rsconscript: "cache_dep_checksum_change.rb")
       expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Copy simple.copy"]
+      expect(lines(result.stdout)).to include *["Copy simple.c => simple.copy"]
     end
 
     it "forces a rebuild with strict_deps=true when dependency order changes" do
@@ -1201,15 +1201,15 @@ EOF
       result = run_rscons(rsconscript: "cache_user_dep.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "CC build/e.1/simple.o",
-        "LD simple.exe",
+        "Compiling simple.c",
+        "Linking => simple.exe",
       ]
 
       File.open("user_deps", "wb") {|fh| fh.write("foo")}
       result = run_rscons(rsconscript: "cache_user_dep.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "LD simple.exe",
+        "Linking => simple.exe",
       ]
     end
 
@@ -1221,8 +1221,8 @@ EOF
       result = run_rscons(rsconscript: "cache_user_dep.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "CC build/e.1/simple.o",
-        "LD simple.exe",
+        "Compiling simple.c",
+        "Linking => simple.exe",
       ]
 
       result = run_rscons(rsconscript: "cache_user_dep.rb")
@@ -1233,7 +1233,7 @@ EOF
       result = run_rscons(rsconscript: "cache_user_dep.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *[
-        "LD simple.exe",
+        "Linking => simple.exe",
       ]
     end
 
@@ -1378,9 +1378,9 @@ EOF
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
       if RUBY_PLATFORM =~ /mingw/
-        expect(slines).to include("SHLD mine.dll")
+        expect(slines).to include("Linking => mine.dll")
       else
-        expect(slines).to include("SHLD libmine.so")
+        expect(slines).to include("Linking => libmine.so")
       end
     end
   end
@@ -1934,7 +1934,7 @@ EOF
       test_dir('simple')
       result = run_rscons
       expect(result.stderr).to eq ""
-      expect(result.stdout).to match /CC .*simple\.o/
+      expect(result.stdout).to match /Compiling.*simple\.c/
     end
 
     it "echoes commands by default with -v" do

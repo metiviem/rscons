@@ -27,7 +27,7 @@ module Rscons
           @vars["_TARGET"] = @target
           @vars["_SOURCES"] = @objects
           command = @env.build_command("${ARCMD}", @vars)
-          standard_command("AR #{@target}", command, sources: @objects)
+          standard_command("Building static library archive => #{@target}", command, sources: @objects)
         end
       end
 

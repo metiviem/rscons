@@ -26,6 +26,23 @@ module Rscons
         command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
       end
 
+      # Return a string showing the path specified, or if more than one, then
+      # the first path with a "(+D)" afterward, where D is the number of
+      # remaining paths.
+      #
+      # @param paths [Array<String>]
+      #   Paths.
+      #
+      # @return [String]
+      #   Condensed path readout.
+      def short_format_paths(paths)
+        if paths.size == 1
+          paths.first
+        else
+          "#{paths.first} (#{paths.size - 1})"
+        end
+      end
+
       # Look for an executable.
       #
       # @return [String, nil]

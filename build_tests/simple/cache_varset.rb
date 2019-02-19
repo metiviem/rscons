@@ -6,7 +6,7 @@ class TestBuilder < Rscons::Builder
         fh.puts("hi")
       end
       msg = "#{name} #{@target}"
-      @env.print_builder_run_message(msg, msg)
+      print_run_message(msg, msg)
       @cache.register_build(@target, command, @sources, @env)
     end
     true

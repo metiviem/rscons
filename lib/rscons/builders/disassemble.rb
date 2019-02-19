@@ -16,7 +16,7 @@ module Rscons
         else
           @vars["_SOURCES"] = @sources
           command = @env.build_command("${DISASM_CMD}", @vars)
-          standard_command("Disassemble #{target}", command, stdout: @target)
+          standard_command("Disassembling #{Util.short_format_paths(@sources)} => #{target}", command, stdout: @target)
         end
       end
 

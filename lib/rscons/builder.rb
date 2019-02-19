@@ -119,6 +119,19 @@ module Rscons
       raise "This method must be overridden in a subclass"
     end
 
+    # Print the builder run message, depending on the Environment's echo mode.
+    #
+    # @param short_description [String]
+    #   Builder short description, printed if the echo mode is :short, or if
+    #   there is no command.
+    # @param command [Array<String>]
+    #   Builder command, printed if the echo mode is :command.
+    #
+    # @return [void]
+    def print_run_message(short_description, command)
+      @env.print_builder_run_message(self, short_description, command)
+    end
+
     # Create a {Command} object to execute the build command in a thread.
     #
     # @param short_description [String]
@@ -138,7 +151,7 @@ module Rscons
       if options[:stdout]
         command_options[:system_options] = {out: options[:stdout]}
       end
-      @env.print_builder_run_message(short_description, @command)
+      print_run_message(short_description, @command)
       wait_for(Command.new(command, self, command_options))
     end
 
