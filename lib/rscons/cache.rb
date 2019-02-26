@@ -85,17 +85,14 @@ module Rscons
       @lookup_checksums = {}
     end
 
-    # Write the cache to disk to be loaded next time.
+    # Write the cache to disk.
     #
     # @return [void]
     def write
-      if @dirty || (@cache["version"] != VERSION)
-        @cache["version"] = VERSION
-        File.open(CACHE_FILE, "w") do |fh|
-          fh.puts(JSON.dump(@cache))
-        end
+      @cache["version"] = VERSION
+      File.open(CACHE_FILE, "w") do |fh|
+        fh.puts(JSON.dump(@cache))
       end
-      @dirty = false
     end
 
     # Check if target(s) are up to date.
@@ -249,7 +246,6 @@ module Rscons
             }
           end,
         }
-        @dirty = true
       end
     end
 
@@ -274,7 +270,6 @@ module Rscons
         unless File.exists?(subpath)
           FileUtils.mkdir_p(subpath)
           @cache["directories"][subpath] = true
-          @dirty = true
         end
       end
     end
@@ -315,7 +310,6 @@ module Rscons
       @cache["targets"] ||= {}
       @cache["directories"] ||= {}
       @lookup_checksums = {}
-      @dirty = false
     end
 
     # Return a file's checksum, or the previously calculated checksum for
