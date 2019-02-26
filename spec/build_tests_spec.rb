@@ -953,6 +953,49 @@ EOF
     end
   end
 
+  context "Copy builder" do
+    it "copies a file to the target file name" do
+      test_dir("typical")
+
+      result = run_rscons(rsconscript: "copy.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include *["Copy copy.rb => inst.exe"]
+
+      result = run_rscons(rsconscript: "copy.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+
+      expect(File.exists?("inst.exe")).to be_truthy
+      expect(File.read("inst.exe", mode: "rb")).to eq(File.read("copy.rb", mode: "rb"))
+
+      FileUtils.rm("inst.exe")
+      result = run_rscons(rsconscript: "copy.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include *["Copy copy.rb => inst.exe"]
+    end
+
+    it "copies multiple files to the target directory name" do
+      test_dir("typical")
+
+      result = run_rscons(rsconscript: "copy_multiple.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include *["Copy copy.rb (+1) => dest"]
+
+      result = run_rscons(rsconscript: "copy_multiple.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+
+      expect(Dir.exists?("dest")).to be_truthy
+      expect(File.exists?("dest/copy.rb")).to be_truthy
+      expect(File.exists?("dest/copy_multiple.rb")).to be_truthy
+
+      FileUtils.rm_rf("dest")
+      result = run_rscons(rsconscript: "copy_multiple.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include *["Copy copy.rb (+1) => dest"]
+    end
+  end
+
   context "Install buildler" do
     it "copies a file to the target file name" do
       test_dir("typical")
@@ -972,26 +1015,6 @@ EOF
       result = run_rscons(rsconscript: "install.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *["Install install.rb => inst.exe"]
-    end
-
-    it "operates the same as a Copy builder" do
-      test_dir("typical")
-
-      result = run_rscons(rsconscript: "copy.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Copy copy.rb => inst.exe"]
-
-      result = run_rscons(rsconscript: "copy.rb")
-      expect(result.stderr).to eq ""
-      expect(result.stdout).to eq ""
-
-      expect(File.exists?("inst.exe")).to be_truthy
-      expect(File.read("inst.exe", mode: "rb")).to eq(File.read("copy.rb", mode: "rb"))
-
-      FileUtils.rm("inst.exe")
-      result = run_rscons(rsconscript: "copy.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Copy copy.rb => inst.exe"]
     end
 
     it "copies a file to the target directory name" do

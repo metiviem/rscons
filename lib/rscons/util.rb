@@ -39,7 +39,7 @@ module Rscons
         if paths.size == 1
           paths.first
         else
-          "#{paths.first} (#{paths.size - 1})"
+          "#{paths.first} (+#{paths.size - 1})"
         end
       end
 
