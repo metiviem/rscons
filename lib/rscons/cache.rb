@@ -96,29 +96,17 @@ module Rscons
     #   Configuration data.
     def configuration_data=(value)
       @cache["configuration_data"] = value
-      @dirty = true
     end
 
-    # Write the cache to disk if it is dirty.
+    # Write the cache to disk.
     #
     # @return [void]
     def write
-      if @dirty || (@cache["version"] != VERSION)
-        @cache["version"] = VERSION
-        validate_json_object(@cache)
-        File.open(CACHE_FILE, "w") do |fh|
-          fh.puts(JSON.dump(@cache))
-        end
+      @cache["version"] = VERSION
+      validate_json_object(@cache)
+      File.open(CACHE_FILE, "w") do |fh|
+        fh.puts(JSON.dump(@cache))
       end
-      @dirty = false
-    end
-
-    # Force a write of the cache to disk.
-    #
-    # @return [void]
-    def write!
-      @dirty = true
-      write
     end
 
     # Check if target(s) are up to date.
@@ -272,7 +260,6 @@ module Rscons
             }
           end,
         }
-        @dirty = true
       end
     end
 
@@ -297,7 +284,6 @@ module Rscons
         unless File.exists?(subpath)
           FileUtils.mkdir_p(subpath)
           @cache["directories"][subpath] = true
-          @dirty = true
         end
       end
     end
@@ -339,7 +325,6 @@ module Rscons
       @cache["directories"] ||= {}
       @cache["configuration_data"] ||= {}
       @lookup_checksums = {}
-      @dirty = false
     end
 
     # Return a file's checksum, or the previously calculated checksum for

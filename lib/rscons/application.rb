@@ -156,7 +156,7 @@ module Rscons
       cache.configuration_data["build_dir"] = options[:build_dir]
       cache.configuration_data["prefix"] = options[:prefix]
       cache.configuration_data["configured"] = rv == 0
-      cache.write!
+      cache.write
       rv
     end
 
