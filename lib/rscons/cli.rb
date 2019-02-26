@@ -5,6 +5,7 @@ USAGE = <<EOF
 Usage: #{$0} [global options] [operation] [operation options]
 
 Global options:
+  -F, --show-failure          Show previous failed command(s) and exit
   --version                   Show rscons version and exit
   -h, --help                  Show rscons help and exit
   -r COLOR, --color=COLOR     Set color mode (off, auto, force)
@@ -86,6 +87,11 @@ module Rscons
             rsconscript = f
           end
 
+          opts.on("-F", "--show-failure") do
+            show_failure
+            exit 0
+          end
+
           opts.on("--version") do
             puts "Rscons version #{Rscons::VERSION}"
             exit 0
@@ -154,6 +160,14 @@ module Rscons
 
         opts.on("--prefix PREFIX") do |prefix|
           options[:prefix] = prefix
+        end
+      end
+
+      def show_failure
+        failed_commands = Cache.instance["failed_commands"]
+        failed_commands.each_with_index do |command, i|
+          Ansi.write($stdout, :red, "Failed command (#{i + 1}/#{failed_commands.size}):", :reset, "\n")
+          $stdout.puts Util.command_to_s(command)
         end
       end
 

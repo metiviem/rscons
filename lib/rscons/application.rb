@@ -80,13 +80,14 @@ module Rscons
     #   Exit code.
     def build(options)
       begin
+        Cache.instance["failed_commands"] = []
         @script.build
         Environment.environments.each do |env|
           env.process
         end
         0
       rescue BuildError => be
-        $stderr.puts be
+        Ansi.write($stderr, :red, be.message, :reset, "\n")
         1
       end
     end
@@ -137,6 +138,7 @@ module Rscons
       options[:build_dir] ||= "build"
       options[:prefix] ||= "/usr/local"
       cache = Cache.instance
+      cache["failed_commands"] = []
       cache["configuration_data"] = {}
       if project_name = @script.project_name
         Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")

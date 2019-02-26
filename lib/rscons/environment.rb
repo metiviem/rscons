@@ -261,7 +261,7 @@ module Rscons
       unless Cache.instance["configuration_data"]["configured"]
         raise "Project must be configured before processing an Environment"
       end
-      @process_failure = nil
+      @process_failures = []
       @process_blocking_wait = false
       @process_commands_waiting_to_run = []
       @process_builder_waits = {}
@@ -269,7 +269,7 @@ module Rscons
       begin
         while @builder_set.size > 0 or @threads.size > 0 or @process_commands_waiting_to_run.size > 0
           process_step
-          if @process_failure
+          unless @process_failures.empty?
             # On a build failure, do not start any more builders or commands,
             # but let the threads that have already been started complete.
             @builder_set.clear
@@ -279,8 +279,12 @@ module Rscons
       ensure
         Cache.instance.write
       end
-      if @process_failure
-        raise BuildError.new(@process_failure)
+      unless @process_failures.empty?
+        msg = @process_failures.join("\n")
+        if Cache.instance["failed_commands"].size > 0
+          msg += "\nRun `#{$0} -F` to see the failed command(s)."
+        end
+        raise BuildError.new(msg)
       end
     end
 
@@ -537,28 +541,7 @@ module Rscons
       Ansi.write($stdout, :cyan, message, :reset, "\n") if message
     end
 
-    # Print a failed command.
-    #
-    # @param command [Array<String>]
-    #   Builder command.
-    #
-    # @return [void]
-    def print_failed_command(command)
-      Ansi.write($stdout, :red, "Failed command was: #{Util.command_to_s(command)}", :reset, "\n")
-    end
-
     private
-
-    # Signal a build failure to the {#process} method.
-    #
-    # @param target [String]
-    #   Build target name.
-    #
-    # @return [void]
-    def process_failure(target)
-      @process_failure = "Failed to build #{target}"
-      Ansi.write($stderr, :red, @process_failure, :reset, "\n")
-    end
 
     # Run a builder and process its return value.
     #
@@ -587,7 +570,7 @@ module Rscons
           end
         end
       when false
-        process_failure(builder.target)
+        @process_failures << "Failed to build #{builder.target}."
       when true
         # Register side-effect files as build targets so that a Cache
         # clean operation will remove them.
@@ -644,10 +627,9 @@ module Rscons
           process_remove_wait(completed_command)
           completed_command.status = thread.value
           unless completed_command.status
-            unless @echo == :command
-              print_failed_command(completed_command.command)
-            end
-            return process_failure(builder.target)
+            Cache.instance["failed_commands"] << completed_command.command
+            @process_failures << "Failed to build #{builder.target}."
+            return
           end
         end
       end

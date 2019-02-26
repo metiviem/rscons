@@ -853,6 +853,25 @@ EOF
     expect(lines(result.stdout)).to include *["MyBuilder foo command"]
   end
 
+  it "stores the failed command for later display with -F command line option" do
+    test_dir("simple")
+
+    File.open("simple.c", "wb") do |fh|
+      fh.write("foo")
+    end
+
+    result = run_rscons
+    expect(result.stderr).to match /Failed to build/
+    expect(result.stderr).to match /^Run.*-F.*to see the failed command/
+    expect(result.status).to_not eq 0
+
+    result = run_rscons(rscons_args: %w[-F])
+    expect(result.stderr).to eq ""
+    expect(result.stdout).to match %r{Failed command \(1/1\):}
+    expect(result.stdout).to match %r{^gcc -}
+    expect(result.status).to eq 0
+  end
+
   context "colored output" do
     it "does not output in color with --color=off" do
       test_dir("simple")
