@@ -367,8 +367,8 @@ module Rscons
           "_default_"
         end
       cache = Cache.instance
-      cache.configuration_data["vars"] ||= {}
-      cache.configuration_data["vars"][usename] ||= {}
+      cache["configuration_data"]["vars"] ||= {}
+      cache["configuration_data"]["vars"][usename] ||= {}
     end
 
     # Perform processing common to several configure checks.

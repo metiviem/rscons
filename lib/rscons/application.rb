@@ -45,7 +45,7 @@ module Rscons
       @script = script
       case operation
       when "build"
-        unless Cache.instance.configuration_data["configured"]
+        unless Cache.instance["configuration_data"]["configured"]
           if @script.autoconf
             rv = configure(operation_options)
             if rv != 0
@@ -118,7 +118,7 @@ module Rscons
     #   Exit code.
     def distclean
       cache = Cache.instance
-      build_dir = cache.configuration_data["build_dir"]
+      build_dir = cache["configuration_data"]["build_dir"]
       clean
       FileUtils.rm_rf(build_dir)
       cache.clear
@@ -137,7 +137,7 @@ module Rscons
       options[:build_dir] ||= "build"
       options[:prefix] ||= "/usr/local"
       cache = Cache.instance
-      cache.configuration_data = {}
+      cache["configuration_data"] = {}
       if project_name = @script.project_name
         Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
       else
@@ -153,9 +153,9 @@ module Rscons
         rv = 1
       end
       co.close
-      cache.configuration_data["build_dir"] = options[:build_dir]
-      cache.configuration_data["prefix"] = options[:prefix]
-      cache.configuration_data["configured"] = rv == 0
+      cache["configuration_data"]["build_dir"] = options[:build_dir]
+      cache["configuration_data"]["prefix"] = options[:prefix]
+      cache["configuration_data"]["configured"] = rv == 0
       cache.write
       rv
     end

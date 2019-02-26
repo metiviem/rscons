@@ -90,7 +90,7 @@ module Rscons
         else
           :short
         end
-      @build_root = "#{Cache.instance.configuration_data["build_dir"]}/e.#{@id}"
+      @build_root = "#{Cache.instance["configuration_data"]["build_dir"]}/e.#{@id}"
       @n_threads = Rscons.application.n_threads
 
       if block_given?
@@ -258,7 +258,7 @@ module Rscons
     #
     # @return [void]
     def process
-      unless Cache.instance.configuration_data["configured"]
+      unless Cache.instance["configuration_data"]["configured"]
         raise "Project must be configured before processing an Environment"
       end
       @process_failure = nil

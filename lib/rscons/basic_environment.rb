@@ -193,7 +193,7 @@ module Rscons
 
     # Load all construction variables saved from the configure operation.
     def load_configuration_data!(options)
-      if vars = Cache.instance.configuration_data["vars"]
+      if vars = Cache.instance["configuration_data"]["vars"]
         if default_vars = vars["_default_"]
           apply_configuration_data!(default_vars)
         end

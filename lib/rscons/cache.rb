@@ -70,6 +70,16 @@ module Rscons
       initialize!
     end
 
+    # Access cache value.
+    def [](key)
+      @cache[key]
+    end
+
+    # Assign cache value.
+    def []=(key, value)
+      @cache[key] = value
+    end
+
     # Remove the cache file.
     #
     # @return [void]
@@ -83,19 +93,6 @@ module Rscons
     # @return [void]
     def clear_checksum_cache!
       @lookup_checksums = {}
-    end
-
-    # Access configuration data.
-    def configuration_data
-      @cache["configuration_data"]
-    end
-
-    # Set configuration data.
-    #
-    # @param value [Hash]
-    #   Configuration data.
-    def configuration_data=(value)
-      @cache["configuration_data"] = value
     end
 
     # Write the cache to disk.
