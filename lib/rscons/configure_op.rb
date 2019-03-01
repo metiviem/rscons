@@ -360,15 +360,19 @@ module Rscons
     # @return [Hash]
     #   Configuration Hash for storing vars.
     def store_common(options)
-      usename =
-        if options[:use]
-          options[:use].to_s
-        else
-          "_default_"
-        end
-      cache = Cache.instance
-      cache["configuration_data"]["vars"] ||= {}
-      cache["configuration_data"]["vars"][usename] ||= {}
+      if options[:use] == false
+        {}
+      else
+        usename =
+          if options[:use]
+            options[:use].to_s
+          else
+            "_default_"
+          end
+        cache = Cache.instance
+        cache["configuration_data"]["vars"] ||= {}
+        cache["configuration_data"]["vars"][usename] ||= {}
+      end
     end
 
     # Perform processing common to several configure checks.

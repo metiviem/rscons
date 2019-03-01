@@ -1806,6 +1806,15 @@ EOF
         expect(result.stdout).to_not match /gcc.*test1.*-lm/
         expect(result.stdout).to match /gcc.*test2.*-lm/
       end
+
+      it "does not link against the checked library if :use is set to false" do
+        test_dir "configure"
+        result = run_rscons(rsconscript: "check_lib_use_false.rb", op: "build")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match /Checking for library 'm'... found/
+        expect(result.stdout).to_not match /-lm/
+      end
     end
 
     context "check_program" do
