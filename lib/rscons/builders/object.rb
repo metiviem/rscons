@@ -12,47 +12,6 @@ module Rscons
         "DC" => "DSUFFIX",
       }
 
-      Rscons.application.default_varset.append(
-        'OBJSUFFIX' => ['.o'],
-        'DEPFILESUFFIX' => '.mf',
-
-        'CPPDEFPREFIX' => '-D',
-        'INCPREFIX' => '-I',
-
-        'AS' => '${CC}',
-        'ASFLAGS' => [],
-        'ASSUFFIX' => ['.S'],
-        'ASPPPATH' => '${CPPPATH}',
-        'ASPPFLAGS' => '${CPPFLAGS}',
-        'ASDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
-        'ASCMD' => ['${AS}', '-c', '-o', '${_TARGET}', '${ASDEPGEN}', '${INCPREFIX}${ASPPPATH}', '${ASPPFLAGS}', '${ASFLAGS}', '${_SOURCES}'],
-
-        'CPPFLAGS' => ['${CPPDEFPREFIX}${CPPDEFINES}'],
-        'CPPDEFINES' => [],
-        'CPPPATH' => [],
-
-        'CCFLAGS' => [],
-
-        'CC' => 'gcc',
-        'CFLAGS' => [],
-        'CSUFFIX' => ['.c'],
-        'CCDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
-        'CCCMD' => ['${CC}', '-c', '-o', '${_TARGET}', '${CCDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${CFLAGS}', '${CCFLAGS}', '${_SOURCES}'],
-
-        'CXX' => 'g++',
-        'CXXFLAGS' => [],
-        'CXXSUFFIX' => ['.cc', '.cpp', '.cxx', '.C'],
-        'CXXDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
-        'CXXCMD' =>['${CXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${CXXFLAGS}', '${CCFLAGS}', '${_SOURCES}'],
-
-        'DC' => 'gdc',
-        'DFLAGS' => [],
-        'DSUFFIX' => ['.d'],
-        'DDEPGEN' => ['-MMD', '-MF', '${_DEPFILE}'],
-        'D_IMPORT_PATH' => [],
-        'DCCMD' => ['${DC}', '-c', '-o', '${_TARGET}', '${DDEPGEN}', '${INCPREFIX}${D_IMPORT_PATH}', '${DFLAGS}', '${_SOURCES}'],
-      )
-
       class << self
         # Return whether this builder object is capable of producing a given target
         # file name from a given source file name.

@@ -13,23 +13,6 @@ module Rscons
         "SHDC" => "DSUFFIX",
       }
 
-      pic_flags = (RUBY_PLATFORM =~ /mingw/ ? [] : ['-fPIC'])
-      Rscons.application.default_varset.append(
-        'SHCCFLAGS' => ['${CCFLAGS}'] + pic_flags,
-
-        'SHCC' => '${CC}',
-        'SHCFLAGS' => ['${CFLAGS}'],
-        'SHCCCMD' => ['${SHCC}', '-c', '-o', '${_TARGET}', '${CCDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
-
-        'SHCXX' => '${CXX}',
-        'SHCXXFLAGS' => ['${CXXFLAGS}'],
-        'SHCXXCMD' => ['${SHCXX}', '-c', '-o', '${_TARGET}', '${CXXDEPGEN}', '${INCPREFIX}${CPPPATH}', '${CPPFLAGS}', '${SHCXXFLAGS}', '${SHCCFLAGS}', '${_SOURCES}'],
-
-        'SHDC' => 'gdc',
-        'SHDFLAGS' => ['${DFLAGS}'] + pic_flags,
-        'SHDCCMD' => ['${SHDC}', '-c', '-o', '${_TARGET}', '${INCPREFIX}${D_IMPORT_PATH}', '${SHDFLAGS}', '${_SOURCES}'],
-      )
-
       class << self
         # Return a set of build features that this builder provides.
         #

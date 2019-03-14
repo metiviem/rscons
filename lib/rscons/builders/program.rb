@@ -4,19 +4,6 @@ module Rscons
     # executable program.
     class Program < Builder
 
-      Rscons.application.default_varset.append(
-        'OBJSUFFIX' => '.o',
-        'PROGSUFFIX' => (Object.const_get("RUBY_PLATFORM") =~ /mingw|cygwin/ ? ".exe" : ""),
-        'LD' => nil,
-        'LIBSUFFIX' => '.a',
-        'LDFLAGS' => [],
-        'LIBPATH' => [],
-        'LIBDIRPREFIX' => '-L',
-        'LIBLINKPREFIX' => '-l',
-        'LIBS' => [],
-        'LDCMD' => ['${LD}', '-o', '${_TARGET}', '${LDFLAGS}', '${_SOURCES}', '${LIBDIRPREFIX}${LIBPATH}', '${LIBLINKPREFIX}${LIBS}']
-      )
-
       # Create an instance of the Builder to build a target.
       #
       # @param options [Hash]

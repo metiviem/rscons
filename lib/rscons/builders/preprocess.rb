@@ -5,12 +5,6 @@ module Rscons
     # The Preprocess builder invokes the C preprocessor
     class Preprocess < Builder
 
-      Rscons.application.default_varset.append(
-        "CPP_CMD" => %w[
-          ${_PREPROCESS_CC} -E ${_PREPROCESS_DEPGEN}
-          -o ${_TARGET} ${INCPREFIX}${CPPPATH} ${CPPFLAGS} ${_SOURCES}],
-      )
-
       # Run the builder to produce a build target.
       def run(options)
         if @command

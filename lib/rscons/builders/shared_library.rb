@@ -4,16 +4,6 @@ module Rscons
     # shared library.
     class SharedLibrary < Builder
 
-      Rscons.application.default_varset.append(
-        'SHLIBPREFIX' => (RUBY_PLATFORM =~ /mingw/ ? '' : 'lib'),
-        'SHLIBSUFFIX' => (RUBY_PLATFORM =~ /mingw/ ? '.dll' : '.so'),
-        'SHLDFLAGS' => ['${LDFLAGS}', '-shared'],
-        'SHLD' => nil,
-        'SHLIBDIRPREFIX' => '-L',
-        'SHLIBLINKPREFIX' => '-l',
-        'SHLDCMD' => ['${SHLD}', '-o', '${_TARGET}', '${SHLDFLAGS}', '${_SOURCES}', '${SHLIBDIRPREFIX}${LIBPATH}', '${SHLIBLINKPREFIX}${LIBS}']
-      )
-
       class << self
         # Return a set of build features that this builder provides.
         #

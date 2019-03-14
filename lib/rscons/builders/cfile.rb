@@ -8,17 +8,6 @@ module Rscons
     #   env.CFile("lex.yy.cc", "parser.ll")
     class CFile < Builder
 
-      Rscons.application.default_varset.append(
-        "YACC" => "bison",
-        "YACC_FLAGS" => ["-d"],
-        "YACC_CMD" => ["${YACC}", "${YACC_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"],
-        "YACCSUFFIX" => [".y", ".yy"],
-        "LEX" => "flex",
-        "LEX_FLAGS" => [],
-        "LEX_CMD" => ["${LEX}", "${LEX_FLAGS}", "-o", "${_TARGET}", "${_SOURCES}"],
-        "LEXSUFFIX" => [".l", ".ll"],
-      )
-
       # Run the builder to produce a build target.
       def run(options)
         if @command

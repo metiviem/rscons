@@ -3,13 +3,6 @@ module Rscons
     # A default Rscons builder that produces a static library archive.
     class Library < Builder
 
-      Rscons.application.default_varset.append(
-        'AR' => 'ar',
-        'LIBSUFFIX' => '.a',
-        'ARFLAGS' => ['rcs'],
-        'ARCMD' => ['${AR}', '${ARFLAGS}', '${_TARGET}', '${_SOURCES}']
-      )
-
       # Create an instance of the Builder to build a target.
       def initialize(options)
         super(options)

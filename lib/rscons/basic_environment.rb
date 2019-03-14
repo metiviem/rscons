@@ -9,7 +9,7 @@ module Rscons
     # @param options [Hash]
     #   Construction options.
     def initialize(options = {})
-      @varset = VarSet.new(Rscons.application.default_varset)
+      @varset = VarSet.new(Rscons::DEFAULT_CONSTRUCTION_VARIABLES)
       load_configuration_data!(options)
     end
 

@@ -19,14 +19,9 @@ module Rscons
     #   Access any variables set on the rscons command-line.
     attr_reader :vars
 
-    # @return [VarSet]
-    #   The default construction variables provided by builders.
-    attr_reader :default_varset
-
     # Create Application instance.
     def initialize
       @n_threads = determine_n_threads
-      @default_varset = VarSet.new
       @vars = VarSet.new
     end
 
