@@ -238,16 +238,13 @@ module Rscons
     #   Source file name.
     # @param suffix [String]
     #   Suffix, including "." if desired.
-    # @param options [Hash]
-    #   Extra options.
-    # @option options [Array<String>] :features
-    #   Builder features to be used for this build. See {#register_builds}.
+    # @param builder_class [Class]
+    #   The builder in use.
     #
     # @return [String]
     #   The file name to be built from +source_fname+ with suffix +suffix+.
-    def get_build_fname(source_fname, suffix, options = {})
-      options[:features] ||= []
-      extra_path = options[:features].include?("shared") ? "/_shared" : ""
+    def get_build_fname(source_fname, suffix, builder_class)
+      extra_path = builder_class == Builders::SharedObject ? "/_shared" : ""
       "#{@build_root}#{extra_path}/#{Util.make_relative_path(Rscons.set_suffix(source_fname, suffix))}".gsub("\\", "/")
     end
 
@@ -421,52 +418,31 @@ module Rscons
       @user_deps[target]
     end
 
-    # Find and register builders to build source files into files containing
-    # one of the suffixes given by suffixes.
+    # Register a builder to build a source file into an output with the given
+    # suffix.
     #
     # This method is used internally by Rscons builders. It can be called
     # from the builder's #initialize method.
     #
-    # @since 1.10.0
-    #
     # @param target [String]
     #   The target that depends on these builds.
-    # @param sources [Array<String>]
-    #   List of source file(s) to build.
-    # @param suffixes [Array<String>]
-    #   List of suffixes to try to convert source files into.
+    # @param source [String]
+    #   Source file to build.
+    # @param suffix [String]
+    #   Suffix to try to convert source files into.
     # @param vars [Hash]
     #   Extra variables to pass to the builders.
-    # @param options [Hash]
-    #   Extra options.
-    # @option options [Array<String>] :features
-    #   Set of features the builder must provide. Each feature can be proceeded
-    #   by a "-" character to indicate that the builder must /not/ provide the
-    #   given feature.
-    #   * shared - builder builds a shared object/library
+    # @param builder_class [Class]
+    #   The builder class to use.
     #
-    # @return [Array<String>]
-    #   List of the output file name(s).
-    def register_builds(target, sources, suffixes, vars, options = {})
-      options[:features] ||= []
+    # @return [String]
+    #   Output file name.
+    def register_dependency_build(target, source, suffix, vars, builder_class)
+      output_fname = get_build_fname(source, suffix, builder_class)
+      self.__send__(builder_class.name, output_fname, source, vars)
       @registered_build_dependencies[target] ||= Set.new
-      sources.map do |source|
-        if source.end_with?(*suffixes)
-          source
-        else
-          output_fname = nil
-          suffixes.each do |suffix|
-            attempt_output_fname = get_build_fname(source, suffix, features: options[:features])
-            if builder = find_builder_for(attempt_output_fname, source, options[:features])
-              output_fname = attempt_output_fname
-              self.__send__(builder.name, output_fname, source, vars)
-              @registered_build_dependencies[target] << output_fname
-              break
-            end
-          end
-          output_fname or raise "Could not find a builder for #{source.inspect}."
-        end
-      end
+      @registered_build_dependencies[target] << output_fname
+      output_fname
     end
 
     # Expand a path to be relative to the Environment's build root.
@@ -703,46 +679,6 @@ module Rscons
         @threads[thread].builder
       else
         @threads[thread]
-      end
-    end
-
-    # Find a builder that meets the requested features and produces a target
-    # of the requested name.
-    #
-    # @param target [String]
-    #   Target file name.
-    # @param source [String]
-    #   Source file name.
-    # @param features [Array<String>]
-    #   See {#register_builds}.
-    #
-    # @return [Builder, nil]
-    #   The builder found, if any.
-    def find_builder_for(target, source, features)
-      @builders.values.find do |builder_class|
-        features_met?(builder_class, features) and builder_class.produces?(target, source, self)
-      end
-    end
-
-    # Determine if a builder meets the requested features.
-    #
-    # @param builder_class [Class]
-    #   The builder.
-    # @param features [Array<String>]
-    #   See {#register_builds}.
-    #
-    # @return [Boolean]
-    #   Whether the builder meets the requested features.
-    def features_met?(builder_class, features)
-      builder_features = builder_class.features
-      features.all? do |feature|
-        want_feature = true
-        if feature =~ /^-(.*)$/
-          want_feature = false
-          feature = $1
-        end
-        builder_has_feature = builder_features.include?(feature)
-        want_feature ? builder_has_feature : !builder_has_feature
       end
     end
 

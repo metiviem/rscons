@@ -4,16 +4,6 @@ module Rscons
     # shared library.
     class SharedLibrary < Builder
 
-      class << self
-        # Return a set of build features that this builder provides.
-        #
-        # @return [Array<String>]
-        #   Set of build features that this builder provides.
-        def features
-          %w[shared]
-        end
-      end
-
       # Create an instance of the Builder to build a target.
       def initialize(options)
         super(options)
@@ -25,9 +15,13 @@ module Rscons
           @target += @env.expand_varref("${SHLIBSUFFIX}", @vars)
         end
         suffixes = @env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], @vars)
-        # Register builders to build each source to an object file or library.
-        @objects = @env.register_builds(@target, @sources, suffixes, @vars,
-                                        features: %w[shared])
+        @objects = @sources.map do |source|
+          if source.end_with?(*suffixes)
+            source
+          else
+            @env.register_dependency_build(@target, source, suffixes.first, @vars, SharedObject)
+          end
+        end
       end
 
       # Run the builder to produce a build target.

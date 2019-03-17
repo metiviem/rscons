@@ -7,8 +7,13 @@ module Rscons
       def initialize(options)
         super(options)
         suffixes = @env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], @vars)
-        # Register builders to build each source to an object file or library.
-        @objects = @env.register_builds(@target, @sources, suffixes, @vars)
+        @objects = @sources.map do |source|
+          if source.end_with?(*suffixes)
+            source
+          else
+            @env.register_dependency_build(@target, source, suffixes.first, @vars, Object)
+          end
+        end
       end
 
       # Run the builder to produce a build target.

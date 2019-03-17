@@ -1410,6 +1410,14 @@ EOF
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include "ar rcf lib.a build/e.1/one.o build/e.1/three.o build/e.1/two.o"
     end
+
+    it "allows passing object files as sources" do
+      test_dir("library")
+      result = run_rscons(rsconscript: "library_from_object.rb")
+      expect(result.stderr).to eq ""
+      expect(File.exists?("two.o")).to be_truthy
+      expect(lines(result.stdout)).to include "Building static library archive => lib.a"
+    end
   end
 
   context "SharedLibrary builder" do
@@ -1424,6 +1432,13 @@ EOF
       else
         expect(slines).to include("Linking => libmine.so")
       end
+    end
+
+    it "allows passing object files as sources" do
+      test_dir "shared_library"
+      result = run_rscons(rsconscript: "shared_library_from_object.rb")
+      expect(result.stderr).to eq ""
+      expect(File.exists?("one.o"))
     end
   end
 
