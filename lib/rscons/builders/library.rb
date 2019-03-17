@@ -3,17 +3,12 @@ module Rscons
     # A default Rscons builder that produces a static library archive.
     class Library < Builder
 
+      include Mixins::ObjectDeps
+
       # Create an instance of the Builder to build a target.
       def initialize(options)
         super(options)
-        suffixes = @env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], @vars)
-        @objects = @sources.map do |source|
-          if source.end_with?(*suffixes)
-            source
-          else
-            @env.register_dependency_build(@target, source, suffixes.first, @vars, Object)
-          end
-        end
+        @objects = register_object_deps(Object)
       end
 
       # Run the builder to produce a build target.

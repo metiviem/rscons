@@ -4,6 +4,8 @@ module Rscons
     # shared library.
     class SharedLibrary < Builder
 
+      include Mixins::ObjectDeps
+
       # Create an instance of the Builder to build a target.
       def initialize(options)
         super(options)
@@ -14,14 +16,7 @@ module Rscons
         unless File.basename(@target)["."]
           @target += @env.expand_varref("${SHLIBSUFFIX}", @vars)
         end
-        suffixes = @env.expand_varref(["${OBJSUFFIX}", "${LIBSUFFIX}"], @vars)
-        @objects = @sources.map do |source|
-          if source.end_with?(*suffixes)
-            source
-          else
-            @env.register_dependency_build(@target, source, suffixes.first, @vars, SharedObject)
-          end
-        end
+        @objects = register_object_deps(SharedObject)
       end
 
       # Run the builder to produce a build target.
