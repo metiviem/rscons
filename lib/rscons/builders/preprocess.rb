@@ -5,15 +5,12 @@ module Rscons
     # The Preprocess builder invokes the C preprocessor
     class Preprocess < Builder
 
+      include Mixins::Depfile
+
       # Run the builder to produce a build target.
       def run(options)
         if @command
-          deps = @sources
-          if File.exists?(@vars["_DEPFILE"])
-            deps += Util.parse_makefile_deps(@vars["_DEPFILE"])
-          end
-          @cache.register_build(@target, @command, deps.uniq, @env)
-          true
+          finalize_command_with_depfile
         else
           if @sources.find {|s| s.end_with?(*@env.expand_varref("${CXXSUFFIX}", @vars))}
             pp_cc = "${CXX}"

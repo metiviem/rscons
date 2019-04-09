@@ -166,6 +166,7 @@ module Rscons
 end
 
 # builder mixins
+require_relative "rscons/builders/mixins/depfile"
 require_relative "rscons/builders/mixins/object"
 require_relative "rscons/builders/mixins/object_deps"
 

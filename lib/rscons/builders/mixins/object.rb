@@ -3,6 +3,8 @@ module Rscons
     module Mixins
       module Object
 
+        include Depfile
+
         class << self
           # Hook called by Ruby when this module is included by a class (klass).
           def included(klass)
@@ -50,12 +52,7 @@ module Rscons
         # Run the builder to produce a build target.
         def run(params)
           if @command
-            deps = @sources
-            if File.exists?(@vars["_DEPFILE"])
-              deps += Util.parse_makefile_deps(@vars["_DEPFILE"])
-            end
-            @cache.register_build(@target, @command, deps.uniq, @env)
-            true
+            finalize_command_with_depfile
           else
             @vars["_TARGET"] = @target
             @vars["_SOURCES"] = @sources
