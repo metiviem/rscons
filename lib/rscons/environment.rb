@@ -71,6 +71,7 @@ module Rscons
       @registered_build_dependencies = {}
       @side_effects = {}
       @builder_set = BuilderSet.new(@registered_build_dependencies, @side_effects)
+      @build_targets = {}
       @user_deps = {}
       # Hash of builder name (String) => builder class (Class).
       @builders = {}
@@ -318,6 +319,7 @@ module Rscons
           env: self,
           vars: vars)
         @builder_set << builder
+        @build_targets[target] = builder
         builder
       else
         super
@@ -515,6 +517,14 @@ module Rscons
         message = short_description if short_description
       end
       Ansi.write($stdout, :cyan, message, :reset, "\n") if message
+    end
+
+    # Get the Builder for a target.
+    #
+    # @return [Builder, nil]
+    #   The {Builder} for target, or +nil+ if none found.
+    def builder_for(target)
+      @build_targets[target]
     end
 
     private

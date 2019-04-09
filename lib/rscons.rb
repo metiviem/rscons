@@ -169,6 +169,7 @@ end
 require_relative "rscons/builders/mixins/depfile"
 require_relative "rscons/builders/mixins/object"
 require_relative "rscons/builders/mixins/object_deps"
+require_relative "rscons/builders/mixins/program"
 
 # default builders
 require_relative "rscons/builders/cfile"

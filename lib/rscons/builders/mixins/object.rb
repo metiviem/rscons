@@ -1,4 +1,11 @@
 module Rscons
+  class Builder
+    # @return [String, nil]
+    #   Preferred linker for this object file, or a construction variable
+    #   reference thereto.
+    attr_reader :preferred_ld
+  end
+
   module Builders
     module Mixins
       module Object
@@ -31,6 +38,9 @@ module Rscons
           # @option params [String] :short_description
           #   Short description to be printed when the builder runs (default:
           #   "Compiling")
+          # @option params [String] :preferred_ld
+          #   Preferred linker for this object file, or a construction variable
+          #   reference thereto.
           def register(params)
             providers << params
           end
@@ -47,6 +57,7 @@ module Rscons
           end
           @command_template = build_params[:command]
           @short_description = build_params[:short_description] || "Compiling"
+          @preferred_ld = build_params[:preferred_ld]
         end
 
         # Run the builder to produce a build target.
