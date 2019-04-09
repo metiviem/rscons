@@ -395,6 +395,14 @@ EOF
     expect(`./simple.exe`).to eq "This is a simple C++ program\n"
   end
 
+  it "links with the C++ linker when object files were built from C++ sources" do
+    test_dir("simple_cc")
+    result = run_rscons(rsconscript: "link_objects.rb")
+    expect(result.stderr).to eq ""
+    expect(File.exists?("simple.o")).to be_truthy
+    expect(`./simple.exe`).to eq "This is a simple C++ program\n"
+  end
+
   it 'allows overriding construction variables for individual builder calls' do
     test_dir('two_sources')
     result = run_rscons
@@ -481,6 +489,15 @@ EOF
       expect(slines).to include("gdc -c -o build/e.1/main.o -MMD -MF build/e.1/main.mf main.d")
       expect(slines).to include("gdc -c -o build/e.1/mod.o -MMD -MF build/e.1/mod.mf mod.d")
       expect(slines).to include("gdc -o hello-d.exe build/e.1/main.o build/e.1/mod.o")
+      expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
+    end
+
+    it "links with the D linker when object files were built from D sources" do
+      test_dir("d")
+      result = run_rscons(rsconscript: "link_objects.rb")
+      expect(result.stderr).to eq ""
+      expect(File.exists?("main.o")).to be_truthy
+      expect(File.exists?("mod.o")).to be_truthy
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
     end
 
