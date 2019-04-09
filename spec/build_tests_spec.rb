@@ -779,6 +779,14 @@ EOF
     expect(`./test-static.exe`).to match /Hi from one/
   end
 
+  it "creates shared libraries using assembly" do
+    test_dir("shared_library")
+
+    result = run_rscons(rsconscript: "shared_library_as.rb")
+    expect(result.stderr).to eq ""
+    expect(File.exists?("file.S")).to be_truthy
+  end
+
   it "creates shared libraries using C++" do
     test_dir("shared_library")
 
@@ -1391,7 +1399,7 @@ EOF
     it "raises an error when given a source file with an unknown suffix" do
       test_dir("simple")
       result = run_rscons(rsconscript: "error_unknown_suffix.rb")
-      expect(result.stderr).to match /unknown input file type: "foo.xyz"/
+      expect(result.stderr).to match /Unknown input file type: "foo.xyz"/
     end
   end
 
@@ -1399,7 +1407,7 @@ EOF
     it "raises an error when given a source file with an unknown suffix" do
       test_dir("shared_library")
       result = run_rscons(rsconscript: "error_unknown_suffix.rb")
-      expect(result.stderr).to match /unknown input file type: "foo.xyz"/
+      expect(result.stderr).to match /Unknown input file type: "foo.xyz"/
     end
   end
 

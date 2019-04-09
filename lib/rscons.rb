@@ -166,6 +166,7 @@ module Rscons
 end
 
 # builder mixins
+require_relative "rscons/builders/mixins/object"
 require_relative "rscons/builders/mixins/object_deps"
 
 # default builders
@@ -181,6 +182,12 @@ require_relative "rscons/builders/program"
 require_relative "rscons/builders/shared_library"
 require_relative "rscons/builders/shared_object"
 require_relative "rscons/builders/simple_builder"
+
+# language support
+require_relative "rscons/builders/lang/asm"
+require_relative "rscons/builders/lang/c"
+require_relative "rscons/builders/lang/cxx"
+require_relative "rscons/builders/lang/d"
 
 # Unbuffer $stdout
 $stdout.sync = true

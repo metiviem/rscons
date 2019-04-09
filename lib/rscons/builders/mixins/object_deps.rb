@@ -1,6 +1,6 @@
 module Rscons
   module Builders
-    # Rscons::Buidlers::Mixins namespacing module.
+    # Rscons::Builders::Mixins namespacing module.
     module Mixins
       # Functionality for builders which desire object or static library files
       # as inputs.
