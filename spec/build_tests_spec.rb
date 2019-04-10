@@ -173,6 +173,14 @@ EOF
     expect(`./simple.exe`).to eq "This is a simple C program\n"
   end
 
+  it "allows specifying a Builder object as the source to another build target" do
+    test_dir("simple")
+    result = run_rscons(rsconscript: "builder_as_source.rb")
+    expect(result.stderr).to eq ""
+    expect(File.exists?("simple.o")).to be_truthy
+    expect(`./simple.exe`).to eq "This is a simple C program\n"
+  end
+
   it 'prints commands as they are executed' do
     test_dir('simple')
     result = run_rscons(rsconscript: "command.rb")

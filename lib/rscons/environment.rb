@@ -310,6 +310,7 @@ module Rscons
         end
         target = expand_path(expand_varref(target))
         sources = Array(sources).map do |source|
+          source = source.target if sources.is_a?(Builder)
           expand_path(expand_varref(source))
         end.flatten
         builder = @builders[method.to_s].new(
