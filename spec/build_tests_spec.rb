@@ -265,6 +265,27 @@ EOF
     ]
   end
 
+  it "supports barriers and prevents parallelizing builders across them" do
+    test_dir "simple"
+    result = run_rscons(rsconscript: "barrier.rb", rscons_args: %w[-j 3])
+    expect(result.stderr).to eq ""
+    slines = lines(result.stdout).select {|line| line =~ /T\d/}
+    expect(slines).to eq [
+      "ThreadedTestBuilder T3",
+      "ThreadedTestBuilder T2",
+      "ThreadedTestBuilder T1",
+      "T1 finished",
+      "T2 finished",
+      "T3 finished",
+      "ThreadedTestBuilder T6",
+      "ThreadedTestBuilder T5",
+      "ThreadedTestBuilder T4",
+      "T4 finished",
+      "T5 finished",
+      "T6 finished",
+    ]
+  end
+
   it "expands target and source paths starting with ^/ to be relative to the build root" do
     test_dir("typical")
     result = run_rscons(rsconscript: "carat.rb")

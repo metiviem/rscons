@@ -70,7 +70,7 @@ module Rscons
       @threads = {}
       @registered_build_dependencies = {}
       @side_effects = {}
-      @builder_set = BuilderSet.new(@registered_build_dependencies, @side_effects)
+      @builder_sets = []
       @build_targets = {}
       @user_deps = {}
       # Hash of builder name (String) => builder class (Class).
@@ -265,12 +265,16 @@ module Rscons
       @process_builder_waits = {}
       @process_builders_to_run = []
       begin
-        while @builder_set.size > 0 or @threads.size > 0 or @process_commands_waiting_to_run.size > 0
+        while @builder_sets.size > 0 or @threads.size > 0 or @process_commands_waiting_to_run.size > 0
           process_step
+          if @builder_sets.size > 0 and @builder_sets.first.empty? and @threads.empty? and @process_commands_waiting_to_run.empty? and @process_builders_to_run.empty?
+            # Remove empty BuilderSet when all other operations have completed.
+            @builder_sets.slice!(0)
+          end
           unless @process_failures.empty?
             # On a build failure, do not start any more builders or commands,
             # but let the threads that have already been started complete.
-            @builder_set.clear
+            @builder_sets.clear
             @process_commands_waiting_to_run.clear
           end
         end
@@ -290,7 +294,7 @@ module Rscons
     #
     # @return [void]
     def clear_targets
-      @builder_set.clear
+      @builder_sets.clear
     end
 
     # Define a build target.
@@ -319,7 +323,10 @@ module Rscons
           cache: Cache.instance,
           env: self,
           vars: vars)
-        @builder_set << builder
+        if @builder_sets.empty?
+          @builder_sets << build_builder_set
+        end
+        @builder_sets.last << builder
         @build_targets[target] = builder
         builder
       else
@@ -528,7 +535,25 @@ module Rscons
       @build_targets[target]
     end
 
+    # Mark a "barrier" point.
+    #
+    # Rscons will wait for all build targets registered before the barrier to
+    # be built before beginning to build any build targets registered after
+    # the barrier. In other words, Rscons will not parallelize build operations
+    # across a barrier.
+    def barrier
+      @builder_sets << build_builder_set
+    end
+
     private
+
+    # Build a BuilderSet.
+    #
+    # @return [BuilderSet]
+    #   New {BuilderSet} object.
+    def build_builder_set
+      BuilderSet.new(@registered_build_dependencies, @side_effects)
+    end
 
     # Run a builder and process its return value.
     #
@@ -639,7 +664,9 @@ module Rscons
       targets_still_building = @threads.reduce([]) do |result, (thread, obj)|
         result << builder_for_thread(thread).target
       end
-      builder = @builder_set.get_next_builder_to_run(targets_still_building)
+      if @builder_sets.size > 0
+        builder = @builder_sets[0].get_next_builder_to_run(targets_still_building)
+      end
 
       if builder
         builder.vars = @varset.merge(builder.vars)
