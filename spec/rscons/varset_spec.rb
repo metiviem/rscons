@@ -166,13 +166,26 @@ module Rscons
         expect(v.expand_varref(false, :lambda_args)).to eq(false)
       end
       it "raises an error when given an invalid argument" do
-        expect { v.expand_varref({a: :b}, :lambda_args) }.to raise_error /Unknown varref type: Hash/
+        expect { v.expand_varref({a: :b}, :lambda_args) }.to raise_error /Unknown construction variable type: Hash/
       end
       it "raises an error when an expanded variable is an unexpected type" do
         expect(v).to receive(:[]).at_least(1).times.with("bad").and_return("bad_val")
         expect(v).to receive(:expand_varref).with("bad_val", :lambda_args).and_return({a: :b})
         expect(v).to receive(:expand_varref).and_call_original
-        expect { v.expand_varref("${bad}", :lambda_args) }.to raise_error /I do not know how to expand a variable reference to a Hash/
+        expect { v.expand_varref("${bad}", :lambda_args) }.to raise_error /Unknown construction variable type: Hash/
+      end
+      it "expands symbols within a string outside an array" do
+        v['var'] = :a_symbol
+        expect(v.expand_varref("this is ${var}", :lambda_args)).to eq "this is a_symbol"
+      end
+      it "expands booleans within a string outside an array" do
+        v['var'] = false
+        expect(v.expand_varref("this is ${var}", :lambda_args)).to eq "this is false"
+      end
+      it "expands symbols and booleans in an array" do
+        v['var'] = [:a_symbol, false]
+        expanded = v.expand_varref("this is ${var}", :lambda_args)
+        expect(expanded).to eq(["this is a_symbol", "this is false"])
       end
     end
 

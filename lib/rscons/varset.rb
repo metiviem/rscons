@@ -94,46 +94,42 @@ module Rscons
     # @return [nil, String, Array, Symbol, TrueClass, FalseClass]
     #   Expanded value with "$!{var}" variable references replaced.
     def expand_varref(varref, lambda_args)
-      if varref.is_a?(String)
+      case varref
+      when Symbol, true, false, nil
+        varref
+      when String
         if varref =~ /^(.*)\$\{([^}]+)\}(.*)$/
           prefix, varname, suffix = $1, $2, $3
           prefix = expand_varref(prefix, lambda_args) unless prefix.empty?
           varval = expand_varref(self[varname], lambda_args)
           # suffix needs no expansion since the regex matches the last occurence
-          if varval.is_a?(String) or varval.nil?
+          case varval
+          when Symbol, true, false, nil, String
             if prefix.is_a?(Array)
               prefix.map {|p| "#{p}#{varval}#{suffix}"}
             else
               "#{prefix}#{varval}#{suffix}"
             end
-          elsif varval.is_a?(Array)
+          when Array
             if prefix.is_a?(Array)
               varval.map {|vv| prefix.map {|p| "#{p}#{vv}#{suffix}"}}.flatten
             else
               varval.map {|vv| "#{prefix}#{vv}#{suffix}"}
             end
           else
-            raise "I do not know how to expand a variable reference to a #{varval.class.name} (from #{varname.inspect} => #{self[varname].inspect})"
+            raise "Unknown construction variable type: #{varval.class} (from #{varname.inspect} => #{self[varname].inspect})"
           end
         else
           varref
         end
-      elsif varref.is_a?(Array)
+      when Array
         varref.map do |ent|
           expand_varref(ent, lambda_args)
         end.flatten
-      elsif varref.is_a?(Proc)
+      when Proc
         expand_varref(varref[*lambda_args], lambda_args)
-      elsif varref.nil?
-        nil
-      elsif varref.is_a?(Symbol)
-        varref
-      elsif varref.is_a?(TrueClass)
-        varref
-      elsif varref.is_a?(FalseClass)
-        varref
       else
-        raise "Unknown varref type: #{varref.class} (#{varref.inspect})"
+        raise "Unknown construction variable type: #{varref.class} (#{varref.inspect})"
       end
     end
 
