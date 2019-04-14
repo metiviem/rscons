@@ -26,6 +26,39 @@ module Rscons
         command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
       end
 
+      # Determine the number of threads to use by default.
+      #
+      # @return [Integer]
+      #   The number of threads to use by default.
+      def determine_n_threads
+        # If the user specifies the number of threads in the environment, then
+        # respect that.
+        if ENV["RSCONS_NTHREADS"] =~ /^(\d+)$/
+          return $1.to_i
+        end
+
+        # Otherwise try to figure out how many threads are available on the
+        # host hardware.
+        begin
+          case RbConfig::CONFIG["host_os"]
+          when /linux/
+            return File.read("/proc/cpuinfo").scan(/^processor\s*:/).size
+          when /mswin|mingw/
+            if `wmic cpu get NumberOfLogicalProcessors /value` =~ /NumberOfLogicalProcessors=(\d+)/
+              return $1.to_i
+            end
+          when /darwin/
+            if `sysctl -n hw.ncpu` =~ /(\d+)/
+              return $1.to_i
+            end
+          end
+        rescue
+        end
+
+        # If we can't figure it out, default to 1.
+        1
+      end
+
       # Return a string showing the path specified, or if more than one, then
       # the first path with a "(+D)" afterward, where D is the number of
       # remaining paths.
