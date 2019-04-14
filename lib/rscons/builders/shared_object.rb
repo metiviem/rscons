@@ -5,6 +5,12 @@ module Rscons
     # source files.
     class SharedObject < Builder
       include Mixins::Object
+
+      class << self
+        def extra_path
+          "_shared"
+        end
+      end
     end
   end
 end

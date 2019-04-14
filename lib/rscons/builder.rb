@@ -8,6 +8,15 @@ module Rscons
   class Builder
 
     class << self
+      # Return a String specifying an extra path component used to
+      # differentiate build targets built by this builder from others.
+      #
+      # @return [String, nil]
+      #   Extra path component used to differentiate build targets built by
+      #   this builder from others.
+      def extra_path
+      end
+
       # Return the name of the builder.
       #
       # If not overridden this defaults to the last component of the class name.

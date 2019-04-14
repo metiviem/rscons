@@ -245,7 +245,9 @@ module Rscons
     # @return [String]
     #   The file name to be built from +source_fname+ with suffix +suffix+.
     def get_build_fname(source_fname, suffix, builder_class)
-      extra_path = builder_class == Builders::SharedObject ? "/_shared" : ""
+      if extra_path = builder_class.extra_path
+        extra_path = "/#{extra_path}"
+      end
       "#{@build_root}#{extra_path}/#{Util.make_relative_path(Rscons.set_suffix(source_fname, suffix))}".gsub("\\", "/")
     end
 
