@@ -2079,4 +2079,49 @@ EOF
     end
   end
 
+  context "direct mode" do
+    it "allows calling Program builder in direct mode and passes all sources to the C compiler" do
+      test_dir("direct")
+
+      result = run_rscons(rsconscript: "c_program.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match %r{Compiling/Linking}
+      expect(File.exists?("test.exe")).to be_truthy
+      expect(`./test.exe`).to match /three/
+
+      result = run_rscons(rsconscript: "c_program.rb")
+      expect(result.stdout).to eq ""
+
+      three_h = File.read("three.h", mode: "rb")
+      File.open("three.h", "wb") do |fh|
+        fh.write(three_h)
+        fh.puts("#define FOO 42")
+      end
+      result = run_rscons(rsconscript: "c_program.rb")
+      expect(result.stdout).to match %r{Compiling/Linking}
+    end
+
+    it "allows calling SharedLibrary builder in direct mode and passes all sources to the C compiler" do
+      test_dir("direct")
+
+      result = run_rscons(rsconscript: "c_shared_library.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match %r{Compiling/Linking}
+      expect(File.exists?("test.exe")).to be_truthy
+      ld_library_path_prefix = (RUBY_PLATFORM =~ /mingw/ ? "" : "LD_LIBRARY_PATH=. ")
+      expect(`#{ld_library_path_prefix}./test.exe`).to match /three/
+
+      result = run_rscons(rsconscript: "c_shared_library.rb")
+      expect(result.stdout).to eq ""
+
+      three_h = File.read("three.h", mode: "rb")
+      File.open("three.h", "wb") do |fh|
+        fh.write(three_h)
+        fh.puts("#define FOO 42")
+      end
+      result = run_rscons(rsconscript: "c_shared_library.rb")
+      expect(result.stdout).to match %r{Compiling/Linking}
+    end
+  end
+
 end

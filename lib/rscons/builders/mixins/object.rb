@@ -55,7 +55,12 @@ module Rscons
           unless build_params
             raise "Unknown input file type: #{@sources.first.inspect}"
           end
-          @command_template = build_params[:command]
+          @command_template =
+            if @vars[:direct]
+              build_params[:direct_command]
+            else
+              build_params[:command]
+            end
           @short_description = build_params[:short_description] || "Compiling"
           @preferred_ld = build_params[:preferred_ld]
         end
@@ -67,10 +72,21 @@ module Rscons
           else
             @vars["_TARGET"] = @target
             @vars["_SOURCES"] = @sources
-            @vars["_DEPFILE"] = Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars))
+            depfilesuffix = @env.expand_varref("${DEPFILESUFFIX}", vars)
+            @vars["_DEPFILE"] =
+              if @vars[:direct]
+                @env.get_build_fname(target, depfilesuffix, self.class)
+              else
+                Rscons.set_suffix(target, depfilesuffix)
+              end
+            @cache.mkdir_p(File.dirname(@vars["_DEPFILE"]))
             command = @env.build_command(@command_template, @vars)
             @env.produces(@target, @vars["_DEPFILE"])
-            message = "#{@short_description} #{Util.short_format_paths(@sources)}"
+            if @vars[:direct]
+              message = "#{@short_description}/Linking #{Util.short_format_paths(@sources)} => #{@target}"
+            else
+              message = "#{@short_description} #{Util.short_format_paths(@sources)}"
+            end
             standard_command(message, command)
           end
         end

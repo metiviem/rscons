@@ -7,12 +7,22 @@ module Rscons
       include Mixins::ObjectDeps
       include Mixins::Program
 
+      class << self
+        def new(options, *more)
+          unless File.basename(options[:target])["."]
+            options[:target] += options[:env].expand_varref("${PROGSUFFIX}", options[:vars])
+          end
+          if options[:vars][:direct]
+            Object.new(options, *more)
+          else
+            super
+          end
+        end
+      end
+
       # Create an instance of the Builder to build a target.
       def initialize(options)
         super(options)
-        unless File.basename(@target)["."]
-          @target += @env.expand_varref("${PROGSUFFIX}", @vars)
-        end
         @objects = register_object_deps(Object)
       end
 

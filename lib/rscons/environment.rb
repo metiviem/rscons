@@ -314,7 +314,7 @@ module Rscons
         end
         target = expand_path(expand_varref(target))
         sources = Array(sources).map do |source|
-          source = source.target if sources.is_a?(Builder)
+          source = source.target if source.is_a?(Builder)
           expand_path(expand_varref(source))
         end.flatten
         builder = @builders[method.to_s].new(
@@ -507,7 +507,7 @@ module Rscons
     # @param short_description [String]
     #   Builder short description, printed if the echo mode is :short, or if
     #   there is no command.
-    # @param command [Array<String>]
+    # @param command [Array<String>, nil]
     #   Builder command, printed if the echo mode is :command.
     #
     # @return [void]
