@@ -116,7 +116,7 @@ module Rscons
         env["foo"] = {}
         expect(env.expand_varref(["-p${path}", "${flags}"])).to eq ["-pdir1", "-pdir2", "-x", "-y", "-z"]
         expect(env.expand_varref("foo")).to eq "foo"
-        expect {env.expand_varref("${foo}")}.to raise_error /Unknown.varref.type/
+        expect {env.expand_varref("${foo}")}.to raise_error /Unknown.construction.variable.type/
         expect(env.expand_varref("${specialflag}")).to eq "-z"
         expect(env.expand_varref("${path}")).to eq ["dir1", "dir2"]
       end
