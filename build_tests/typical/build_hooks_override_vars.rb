@@ -1,6 +1,6 @@
 build do
   Environment.new(echo: :command) do |env|
-    env.append('CPPPATH' => Rscons.glob('src/**'))
+    env.append('CPPPATH' => glob('src/**'))
     env.add_build_hook do |builder|
       if builder.name == "Object" && builder.sources.first =~ %r{one\.c}
         builder.vars["CFLAGS"] << "-O1"

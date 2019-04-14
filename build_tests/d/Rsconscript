@@ -1,5 +1,5 @@
 build do
   Environment.new(echo: :command) do |env|
-    env.Program("hello-d.exe", Rscons.glob("*.d"))
+    env.Program("hello-d.exe", glob("*.d"))
   end
 end
