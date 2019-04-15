@@ -2012,10 +2012,10 @@ EOF
       expect(result.status).to_not eq 0
     end
 
-    it "exits with an error if configuration has not been performed before attempting to process an environment" do
+    it "exits with an error if configuration has not been performed before attempting to create an environment" do
       test_dir "configure"
-      result = run_rscons(rsconscript: "error_env_process_before_configure.rb")
-      expect(result.stderr).to match /Project must be configured before processing an Environment/
+      result = run_rscons(rsconscript: "error_env_construction_before_configure.rb")
+      expect(result.stderr).to match /Project must be configured before creating an Environment/
       expect(result.status).to_not eq 0
     end
 

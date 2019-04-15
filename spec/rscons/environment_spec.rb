@@ -1,5 +1,9 @@
 module Rscons
   describe Environment do
+    before(:each) do
+      Cache.instance["configuration_data"] = {"configured" => true}
+    end
+
     describe "#initialize" do
       it "adds the default builders when they are not excluded" do
         env = Environment.new

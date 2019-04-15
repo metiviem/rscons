@@ -63,6 +63,9 @@ module Rscons
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
+      unless Cache.instance["configuration_data"]["configured"]
+        raise "Project must be configured before creating an Environment"
+      end
       super(options)
       @id = self.class.get_id
       self.class.register(self)
@@ -258,9 +261,6 @@ module Rscons
     #
     # @return [void]
     def process
-      unless Cache.instance["configuration_data"]["configured"]
-        raise "Project must be configured before processing an Environment"
-      end
       @process_failures = []
       @process_blocking_wait = false
       @process_commands_waiting_to_run = []
