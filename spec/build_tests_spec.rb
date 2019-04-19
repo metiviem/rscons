@@ -896,7 +896,7 @@ EOF
 
     result = run_rscons(rsconscript: "echo_command_ruby_builder.rb")
     expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to include *["Install install.rb => inst.exe"]
+    expect(lines(result.stdout)).to include *["Copy echo_command_ruby_builder.rb => copy.rb"]
   end
 
   it "supports a string for a builder's echoed 'command' with Environment#print_builder_run_message" do
