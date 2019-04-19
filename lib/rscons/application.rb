@@ -42,7 +42,7 @@ module Rscons
       when "build"
         unless Cache.instance["configuration_data"]["configured"]
           if @script.autoconf
-            rv = configure(operation_options)
+            rv = run("configure", script, operation_options)
             if rv != 0
               return rv
             end
