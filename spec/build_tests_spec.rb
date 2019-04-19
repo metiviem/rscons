@@ -1067,6 +1067,42 @@ EOF
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *["Copy copy.rb (+1) => dest"]
     end
+
+    it "copies a file to the target directory name" do
+      test_dir("typical")
+
+      result = run_rscons(rsconscript: "copy_directory.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include("Copy copy_directory.rb => copy")
+      expect(File.exists?("copy/copy_directory.rb")).to be_truthy
+      expect(File.read("copy/copy_directory.rb", mode: "rb")).to eq(File.read("copy_directory.rb", mode: "rb"))
+
+      result = run_rscons(rsconscript: "copy_directory.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+    end
+
+    it "copies a directory to the non-existent target directory name" do
+      test_dir("typical")
+      result = run_rscons(rsconscript: "copy_directory.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include("Copy src => noexist/src")
+      %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
+        expect(File.exists?("noexist/#{f}")).to be_truthy
+        expect(File.read("noexist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
+      end
+    end
+
+    it "copies a directory to the existent target directory name" do
+      test_dir("typical")
+      result = run_rscons(rsconscript: "copy_directory.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to include("Copy src => exist/src")
+      %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
+        expect(File.exists?("exist/#{f}")).to be_truthy
+        expect(File.read("exist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
+      end
+    end
   end
 
   context "Install buildler" do
@@ -1088,42 +1124,6 @@ EOF
       result = run_rscons(rsconscript: "install.rb")
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to include *["Install install.rb => inst.exe"]
-    end
-
-    it "copies a file to the target directory name" do
-      test_dir("typical")
-
-      result = run_rscons(rsconscript: "install_directory.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include("Install install_directory.rb => inst")
-      expect(File.exists?("inst/install_directory.rb")).to be_truthy
-      expect(File.read("inst/install_directory.rb", mode: "rb")).to eq(File.read("install_directory.rb", mode: "rb"))
-
-      result = run_rscons(rsconscript: "install_directory.rb")
-      expect(result.stderr).to eq ""
-      expect(result.stdout).to eq ""
-    end
-
-    it "copies a directory to the non-existent target directory name" do
-      test_dir("typical")
-      result = run_rscons(rsconscript: "install_directory.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include("Install src => noexist/src")
-      %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
-        expect(File.exists?("noexist/#{f}")).to be_truthy
-        expect(File.read("noexist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
-      end
-    end
-
-    it "copies a directory to the existent target directory name" do
-      test_dir("typical")
-      result = run_rscons(rsconscript: "install_directory.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include("Install src => exist/src")
-      %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
-        expect(File.exists?("exist/#{f}")).to be_truthy
-        expect(File.read("exist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
-      end
     end
   end
 
