@@ -236,9 +236,12 @@ module Rscons
     #   trigger a rebuild.
     # @param deps [Array<String>] List of dependencies for the target.
     # @param env [Environment] The {Rscons::Environment}.
+    # @param options [Hash] Optional arguments.
+    # @option options [Boolean] :install
+    #   Whether the target is for an install operation.
     #
     # @return [void]
-    def register_build(targets, command, deps, env)
+    def register_build(targets, command, deps, env, options = {})
       Array(targets).each do |target|
         target_checksum = Rscons.phony_target?(target) ? "" : calculate_checksum(target)
         @cache["targets"][get_cache_key(target)] = {
@@ -256,41 +259,65 @@ module Rscons
               "checksum" => lookup_checksum(dep),
             }
           end,
+          "install" => !!options[:install],
         }
       end
     end
 
-    # Return a list of targets that have been built.
+    # Return a list of targets that have been built or installed.
     #
-    # @return [Array<String>] List of targets that have been built.
-    def targets
-      @cache["targets"].keys
+    # @param install [Boolean]
+    #   Whether to return installed targets. If false, will only return normal
+    #   build targets and not install targets.
+    #
+    # @return [Array<String>]
+    #   List of build targets that have been built or installed.
+    def targets(install)
+      install = !!install
+      @cache["targets"].select do |key, target|
+        target["install"] == install
+      end.map(&:first)
     end
 
-    # Make any needed directories and record the ones that are created for
-    # removal upon a "clean" operation.
+    # Create any needed directory components for a build or install operation.
     #
-    # @param path [String] Directory to create.
+    # Build directories will be removed if empty upon a "clean" operation.
+    # Install directories will be removed if empty upon an "uninstall"
+    # operation.
+    #
+    # @param path [String]
+    #   Directory to create.
+    # @param options [Hash]
+    #   Optional arguments.
+    # @option options [Boolean] :install
+    #   Whether the directory is for an install operation.
     #
     # @return [void]
-    def mkdir_p(path)
+    def mkdir_p(path, options = {})
       parts = path.split(/[\\\/]/)
       parts.each_index do |i|
         next if parts[i] == ""
         subpath = File.join(*parts[0, i + 1])
         unless File.exists?(subpath)
           FileUtils.mkdir_p(subpath)
-          @cache["directories"][subpath] = true
+          @cache["directories"][subpath] = !!options[:install]
         end
       end
     end
 
     # Return a list of directories which were created as a part of the build.
     #
+    # @param install [Boolean]
+    #   Whether to return installed directories. If false, will only return
+    #   normal build directories and not install targets.
+    #
     # @return [Array<String>]
     #   List of directories which were created as a part of the build.
-    def directories
-      @cache["directories"].keys
+    def directories(install)
+      install = !!install
+      @cache["directories"].select do |key, d_install|
+        d_install == install
+      end.map(&:first)
     end
 
     private

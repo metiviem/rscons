@@ -13,13 +13,6 @@ module Rscons
       end
     end
 
-    describe "#targets" do
-      it "returns a list of targets that are cached" do
-        cache = {"targets" => {"t1" => {}, "t2" => {}, "t3" => {}}}
-        expect(build_from(cache).targets).to eq ["t1", "t2", "t3"]
-      end
-    end
-
     describe "#mkdir_p" do
       it "makes directories and records any created in the cache" do
         _cache = {}
@@ -35,7 +28,7 @@ module Rscons
         expect(FileUtils).to receive(:mkdir_p).with("one/two/four")
         cache.mkdir_p("one/two/three")
         cache.mkdir_p("one\\two\\four")
-        expect(cache.directories).to eq ["one/two", "one/two/three", "one/two/four"]
+        expect(cache.directories(false)).to eq ["one/two", "one/two/three", "one/two/four"]
       end
 
       it "handles absolute paths" do
@@ -45,14 +38,7 @@ module Rscons
         expect(File).to receive(:exists?).with("/one/two").and_return(false)
         expect(FileUtils).to receive(:mkdir_p).with("/one/two")
         cache.mkdir_p("/one/two")
-        expect(cache.directories).to eq ["/one/two"]
-      end
-    end
-
-    describe "#directories" do
-      it "returns a list of directories that are cached" do
-        _cache = {"directories" => {"dir1" => true, "dir2" => true}}
-        expect(build_from(_cache).directories).to eq ["dir1", "dir2"]
+        expect(cache.directories(false)).to eq ["/one/two"]
       end
     end
 
