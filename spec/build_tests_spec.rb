@@ -1,6 +1,7 @@
 require 'fileutils'
 require "open3"
 require "set"
+require "tmpdir"
 
 describe Rscons do
 
@@ -305,29 +306,50 @@ EOF
     expect(IO.read('foo.yml')).to eq("---\nkey: value\n")
   end
 
-  it 'cleans built files' do
-    test_dir("simple")
-    result = run_rscons
-    expect(result.stderr).to eq ""
-    expect(`./simple.exe`).to match /This is a simple C program/
-    expect(File.exists?('build/e.1/simple.o')).to be_truthy
-    result = run_rscons(op: %w[clean])
-    expect(File.exists?('build/e.1/simple.o')).to be_falsey
-    expect(File.exists?('build/e.1')).to be_falsey
-    expect(File.exists?('simple.exe')).to be_falsey
-    expect(File.exists?('simple.c')).to be_truthy
-  end
+  context "clean operation" do
+    it 'cleans built files' do
+      test_dir("simple")
+      result = run_rscons
+      expect(result.stderr).to eq ""
+      expect(`./simple.exe`).to match /This is a simple C program/
+      expect(File.exists?('build/e.1/simple.o')).to be_truthy
+      result = run_rscons(op: %w[clean])
+      expect(File.exists?('build/e.1/simple.o')).to be_falsey
+      expect(File.exists?('build/e.1')).to be_falsey
+      expect(File.exists?('simple.exe')).to be_falsey
+      expect(File.exists?('simple.c')).to be_truthy
+    end
 
-  it 'does not clean created directories if other non-rscons-generated files reside there' do
-    test_dir("simple")
-    result = run_rscons
-    expect(result.stderr).to eq ""
-    expect(`./simple.exe`).to match /This is a simple C program/
-    expect(File.exists?('build/e.1/simple.o')).to be_truthy
-    File.open('build/e.1/dum', 'w') { |fh| fh.puts "dum" }
-    result = run_rscons(op: %w[clean])
-    expect(File.exists?('build/e.1')).to be_truthy
-    expect(File.exists?('build/e.1/dum')).to be_truthy
+    it 'does not clean created directories if other non-rscons-generated files reside there' do
+      test_dir("simple")
+      result = run_rscons
+      expect(result.stderr).to eq ""
+      expect(`./simple.exe`).to match /This is a simple C program/
+      expect(File.exists?('build/e.1/simple.o')).to be_truthy
+      File.open('build/e.1/dum', 'w') { |fh| fh.puts "dum" }
+      result = run_rscons(op: %w[clean])
+      expect(File.exists?('build/e.1')).to be_truthy
+      expect(File.exists?('build/e.1/dum')).to be_truthy
+    end
+
+    it "removes built files but not installed files" do
+      test_dir "typical"
+
+      Dir.mktmpdir do |prefix|
+        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[clean])
+        expect(result.stderr).to eq ""
+        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exists?("build/e.1/src/one/one.o")).to be_falsey
+      end
+    end
   end
 
   it 'allows Ruby classes as custom builders to be used to construct files' do
@@ -1105,28 +1127,6 @@ EOF
     end
   end
 
-  context "Install buildler" do
-    it "copies a file to the target file name" do
-      test_dir("typical")
-
-      result = run_rscons(rsconscript: "install.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Install install.rb => inst.exe"]
-
-      result = run_rscons(rsconscript: "install.rb")
-      expect(result.stderr).to eq ""
-      expect(result.stdout).to eq ""
-
-      expect(File.exists?("inst.exe")).to be_truthy
-      expect(File.read("inst.exe", mode: "rb")).to eq(File.read("install.rb", mode: "rb"))
-
-      FileUtils.rm("inst.exe")
-      result = run_rscons(rsconscript: "install.rb")
-      expect(result.stderr).to eq ""
-      expect(lines(result.stdout)).to include *["Install install.rb => inst.exe"]
-    end
-  end
-
   context "phony targets" do
     it "allows specifying a Symbol as a target name and reruns the builder if the sources or command have changed" do
       test_dir("simple")
@@ -1584,7 +1584,7 @@ EOF
     end
   end
 
-  context "configure" do
+  context "configure operation" do
     it "raises a method not found error for configure methods called outside a configure block" do
       test_dir "configure"
       result = run_rscons(rsconscript: "scope.rb")
@@ -2121,6 +2121,96 @@ EOF
       end
       result = run_rscons(rsconscript: "c_shared_library.rb")
       expect(result.stdout).to match %r{Compiling/Linking}
+    end
+  end
+
+  context "install operation" do
+    it "invokes a configure operation if the project is not yet configured" do
+      test_dir "typical"
+
+      result = run_rscons(rsconscript: "install.rb", op: %W[install])
+      expect(result.stdout).to match /Configuring install_test/
+    end
+
+    it "invokes a build operation" do
+      test_dir "typical"
+
+      Dir.mktmpdir do |prefix|
+        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        expect(result.stderr).to eq ""
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to match /Compiling/
+        expect(result.stdout).to match /Linking/
+      end
+    end
+
+    it "installs the requested directories and files" do
+      test_dir "typical"
+
+      Dir.mktmpdir do |prefix|
+        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to match /Creating directory/
+        expect(result.stdout).to match /Install install.rb =>/
+        expect(result.stdout).to match /Install src =>/
+        expect(Dir.entries(prefix)).to match_array %w[. .. bin src share mult]
+        expect(File.directory?("#{prefix}/bin")).to be_truthy
+        expect(File.directory?("#{prefix}/src")).to be_truthy
+        expect(File.directory?("#{prefix}/share")).to be_truthy
+        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exists?("#{prefix}/src/one/one.c")).to be_truthy
+        expect(File.exists?("#{prefix}/share/proj/install.rb")).to be_truthy
+        expect(File.exists?("#{prefix}/mult/install.rb")).to be_truthy
+        expect(File.exists?("#{prefix}/mult/copy.rb")).to be_truthy
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to eq ""
+      end
+    end
+
+    it "does not install when only a build is performed" do
+      test_dir "typical"
+
+      Dir.mktmpdir do |prefix|
+        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[build])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to_not match /Install/
+        expect(Dir.entries(prefix)).to match_array %w[. ..]
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to match /Install/
+      end
+    end
+  end
+
+  context "uninstall operation" do
+    it "removes installed files but not built files" do
+      test_dir "typical"
+
+      Dir.mktmpdir do |prefix|
+        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall])
+        expect(result.stderr).to eq ""
+        expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
+        expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
+        expect(Dir.entries(prefix)).to match_array %w[. ..]
+      end
     end
   end
 

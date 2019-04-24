@@ -1,3 +1,5 @@
+require "set"
+
 module Rscons
 
   # Functionality for an instance of the rscons application invocation.
@@ -23,6 +25,18 @@ module Rscons
     def initialize
       @n_threads = Util.determine_n_threads
       @vars = VarSet.new
+      @operations = Set.new
+    end
+
+    # Check whether a requested operation is active.
+    #
+    # @param op [String]
+    #   Operation name.
+    #
+    # @return [Boolean]
+    #   Whether the requested operation is active.
+    def operation(op)
+      @operations.include?(op)
     end
 
     # Run the specified operation.
@@ -37,6 +51,7 @@ module Rscons
     # @return [Integer]
     #   Process exit code (0 on success).
     def run(operation, script, operation_options)
+      @operations << operation
       @script = script
       case operation
       when "build"
@@ -58,6 +73,10 @@ module Rscons
         configure(operation_options)
       when "distclean"
         distclean
+      when "install"
+        run("build", script, operation_options)
+      when "uninstall"
+        uninstall
       else
         $stderr.puts "Unknown operation: #{operation}"
         1
@@ -129,32 +148,35 @@ module Rscons
     # @return [Integer]
     #   Exit code.
     def configure(options)
-      # Default options.
-      options[:build_dir] ||= "build"
-      options[:prefix] ||= "/usr/local"
-      cache = Cache.instance
-      cache["failed_commands"] = []
-      cache["configuration_data"] = {}
-      if project_name = @script.project_name
-        Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
-      else
-        $stdout.puts "Configuring project..."
-      end
-      Ansi.write($stdout, "Setting build directory... ", :green, options[:build_dir], :reset, "\n")
-      Ansi.write($stdout, "Setting prefix... ", :green, options[:prefix], :reset, "\n")
       rv = 0
-      co = ConfigureOp.new("#{options[:build_dir]}/configure")
+      options = options.merge(project_name: @script.project_name)
+      co = ConfigureOp.new(options)
       begin
         @script.configure(co)
       rescue ConfigureOp::ConfigureFailure
         rv = 1
       end
-      co.close
-      cache["configuration_data"]["build_dir"] = options[:build_dir]
-      cache["configuration_data"]["prefix"] = options[:prefix]
-      cache["configuration_data"]["configured"] = rv == 0
-      cache.write
+      co.close(rv == 0)
       rv
+    end
+
+    # Remove installed files.
+    #
+    # @return [Integer]
+    #   Exit code.
+    def uninstall
+      cache = Cache.instance
+      cache.targets(true).each do |target|
+        FileUtils.rm_f(target)
+      end
+      # remove all created directories if they are empty
+      cache.directories(true).sort {|a, b| b.size <=> a.size}.each do |directory|
+        next unless File.directory?(directory)
+        if (Dir.entries(directory) - ['.', '..']).empty?
+          Dir.rmdir(directory) rescue nil
+        end
+      end
+      0
     end
 
   end

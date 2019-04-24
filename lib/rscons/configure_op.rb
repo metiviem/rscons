@@ -10,20 +10,48 @@ module Rscons
 
     # Create a ConfigureOp.
     #
-    # @param work_dir [String]
-    #   Work directory for configure operation.
-    def initialize(work_dir)
-      @work_dir = work_dir
+    # @param options [Hash]
+    #   Optional parameters.
+    # @param build_dir [String]
+    #   Build directory.
+    # @param prefix [String]
+    #   Install prefix.
+    # @param project_name [String]
+    #   Project name.
+    def initialize(options)
+      # Default options.
+      options[:build_dir] ||= "build"
+      options[:prefix] ||= "/usr/local"
+      @work_dir = "#{options[:build_dir]}/configure"
       FileUtils.mkdir_p(@work_dir)
       @log_fh = File.open("#{@work_dir}/config.log", "wb")
+      cache = Cache.instance
+      cache["failed_commands"] = []
+      cache["configuration_data"] = {}
+      cache["configuration_data"]["build_dir"] = options[:build_dir]
+      cache["configuration_data"]["prefix"] = options[:prefix]
+      if project_name = options[:project_name]
+        Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
+      else
+        $stdout.puts "Configuring project..."
+      end
+      Ansi.write($stdout, "Setting build directory... ", :green, options[:build_dir], :reset, "\n")
+      Ansi.write($stdout, "Setting prefix... ", :green, options[:prefix], :reset, "\n")
+      store_merge("prefix" => options[:prefix])
     end
 
     # Close the log file handle.
     #
+    # @param success [Boolean]
+    #   Whether all configure operations were successful.
+    #
     # @return [void]
-    def close
+    def close(success)
       @log_fh.close
       @log_fh = nil
+      cache = Cache.instance
+      cache["configuration_data"]["configured"] = success
+      cache.write
     end
 
     # Check for a working C compiler.

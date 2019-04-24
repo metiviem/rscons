@@ -26,6 +26,7 @@ module Rscons
     :Directory,
     :Disassemble,
     :Install,
+    :InstallDirectory,
     :Library,
     :Object,
     :Preprocess,
@@ -145,9 +146,9 @@ require_relative "rscons/builders/mixins/program"
 # default builders
 require_relative "rscons/builders/cfile"
 require_relative "rscons/builders/command"
+require_relative "rscons/builders/copy"
 require_relative "rscons/builders/directory"
 require_relative "rscons/builders/disassemble"
-require_relative "rscons/builders/install"
 require_relative "rscons/builders/library"
 require_relative "rscons/builders/object"
 require_relative "rscons/builders/preprocess"
