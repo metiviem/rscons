@@ -114,16 +114,18 @@ module Rscons
       cache = Cache.instance
       # remove all built files
       cache.targets(false).each do |target|
+        cache.remove_target(target)
         FileUtils.rm_f(target)
       end
       # remove all created directories if they are empty
       cache.directories(false).sort {|a, b| b.size <=> a.size}.each do |directory|
+        cache.remove_directory(directory)
         next unless File.directory?(directory)
         if (Dir.entries(directory) - ['.', '..']).empty?
           Dir.rmdir(directory) rescue nil
         end
       end
-      cache.clear
+      cache.write
       0
     end
 

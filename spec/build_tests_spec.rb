@@ -350,6 +350,28 @@ EOF
         expect(File.exists?("build/e.1/src/one/one.o")).to be_falsey
       end
     end
+
+    it "does not remove install cache entries" do
+      test_dir "typical"
+
+      Dir.mktmpdir do |prefix|
+        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[clean])
+        expect(result.stderr).to eq ""
+        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exists?("build/e.1/src/one/one.o")).to be_falsey
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to match %r{Removing #{prefix}/bin/program.exe}
+        expect(Dir.entries(prefix)).to match_array %w[. ..]
+      end
+    end
   end
 
   it 'allows Ruby classes as custom builders to be used to construct files' do
@@ -1173,16 +1195,6 @@ EOF
       end
       result = run_rscons
       expect(result.stderr).to match /Warning.*was corrupt. Contents:/
-    end
-
-    it "removes the cache file on a clean operation" do
-      test_dir("simple")
-      result = run_rscons
-      expect(result.stderr).to eq ""
-      expect(File.exists?(Rscons::Cache::CACHE_FILE)).to be_truthy
-      result = run_rscons(op: %w[clean])
-      expect(result.stderr).to eq ""
-      expect(File.exists?(Rscons::Cache::CACHE_FILE)).to be_falsey
     end
 
     it "forces a build when the target file does not exist and is not in the cache" do
