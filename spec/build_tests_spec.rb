@@ -2207,9 +2207,52 @@ EOF
 
         result = run_rscons(rsconscript: "install.rb", op: %W[uninstall])
         expect(result.stderr).to eq ""
+        expect(result.stdout).to_not match /Removing/
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
         expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
         expect(Dir.entries(prefix)).to match_array %w[. ..]
+      end
+    end
+
+    it "prints removed files and directories when running verbosely" do
+      test_dir "typical"
+
+      Dir.mktmpdir do |prefix|
+        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to match %r{Removing #{prefix}/bin/program.exe}
+        expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
+        expect(Dir.entries(prefix)).to match_array %w[. ..]
+      end
+    end
+
+    it "removes cache entries when uninstalling" do
+      test_dir "typical"
+
+      Dir.mktmpdir do |prefix|
+        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        expect(result.stderr).to eq ""
+
+        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to match %r{Removing #{prefix}/bin/program.exe}
+        expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
+        expect(Dir.entries(prefix)).to match_array %w[. ..]
+
+        FileUtils.mkdir_p("#{prefix}/bin")
+        File.open("#{prefix}/bin/program.exe", "w") {|fh| fh.write("hi")}
+        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
+        expect(result.stderr).to eq ""
+        expect(result.stdout).to_not match /Removing/
       end
     end
   end

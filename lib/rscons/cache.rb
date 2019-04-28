@@ -320,6 +320,20 @@ module Rscons
       end.map(&:first)
     end
 
+    # Remove a target from the cache.
+    #
+    # @return [void]
+    def remove_target(target)
+      @cache["targets"].delete(target)
+    end
+
+    # Remove a directory from the cache.
+    #
+    # @return [void]
+    def remove_directory(directory)
+      @cache["directories"].delete(directory)
+    end
+
     private
 
     # Return a String key based on the target name to use in the on-disk cache.

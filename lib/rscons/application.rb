@@ -167,15 +167,21 @@ module Rscons
     def uninstall
       cache = Cache.instance
       cache.targets(true).each do |target|
+        cache.remove_target(target)
+        next unless File.exists?(target)
+        puts "Removing #{target}" if verbose
         FileUtils.rm_f(target)
       end
       # remove all created directories if they are empty
       cache.directories(true).sort {|a, b| b.size <=> a.size}.each do |directory|
+        cache.remove_directory(directory)
         next unless File.directory?(directory)
         if (Dir.entries(directory) - ['.', '..']).empty?
+          puts "Removing #{directory}" if verbose
           Dir.rmdir(directory) rescue nil
         end
       end
+      cache.write
       0
     end
 
