@@ -151,6 +151,20 @@ EOF
       end
     end
 
+    describe ".format_elapsed_time" do
+      it "includes minutes when hours is nonzero and minutes is zero" do
+        expect(Util.format_elapsed_time(60 * 60 + 4)).to eq "1h 0m 4s"
+      end
+
+      it "only includes minutes and seconds when hours is zero and minutes is nonzero" do
+        expect(Util.format_elapsed_time(3 * 60 + 33)).to eq "3m 33s"
+      end
+
+      it "only includes seconds when hours and minutes are zero" do
+        expect(Util.format_elapsed_time(7.84)).to eq "8s"
+      end
+    end
+
     describe ".make_relative_path" do
       context "when passed a relative path" do
         it "returns the path itself" do

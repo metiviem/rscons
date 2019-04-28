@@ -2089,6 +2089,16 @@ EOF
       expect(result.stderr).to eq ""
       expect(result.stdout).to match /gcc.*-o.*simple/
     end
+
+    it "prints operation start time" do
+      test_dir("simple")
+      result = run_rscons(rscons_args: %w[-v])
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match /Starting 'configure' at/
+      expect(result.stdout).to match /Starting 'build' at/
+      expect(result.stdout).to match /'build' complete at/
+      expect(result.stdout).to_not match /'configure' complete at/
+    end
   end
 
   context "direct mode" do

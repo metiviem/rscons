@@ -47,40 +47,54 @@ module Rscons
     #   The script.
     # @param operation_options [Hash]
     #   Option values from the CLI for the operation.
+    # @param options [Hash]
+    #   Optional parameters.
+    # @option sub_op [Boolean]
+    #   Whether this operation is not the top-level operation.
     #
     # @return [Integer]
     #   Process exit code (0 on success).
-    def run(operation, script, operation_options)
-      @operations << operation
+    def run(operation, script, operation_options, options = {})
+      @start_time = Time.new
       @script = script
-      case operation
-      when "build"
-        unless Cache.instance["configuration_data"]["configured"]
-          if @script.autoconf
-            rv = run("configure", script, operation_options)
-            if rv != 0
-              return rv
-            end
-          else
-            $stderr.puts "Project must be configured first, and autoconf is disabled"
-            return 1
+      @operations << operation
+      puts "Starting '#{operation}' at #{Time.new}" if verbose
+      rv =
+        case operation
+        when "build"
+          rv = 0
+          unless Cache.instance["configuration_data"]["configured"]
+            rv =
+              if @script.autoconf
+                run("configure", script, operation_options, sub_op: false)
+              else
+                $stderr.puts "Project must be configured first, and autoconf is disabled"
+                1
+              end
           end
+          if rv == 0
+            build(operation_options)
+          end
+        when "clean"
+          clean
+        when "configure"
+          configure(operation_options)
+        when "distclean"
+          distclean
+        when "install"
+          run("build", script, operation_options, sub_op: false)
+        when "uninstall"
+          uninstall
+        else
+          $stderr.puts "Unknown operation: #{operation}"
+          1
         end
-        build(operation_options)
-      when "clean"
-        clean
-      when "configure"
-        configure(operation_options)
-      when "distclean"
-        distclean
-      when "install"
-        run("build", script, operation_options)
-      when "uninstall"
-        uninstall
-      else
-        $stderr.puts "Unknown operation: #{operation}"
-        1
+      if verbose and options[:sub_op].nil?
+        time = Time.new
+        elapsed = time - @start_time
+        puts "'#{operation}' complete at #{time} (#{Util.format_elapsed_time(elapsed)})"
       end
+      rv
     end
 
     private

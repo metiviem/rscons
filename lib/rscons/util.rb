@@ -95,6 +95,27 @@ module Rscons
         end
       end
 
+      # Format an elapsed time in human-readable format.
+      #
+      # @return [String]
+      #   Elapsed time in human-readable format.
+      def format_elapsed_time(elapsed)
+        hours = (elapsed / (60 * 60)).to_i
+        elapsed -= hours * 60 * 60
+        minutes = (elapsed / 60).to_i
+        elapsed -= minutes * 60
+        seconds = elapsed.ceil
+        result = ""
+        if hours > 0
+          result += "#{hours}h "
+        end
+        if hours > 0 || minutes > 0
+          result += "#{minutes}m "
+        end
+        result += "#{seconds}s"
+        result
+      end
+
       # Make a relative path corresponding to a possibly absolute one.
       #
       # @param path [String]
