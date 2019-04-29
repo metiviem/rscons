@@ -31,6 +31,16 @@ module Rscons
       self[builder.target] << builder
     end
 
+    # Return the number of remaining build steps.
+    #
+    # @return [Integer]
+    #   The number of remaining build steps.
+    def build_steps_remaining
+      self.reduce(0) do |result, (target, builders)|
+        result + builders.select {|b| not b.nop?}.size
+      end
+    end
+
     # Get the next builder that is ready to run from the BuilderSet.
     #
     # This method will remove the builder from the BuilderSet.

@@ -4,10 +4,26 @@ module Rscons
     # The Directory builder creates a directory.
     class Directory < Builder
 
+      # Construct builder.
+      def initialize(*args)
+        super
+        @install_builder = self.class.name == "InstallDirectory"
+        @nop = @install_builder && !Rscons.application.operation("install")
+      end
+
+      # Return whether the builder is a no-op.
+      #
+      # @return [Boolean]
+      #   Whether the builder is a no-op.
+      def nop?
+        @nop
+      end
+
       # Run the builder to produce a build target.
       def run(options)
-        install_builder = self.class.name == "InstallDirectory"
-        if (not install_builder) or Rscons.application.operation("install")
+        if @nop
+          true
+        else
           if File.directory?(@target)
             true
           elsif File.exists?(@target)
@@ -15,11 +31,9 @@ module Rscons
             false
           else
             print_run_message("Creating directory => #{@target}", nil)
-            @cache.mkdir_p(@target, install: install_builder)
+            @cache.mkdir_p(@target, install: @install_builder)
             true
           end
-        else
-          true
         end
       end
 

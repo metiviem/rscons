@@ -47,6 +47,10 @@ module Rscons
     #   Construction variables used to perform the build operation.
     attr_accessor :vars
 
+    # @return [Integer]
+    #   Build step.
+    attr_accessor :build_step
+
     # Create an instance of the Builder to build a target.
     #
     # @param options [Hash]
@@ -76,6 +80,14 @@ module Rscons
     # @return [String] The name of the builder.
     def name
       self.class.name
+    end
+
+    # Return whether the builder is a no-op.
+    #
+    # @return [Boolean]
+    #   Whether the builder is a no-op.
+    def nop?
+      false
     end
 
     # Manually record a given build target as depending on the specified files.

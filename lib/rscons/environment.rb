@@ -526,7 +526,10 @@ module Rscons
       when :short
         message = short_description if short_description
       end
-      Ansi.write($stdout, :cyan, message, :reset, "\n") if message
+      total_build_steps = Rscons.application.get_total_build_steps.to_s
+      this_build_step = sprintf("%#{total_build_steps.size}d", builder.build_step)
+      progress = "[#{this_build_step}/#{total_build_steps}]"
+      Ansi.write($stdout, :cyan, "#{progress} #{message}", :reset, "\n") if message
     end
 
     # Get the Builder for a target.
@@ -545,6 +548,16 @@ module Rscons
     # across a barrier.
     def barrier
       @builder_sets << build_builder_set
+    end
+
+    # Get the number of build steps remaining.
+    #
+    # @return [Integer]
+    #   The number of build steps remaining.
+    def build_steps_remaining
+      @builder_sets.reduce(0) do |result, builder_set|
+        result + builder_set.build_steps_remaining
+      end
     end
 
     private
@@ -567,6 +580,9 @@ module Rscons
       # TODO: have Cache determine when checksums may be invalid based on
       # file size and/or timestamp.
       Cache.instance.clear_checksum_cache!
+      unless builder.nop?
+        builder.build_step ||= Rscons.application.get_next_build_step
+      end
       case result = builder.run({})
       when Array
         result.each do |waititem|

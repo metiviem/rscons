@@ -26,6 +26,7 @@ module Rscons
       @n_threads = Util.determine_n_threads
       @vars = VarSet.new
       @operations = Set.new
+      @build_step = 0
     end
 
     # Check whether a requested operation is active.
@@ -95,6 +96,25 @@ module Rscons
         puts "'#{operation}' complete at #{time} (#{Util.format_elapsed_time(elapsed)})"
       end
       rv
+    end
+
+    # Get the next build step number.
+    #
+    # This is used internally by the {Environment} class.
+    #
+    # @api private
+    def get_next_build_step
+      @build_step += 1
+    end
+
+    # Get the total number of build steps.
+    #
+    # @return [Integer]
+    #   The total number of build steps.
+    def get_total_build_steps
+      Environment.environments.reduce(@build_step) do |result, env|
+        result + env.build_steps_remaining
+      end
     end
 
     private

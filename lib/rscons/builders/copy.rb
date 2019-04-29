@@ -5,10 +5,26 @@ module Rscons
     # The Copy builder copies files/directories to new locations.
     class Copy < Builder
 
+      # Construct builder.
+      def initialize(*args)
+        super
+        @install_builder = self.class.name == "Install"
+        @nop = @install_builder && !Rscons.application.operation("install")
+      end
+
+      # Return whether the builder is a no-op.
+      #
+      # @return [Boolean]
+      #   Whether the builder is a no-op.
+      def nop?
+        @nop
+      end
+
       # Run the builder to produce a build target.
       def run(options)
-        install_builder = self.class.name == "Install"
-        if (not install_builder) or Rscons.application.operation("install")
+        if @nop
+          true
+        else
           target_is_dir = (@sources.length > 1) ||
                           Dir.exists?(@sources.first) ||
                           Dir.exists?(@target)
@@ -40,14 +56,12 @@ module Rscons
                 print_run_message(message, nil)
                 printed_message = true
               end
-              @cache.mkdir_p(File.dirname(dest), install: install_builder)
+              @cache.mkdir_p(File.dirname(dest), install: @install_builder)
               FileUtils.cp(src, dest, :preserve => true)
             end
-            @cache.register_build(dest, :Copy, [src], @env, install: install_builder)
+            @cache.register_build(dest, :Copy, [src], @env, install: @install_builder)
           end
           (target_is_dir ? Dir.exists?(@target) : File.exists?(@target)) ? true : false
-        else
-          true
         end
       end
 
