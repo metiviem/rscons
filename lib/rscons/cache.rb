@@ -100,7 +100,6 @@ module Rscons
     # @return [void]
     def write
       @cache["version"] = VERSION
-      validate_json_object(@cache)
       File.open(CACHE_FILE, "w") do |fh|
         fh.puts(JSON.dump(@cache))
       end
@@ -382,21 +381,6 @@ module Rscons
     # @return [String] The file's checksum.
     def calculate_checksum(file)
       @lookup_checksums[file] = Digest::MD5.hexdigest(File.read(file, mode: "rb")) rescue ""
-    end
-
-    # Validate that an object is one of a known set of values that can be
-    # serialized properly with JSON.
-    #
-    # @param o [Object]
-    #   Object to validate.
-    def validate_json_object(o)
-      if o.is_a?(Array)
-        o.each {|v| validate_json_object(v)}
-      elsif o.is_a?(Hash)
-        o.each {|*kv| validate_json_object(kv)}
-      elsif [NilClass, TrueClass, FalseClass, String].none? {|c| o.is_a?(c)}
-        raise "Unexpected cache value for serialization: #{o.inspect}"
-      end
     end
 
   end

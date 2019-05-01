@@ -65,12 +65,5 @@ module Rscons
         expect(build_from({}).send(:calculate_checksum, "fname")).to eq "the_checksum"
       end
     end
-
-    describe "#validate_json_object" do
-      it "raises an error when an unexpected object is passed" do
-        cache = build_from({})
-        expect {cache.__send__(:validate_json_object, :symbol)}.to raise_error /Unexpected cache value/
-      end
-    end
   end
 end
