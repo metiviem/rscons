@@ -41,4 +41,50 @@ YARD::Rake::YardocTask.new do |yard|
   yard.files = ['lib/**/*.rb']
 end
 
+task :gen_large_project, [:size] => :build_dist do |task, args|
+  size = (args.size || 1000).to_i
+  FileUtils.rm_rf("large_project")
+  FileUtils.mkdir_p("large_project/src")
+  size.times do |i|
+    File.open("large_project/src/fn#{i}.c", "w") do |fh|
+      fh.puts(<<-EOF)
+        int fn#{i}(void)
+        {
+          return #{i};
+        }
+      EOF
+    end
+    File.open("large_project/src/fn#{i}.h", "w") do |fh|
+      fh.puts %[int fn#{i}(void);]
+    end
+  end
+  File.open("large_project/src/main.c", "w") do |fh|
+    size.times do |i|
+      fh.puts %[#include "fn#{i}.h"]
+    end
+    fh.puts <<-EOF
+      int main(int argc, char * argv[])
+      {
+        int result = 0;
+    EOF
+    size.times do |i|
+      fh.puts %[result += fn#{i}();]
+    end
+    fh.puts <<-EOF
+        return result;
+      }
+    EOF
+  end
+  File.open("large_project/Rsconscript", "w") do |fh|
+    fh.puts <<EOF
+build do
+  Environment.new do |env|
+    env.Program("project", glob("src/*.c"))
+  end
+end
+EOF
+  end
+  FileUtils.cp("dist/rscons", "large_project")
+end
+
 task :default => :spec
