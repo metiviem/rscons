@@ -29,6 +29,12 @@ module Rscons
       end
     end
 
+    describe ".colorize_markup" do
+      it "turns a builder message string with markup into an Array for Ansi module" do
+        expect(Util.colorize_markup("[ 1/33] Generating <foo> lexer from <source>parser/lexer.l<reset> => <target>build/e.1/parser/lexer.cc<reset>")).to eq ["[ 1/33] Generating ", "<foo>", " lexer from ", :cyan, "parser/lexer.l", :reset, " => ", :magenta, "build/e.1/parser/lexer.cc", :reset]
+      end
+    end
+
     describe ".determine_n_threads" do
       context "when specified by environment variable" do
         before(:each) do

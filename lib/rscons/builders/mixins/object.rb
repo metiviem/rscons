@@ -83,9 +83,9 @@ module Rscons
             command = @env.build_command(@command_template, @vars)
             @env.produces(@target, @vars["_DEPFILE"])
             if @vars[:direct]
-              message = "#{@short_description}/Linking #{Util.short_format_paths(@sources)} => #{@target}"
+              message = "#{@short_description}/Linking <source>#{Util.short_format_paths(@sources)}<reset> => <target>#{@target}<reset>"
             else
-              message = "#{@short_description} #{Util.short_format_paths(@sources)}"
+              message = "#{@short_description} <source>#{Util.short_format_paths(@sources)}<reset>"
             end
             standard_command(message, command)
           end

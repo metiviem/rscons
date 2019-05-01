@@ -526,10 +526,12 @@ module Rscons
       when :short
         message = short_description if short_description
       end
-      total_build_steps = Rscons.application.get_total_build_steps.to_s
-      this_build_step = sprintf("%#{total_build_steps.size}d", builder.build_step)
-      progress = "[#{this_build_step}/#{total_build_steps}]"
-      Ansi.write($stdout, :cyan, "#{progress} #{message}", :reset, "\n") if message
+      if message
+        total_build_steps = Rscons.application.get_total_build_steps.to_s
+        this_build_step = sprintf("%#{total_build_steps.size}d", builder.build_step)
+        progress = "[#{this_build_step}/#{total_build_steps}]"
+        Ansi.write($stdout, *Util.colorize_markup("#{progress} #{message}"), "\n")
+      end
     end
 
     # Get the Builder for a target.

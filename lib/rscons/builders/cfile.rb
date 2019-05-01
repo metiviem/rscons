@@ -26,7 +26,7 @@ module Rscons
             raise "Unknown source file #{@sources.first.inspect} for CFile builder"
           end
           command = @env.build_command("${#{cmd}_CMD}", @vars)
-          standard_command("#{message} from #{Util.short_format_paths(@sources)} => #{@target}", command)
+          standard_command("#{message} from <source>#{Util.short_format_paths(@sources)}<reset> => <target>#{@target}<reset>", command)
         end
       end
 

@@ -27,7 +27,7 @@ module Rscons
             @vars["_SOURCES"] = @objects
             @vars["#{ld_var}"] = ld
             command = @env.build_command("${#{ld_var}CMD}", @vars)
-            standard_command("Linking => #{@target}", command, sources: @objects)
+            standard_command("Linking <target>#{@target}<reset>", command, sources: @objects)
           end
         end
 

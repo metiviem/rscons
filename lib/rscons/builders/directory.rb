@@ -30,7 +30,7 @@ module Rscons
             Ansi.write($stderr, :red, "Error: `#{@target}' already exists and is not a directory", :reset, "\n")
             false
           else
-            print_run_message("Creating directory => #{@target}", nil)
+            print_run_message("Creating directory <target>#{@target}<reset>", nil)
             @cache.mkdir_p(@target, install: @install_builder)
             true
           end

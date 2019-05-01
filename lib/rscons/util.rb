@@ -15,6 +15,30 @@ module Rscons
         end
       end
 
+      # Colorize a builder run message.
+      #
+      # @param message [String]
+      #   Builder run message.
+      #
+      # @return [Array]
+      #   Colorized message with color codes for {Ansi} module.
+      def colorize_markup(message)
+        if message =~ /^(.*?)(<[^>]+>)(.*)$/
+          prefix, code, suffix = $1, $2, $3
+          case code
+          when "<target>"
+            code = :magenta
+          when "<source>"
+            code = :cyan
+          when "<reset>"
+            code = :reset
+          end
+          [prefix, code, *colorize_markup(suffix)].delete_if {|v| v == ""}
+        else
+          [message]
+        end
+      end
+
       # Return a string representation of a command.
       #
       # @param command [Array<String>]

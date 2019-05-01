@@ -216,7 +216,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling header.c},
-      %r{Linking => header.exe},
+      %r{Linking header.exe},
     ])
   end
 
@@ -245,7 +245,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling header.c},
-      %r{Linking => header.exe},
+      %r{Linking header.exe},
     ])
     expect(`./header.exe`).to eq "The value is 2\n"
     result = run_rscons
@@ -259,7 +259,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling header.c},
-      %r{Linking => header.exe},
+      %r{Linking header.exe},
     ])
     expect(`./header.exe`).to eq "The value is 2\n"
     sleep 0.05
@@ -398,7 +398,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling program.c},
-      %r{Linking => program.exe},
+      %r{Linking program.exe},
     ])
     expect(File.exists?('inc.h')).to be_truthy
     expect(`./program.exe`).to eq "The value is 5678\n"
@@ -413,7 +413,7 @@ EOF
       %r{CHGen inc.c},
       %r{Compiling program.c},
       %r{Compiling inc.c},
-      %r{Linking => program.exe},
+      %r{Linking program.exe},
     ])
     expect(File.exists?("inc.c")).to be_truthy
     expect(File.exists?("inc.h")).to be_truthy
@@ -562,7 +562,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
-      %r{Linking => simple.exe},
+      %r{Linking simple.exe},
     ])
     expect(File.exists?('build/e.1/simple.o')).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
@@ -570,12 +570,12 @@ EOF
     File.open("program.ld", "w") {|fh| fh.puts("2")}
     result = run_rscons(rsconscript: "user_dependencies.rb")
     expect(result.stderr).to eq ""
-    verify_lines(lines(result.stdout), [%r{Linking => simple.exe}])
+    verify_lines(lines(result.stdout), [%r{Linking simple.exe}])
 
     File.unlink("program.ld")
     result = run_rscons(rsconscript: "user_dependencies.rb")
     expect(result.stderr).to eq ""
-    verify_lines(lines(result.stdout), [%r{Linking => simple.exe}])
+    verify_lines(lines(result.stdout), [%r{Linking simple.exe}])
 
     result = run_rscons(rsconscript: "user_dependencies.rb")
     expect(result.stderr).to eq ""
@@ -634,9 +634,9 @@ EOF
       #expect(result.stderr).to eq ""
       slines = lines(result.stdout)
       if RUBY_PLATFORM =~ /mingw/
-        verify_lines(slines, [%r{Linking => mine.dll}])
+        verify_lines(slines, [%r{Linking mine.dll}])
       else
-        verify_lines(slines, [%r{Linking => libmine.so}])
+        verify_lines(slines, [%r{Linking libmine.so}])
       end
     end
   end
@@ -682,7 +682,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling program.c},
-      %r{Linking => program.exe},
+      %r{Linking program.exe},
     ])
     expect(File.exists?('inc.h')).to be_truthy
     expect(`./program.exe`).to eq "The value is 678\n"
@@ -751,7 +751,7 @@ EOF
       %r{Compiling two.c},
       %r{Assembling one.ssss},
       %r{Assembling two.sss},
-      %r{Linking => two_sources.exe},
+      %r{Linking two_sources.exe},
     ])
     expect(File.exists?("two_sources.exe")).to be_truthy
     expect(`./two_sources.exe`).to eq "This is a C program with two sources.\n"
@@ -845,7 +845,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
-      %r{Linking => simple.out},
+      %r{Linking simple.out},
     ])
   end
 
@@ -855,7 +855,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
-      %r{Linking => simple.out},
+      %r{Linking simple.out},
     ])
   end
 
@@ -865,7 +865,7 @@ EOF
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
-      %r{Linking => simple.xyz},
+      %r{Linking simple.xyz},
     ])
   end
 
@@ -885,10 +885,10 @@ EOF
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     if RUBY_PLATFORM =~ /mingw/
-      verify_lines(slines, [%r{Linking => mine.dll}])
+      verify_lines(slines, [%r{Linking mine.dll}])
       expect(File.exists?("mine.dll")).to be_truthy
     else
-      verify_lines(slines, [%r{Linking => libmine.so}])
+      verify_lines(slines, [%r{Linking libmine.so}])
       expect(File.exists?("libmine.so")).to be_truthy
     end
 
@@ -916,9 +916,9 @@ EOF
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     if RUBY_PLATFORM =~ /mingw/
-      verify_lines(slines, [%r{Linking => mine.dll}])
+      verify_lines(slines, [%r{Linking mine.dll}])
     else
-      verify_lines(slines, [%r{Linking => libmine.so}])
+      verify_lines(slines, [%r{Linking libmine.so}])
     end
 
     result = run_rscons(rsconscript: "shared_library_cxx.rb")
@@ -1055,7 +1055,7 @@ EOF
 
       result = run_rscons(rsconscript: "command_builder.rb")
       expect(result.stderr).to eq ""
-      verify_lines(lines(result.stdout), [%r{BuildIt => simple.exe}])
+      verify_lines(lines(result.stdout), [%r{BuildIt simple.exe}])
       expect(`./simple.exe`).to eq "This is a simple C program\n"
 
       result = run_rscons(rsconscript: "command_builder.rb")
@@ -1070,7 +1070,7 @@ EOF
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
-        %r{My Disassemble => simple.txt},
+        %r{My Disassemble simple.txt},
       ])
       expect(File.read("simple.txt")).to match /Disassembly of section .text:/
     end
@@ -1081,7 +1081,7 @@ EOF
       test_dir("simple")
       result = run_rscons(rsconscript: "directory.rb")
       expect(result.stderr).to eq ""
-      verify_lines(lines(result.stdout), [%r{Creating directory => teh_dir}])
+      verify_lines(lines(result.stdout), [%r{Creating directory teh_dir}])
       expect(File.directory?("teh_dir")).to be_truthy
     end
 
@@ -1189,7 +1189,7 @@ EOF
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
         %r{Checker simple.exe},
       ])
 
@@ -1269,13 +1269,13 @@ EOF
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
       ])
 
       result = run_rscons(rsconscript: "cache_command_change.rb")
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
       ])
     end
 
@@ -1286,13 +1286,13 @@ EOF
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
       ])
 
       result = run_rscons(rsconscript: "cache_new_dep2.rb")
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
       ])
     end
 
@@ -1342,14 +1342,14 @@ EOF
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
       ])
 
       File.open("user_deps", "wb") {|fh| fh.write("foo")}
       result = run_rscons(rsconscript: "cache_user_dep.rb")
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
       ])
     end
 
@@ -1362,7 +1362,7 @@ EOF
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
       ])
 
       result = run_rscons(rsconscript: "cache_user_dep.rb")
@@ -1373,7 +1373,7 @@ EOF
       result = run_rscons(rsconscript: "cache_user_dep.rb")
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
-        %r{Linking => simple.exe},
+        %r{Linking simple.exe},
       ])
     end
 
@@ -1514,7 +1514,7 @@ EOF
       result = run_rscons(rsconscript: "library_from_object.rb")
       expect(result.stderr).to eq ""
       expect(File.exists?("two.o")).to be_truthy
-      verify_lines(lines(result.stdout), [%r{Building static library archive => lib.a}])
+      verify_lines(lines(result.stdout), [%r{Building static library archive lib.a}])
     end
   end
 
@@ -1526,9 +1526,9 @@ EOF
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
       if RUBY_PLATFORM =~ /mingw/
-        verify_lines(slines, [%r{Linking => mine.dll}])
+        verify_lines(slines, [%r{Linking mine.dll}])
       else
-        verify_lines(slines, [%r{Linking => libmine.so}])
+        verify_lines(slines, [%r{Linking libmine.so}])
       end
     end
 

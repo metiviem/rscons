@@ -52,7 +52,7 @@ module Rscons
             # Check the cache and copy if necessary
             unless @cache.up_to_date?(dest, :Copy, [src], @env)
               unless printed_message
-                message = "#{name} #{Util.short_format_paths(@sources)} => #{@target}"
+                message = "#{name} <source>#{Util.short_format_paths(@sources)}<reset> => <target>#{@target}<reset>"
                 print_run_message(message, nil)
                 printed_message = true
               end

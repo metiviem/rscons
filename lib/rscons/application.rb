@@ -171,7 +171,9 @@ module Rscons
       cache = Cache.instance
       build_dir = cache["configuration_data"]["build_dir"]
       clean
-      FileUtils.rm_rf(build_dir)
+      if build_dir
+        FileUtils.rm_rf(build_dir)
+      end
       cache.clear
       0
     end

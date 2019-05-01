@@ -23,7 +23,7 @@ module Rscons
           if @vars["CMD_STDOUT"]
             options[:stdout] = @env.expand_varref("${CMD_STDOUT}", @vars)
           end
-          standard_command("#{cmd_desc} => #{@target}", command, options)
+          standard_command("#{cmd_desc} <target>#{@target}<reset>", command, options)
         end
       end
 
