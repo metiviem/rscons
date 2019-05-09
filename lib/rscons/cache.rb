@@ -238,11 +238,18 @@ module Rscons
     # @param options [Hash] Optional arguments.
     # @option options [Boolean] :install
     #   Whether the target is for an install operation.
+    # @option options [Boolean] :side_effect
+    #   Whether the target is a side-effect file (no checksum will be stored).
     #
     # @return [void]
     def register_build(targets, command, deps, env, options = {})
       Array(targets).each do |target|
-        target_checksum = Rscons.phony_target?(target) ? "" : calculate_checksum(target)
+        target_checksum =
+          if options[:side_effect] or Rscons.phony_target?(target)
+            ""
+          else
+            calculate_checksum(target)
+          end
         @cache["targets"][get_cache_key(target)] = {
           "command" => Digest::MD5.hexdigest(command.inspect),
           "checksum" => target_checksum,

@@ -620,7 +620,7 @@ module Rscons
         # Register side-effect files as build targets so that a Cache
         # clean operation will remove them.
         builder.side_effects.each do |side_effect|
-          Cache.instance.register_build(side_effect, nil, [], self)
+          Cache.instance.register_build(side_effect, nil, [], self, side_effect: true)
           @side_effects.delete(side_effect)
         end
         @build_hooks[:post].each do |build_hook_block|
