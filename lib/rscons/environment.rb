@@ -262,6 +262,7 @@ module Rscons
     #
     # @return [void]
     def process
+      Cache.instance.clear_checksum_cache!
       @process_failures = []
       @process_blocking_wait = false
       @process_commands_waiting_to_run = []
@@ -594,9 +595,6 @@ module Rscons
     #
     # @return [void]
     def run_builder(builder)
-      # TODO: have Cache determine when checksums may be invalid based on
-      # file size and/or timestamp.
-      Cache.instance.clear_checksum_cache!
       unless builder.nop?
         builder.build_step ||= Rscons.application.get_next_build_step
       end
