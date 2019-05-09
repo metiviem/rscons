@@ -324,6 +324,12 @@ EOF
     expect(IO.read('foo.yml')).to eq("---\nkey: value\n")
   end
 
+  it "raises an error when a side-effect file is registered for a build target that is not registered" do
+    test_dir "simple"
+    result = run_rscons(rsconscript: "error_produces_nonexistent_target.rb")
+    expect(result.stderr).to match /Could not find a registered build target "foo"/
+  end
+
   context "clean operation" do
     it 'cleans built files' do
       test_dir("simple")
@@ -1562,9 +1568,16 @@ EOF
       expect(result.stderr).to eq ""
     end
 
-    it "allows the user to specify side-effect files produced by another builder" do
+    it "allows the user to specify side-effect files produced by another builder with Builder#produces" do
       test_dir("custom_builder")
       result = run_rscons(rsconscript: "produces.rb", rscons_args: %w[-j 4])
+      expect(result.stderr).to eq ""
+      expect(File.exists?("copy_inc.h")).to be_truthy
+    end
+
+    it "allows the user to specify side-effect files produced by another builder with Environment#produces" do
+      test_dir("custom_builder")
+      result = run_rscons(rsconscript: "produces_env.rb", rscons_args: %w[-j 4])
       expect(result.stderr).to eq ""
       expect(File.exists?("copy_inc.h")).to be_truthy
     end

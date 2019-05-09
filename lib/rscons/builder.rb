@@ -47,6 +47,10 @@ module Rscons
     #   Construction variables used to perform the build operation.
     attr_accessor :vars
 
+    # @return [Set<String>]
+    #   Side effect file(s) produced when this builder runs.
+    attr_accessor :side_effects
+
     # @return [Integer]
     #   Build step.
     attr_accessor :build_step
@@ -71,6 +75,7 @@ module Rscons
       @cache = options[:cache]
       @env = options[:env]
       @vars = options[:vars]
+      @side_effects = Set.new
     end
 
     # Return the name of the builder.
@@ -98,6 +103,18 @@ module Rscons
     # @return [void]
     def depends(*user_deps)
       @env.depends(@target, *user_deps)
+    end
+
+    # Manually record the given side effect file(s) as being produced when the
+    # named target is produced.
+    #
+    # @return [void]
+    def produces(*side_effects)
+      side_effects.each do |side_effect|
+        side_effect_expanded = @env.expand_path(@env.expand_varref(side_effect))
+        @env.register_side_effect(side_effect_expanded)
+        @side_effects << side_effect_expanded
+      end
     end
 
     # Run the builder to produce a build target.

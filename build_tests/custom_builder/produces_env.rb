@@ -7,10 +7,10 @@ build do
     env.depends("${build_root}/program.o", "${inc_h}")
     env.Program("program.exe", ["program.c", "inc.c"])
 
-    inc_c = env.Command("inc.c",
-                        [],
-                        "CMD" => %w[ruby gen.rb ${_TARGET}],
-                        "CMD_DESC" => "Generating")
-    inc_c.produces("inc.h")
+    env.Command("inc.c",
+                [],
+                "CMD" => %w[ruby gen.rb ${_TARGET}],
+                "CMD_DESC" => "Generating")
+    env.produces("inc.c", "inc.h")
   end
 end

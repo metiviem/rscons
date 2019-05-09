@@ -81,7 +81,7 @@ module Rscons
               end
             @cache.mkdir_p(File.dirname(@vars["_DEPFILE"]))
             command = @env.build_command(@command_template, @vars)
-            @env.produces(@target, @vars["_DEPFILE"])
+            self.produces(@vars["_DEPFILE"])
             if @vars[:direct]
               message = "#{@short_description}/Linking <source>#{Util.short_format_paths(@sources)}<reset> => <target>#{@target}<reset>"
             else

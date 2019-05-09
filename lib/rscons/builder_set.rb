@@ -8,10 +8,10 @@ module Rscons
     #   Hash mapping targets to a set of build dependencies. A builder will not
     #   be returned as ready to run if any of its dependencies are still
     #   building.
-    # @param side_effects [Hash]
-    #   Hash mapping targets to a set of side-effect files. A builder will not
-    #   be returned as ready to run if any of its dependencies is a side-effect
-    #   of another target that has not yet been built.
+    # @param side_effects [Set]
+    #   Set of side-effect files. A builder will not be returned as ready to
+    #   run if any of its dependencies is a side-effect of another target that
+    #   has not yet been built.
     def initialize(build_dependencies, side_effects)
       super()
       @build_dependencies = build_dependencies
@@ -53,22 +53,24 @@ module Rscons
     # @return [nil, Builder]
     #   The next builder to run.
     def get_next_builder_to_run(targets_still_building)
-      not_built_yet = targets_still_building + self.keys
-      not_built_yet += not_built_yet.reduce([]) do |result, target|
-        result + (@side_effects[target] || [])
+      to_build = self.find do |target, builders|
+        deps = builders.first.sources + (@build_dependencies[target] || []).to_a
+        # All dependencies must have been built for this target to be ready to
+        # build.
+        deps.all? do |dep|
+          !(targets_still_building.include?(dep) ||
+            self.include?(dep) ||
+            @side_effects.include?(dep))
+        end
       end
 
-      target_to_build = self.keys.find do |target|
-        deps = self[target][0].sources + (@build_dependencies[target] || []).to_a
-        !deps.find {|dep| not_built_yet.include?(dep)}
-      end
-
-      if target_to_build
-        builder = self[target_to_build][0]
-        if self[target_to_build].size > 1
-          self[target_to_build].slice!(0)
+      if to_build
+        target, builders = *to_build
+        builder = builders.first
+        if builders.size > 1
+          builders.slice!(0)
         else
-          self.delete(target_to_build)
+          self.delete(target)
         end
         return builder
       end

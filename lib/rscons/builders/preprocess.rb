@@ -25,7 +25,7 @@ module Rscons
           @vars["_SOURCES"] = @sources
           @vars["_DEPFILE"] = Rscons.set_suffix(target, env.expand_varref("${DEPFILESUFFIX}", vars))
           command = @env.build_command("${CPP_CMD}", @vars)
-          @env.produces(@target, @vars["_DEPFILE"])
+          self.produces(@vars["_DEPFILE"])
           standard_command("Preprocessing <source>#{Util.short_format_paths(@sources)}<reset> => <target>#{@target}<reset>", command)
         end
       end

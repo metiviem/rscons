@@ -72,7 +72,8 @@ module Rscons
       # Hash of Thread object => {Command} or {Builder}.
       @threads = {}
       @registered_build_dependencies = {}
-      @side_effects = {}
+      # Set of side-effect files that have not yet been built.
+      @side_effects = Set.new
       @builder_sets = []
       @build_targets = {}
       @user_deps = {}
@@ -412,11 +413,25 @@ module Rscons
     # @return [void]
     def produces(target, *side_effects)
       target = expand_path(expand_varref(target))
-      side_effects = Array(side_effects).map do |side_effect|
-        expand_path(expand_varref(side_effect))
-      end.flatten
-      @side_effects[target] ||= []
-      @side_effects[target] += side_effects
+      @builder_sets.reverse.each do |builder_set|
+        if builders = builder_set[target]
+          builders.last.produces(*side_effects)
+          return
+        end
+      end
+      raise "Could not find a registered build target #{target.inspect}"
+    end
+
+    # Register a side effect file.
+    #
+    # This is an internally used method.
+    #
+    # @api private
+    #
+    # @param side_effect [String]
+    #   Side effect fiel name.
+    def register_side_effect(side_effect)
+      @side_effects << side_effect
     end
 
     # Return the list of user dependencies for a given target.
@@ -606,8 +621,9 @@ module Rscons
       when true
         # Register side-effect files as build targets so that a Cache
         # clean operation will remove them.
-        (@side_effects[builder.target] || []).each do |side_effect_file|
-          Cache.instance.register_build(side_effect_file, nil, [], self)
+        builder.side_effects.each do |side_effect|
+          Cache.instance.register_build(side_effect, nil, [], self)
+          @side_effects.delete(side_effect)
         end
         @build_hooks[:post].each do |build_hook_block|
           build_hook_block.call(builder)
