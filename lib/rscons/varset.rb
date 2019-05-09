@@ -95,8 +95,6 @@ module Rscons
     #   Expanded value with "$!{var}" variable references replaced.
     def expand_varref(varref, lambda_args)
       case varref
-      when Symbol, true, false, nil
-        varref
       when String
         if varref =~ /^(.*)\$\{([^}]+)\}(.*)$/
           prefix, varname, suffix = $1, $2, $3
@@ -104,17 +102,17 @@ module Rscons
           varval = expand_varref(self[varname], lambda_args)
           # suffix needs no expansion since the regex matches the last occurence
           case varval
-          when Symbol, true, false, nil, String
-            if prefix.is_a?(Array)
-              prefix.map {|p| "#{p}#{varval}#{suffix}"}
-            else
-              "#{prefix}#{varval}#{suffix}"
-            end
           when Array
             if prefix.is_a?(Array)
               varval.map {|vv| prefix.map {|p| "#{p}#{vv}#{suffix}"}}.flatten
             else
               varval.map {|vv| "#{prefix}#{vv}#{suffix}"}
+            end
+          when String, Symbol, true, false, nil
+            if prefix.is_a?(Array)
+              prefix.map {|p| "#{p}#{varval}#{suffix}"}
+            else
+              "#{prefix}#{varval}#{suffix}"
             end
           else
             raise "Unknown construction variable type: #{varval.class} (from #{varname.inspect} => #{self[varname].inspect})"
@@ -126,6 +124,8 @@ module Rscons
         varref.map do |ent|
           expand_varref(ent, lambda_args)
         end.flatten
+      when Symbol, true, false, nil
+        varref
       when Proc
         expand_varref(varref[*lambda_args], lambda_args)
       else
