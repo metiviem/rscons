@@ -12,11 +12,11 @@ module Rscons
     #
     # @param options [Hash]
     #   Optional parameters.
-    # @param build_dir [String]
+    # @option options [String] :build_dir
     #   Build directory.
-    # @param prefix [String]
+    # @option options [String] :prefix
     #   Install prefix.
-    # @param project_name [String]
+    # @option options [String] :project_name
     #   Project name.
     def initialize(options)
       # Default options.
