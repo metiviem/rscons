@@ -13,18 +13,42 @@ module Rscons
       load_configuration_data!(options)
     end
 
-    # Get a construction variable's value.
+    # Access the value of a construction variable.
     #
-    # @see VarSet#[]
-    def [](*args)
-      @varset.__send__(:[], *args)
+    # @param key [String, Symbol]
+    #   The construction variable name.
+    #
+    # @return [Object]
+    #   The construction variable's value.
+    def [](key)
+      @varset[key]
     end
 
-    # Set a construction variable's value.
+    # Access the value of a construction variable.
     #
-    # @see VarSet#[]=
-    def []=(*args)
-      @varset.__send__(:[]=, *args)
+    # This method is similar to #[] but does not make a copy-on-access copy of
+    # the variable accessed. This means that the returned value is NOT safe to
+    # be modified by the caller. Thus the caller must guarantee that it does
+    # not modify the returned value.
+    #
+    # @param key [String, Symbol]
+    #   The construction variable name.
+    #
+    # @return [Object]
+    #   The construction variable's value.
+    def get_var(key)
+      @varset.get_var(key)
+    end
+
+    # Assign a value to a construction variable.
+    #
+    # @param key [String, Symbol]
+    #   The construction variable name.
+    #
+    # @param val [Object]
+    #   The value to set.
+    def []=(key, val)
+      @varset[key] = val
     end
 
     # Add a set of construction variables to the BasicEnvironment.
@@ -108,7 +132,7 @@ module Rscons
             append["LDFLAGS", ["-arch", val]]
           end
           skip = true
-        elsif word =~ /^#{self["CPPDEFPREFIX"]}(.*)$/
+        elsif word =~ /^#{get_var("CPPDEFPREFIX")}(.*)$/
           handle["CPPDEFINES", $1]
         elsif word == "-include"
           if val = words[i + 1]
@@ -121,11 +145,11 @@ module Rscons
             append["LDFLAGS", ["-isysroot", val]]
           end
           skip = true
-        elsif word =~ /^#{self["INCPREFIX"]}(.*)$/
+        elsif word =~ /^#{get_var("INCPREFIX")}(.*)$/
           handle["CPPPATH", $1]
-        elsif word =~ /^#{self["LIBLINKPREFIX"]}(.*)$/
+        elsif word =~ /^#{get_var("LIBLINKPREFIX")}(.*)$/
           handle["LIBS", $1]
-        elsif word =~ /^#{self["LIBDIRPREFIX"]}(.*)$/
+        elsif word =~ /^#{get_var("LIBDIRPREFIX")}(.*)$/
           handle["LIBPATH", $1]
         elsif word == "-mno-cygwin"
           append["CCFLAGS", [word]]
@@ -174,7 +198,7 @@ module Rscons
     # @return [void]
     def merge_flags(flags)
       flags.each_pair do |key, val|
-        if self[key].is_a?(Array) and val.is_a?(Array)
+        if self.get_var(key).is_a?(Array) and val.is_a?(Array)
           self[key] += val
         else
           self[key] = val

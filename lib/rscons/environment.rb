@@ -507,9 +507,9 @@ module Rscons
     # @return [String] The command's standard output.
     def shell(command)
       shell_cmd =
-        if self["SHELL"]
-          flag = self["SHELLFLAG"] || (self["SHELL"] == "cmd" ? "/c" : "-c")
-          [self["SHELL"], flag]
+        if shell = get_var("SHELL")
+          flag = get_var("SHELLFLAG") || (shell == "cmd" ? "/c" : "-c")
+          [shell, flag]
         else
           Rscons.get_system_shell
         end
