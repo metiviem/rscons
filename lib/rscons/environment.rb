@@ -666,7 +666,7 @@ module Rscons
       if thread
         # We found a completed thread.
         process_remove_wait(thread)
-        builder = builder_for_thread(thread)
+        unblocked_builder = builder_for_thread(thread)
         completed_command = @threads[thread]
         @threads.delete(thread)
         if completed_command.is_a?(Command)
@@ -674,7 +674,7 @@ module Rscons
           completed_command.status = thread.value
           unless completed_command.status
             Cache.instance["failed_commands"] << completed_command.command
-            @process_failures << "Failed to build #{builder.target}."
+            @process_failures << "Failed to build #{unblocked_builder.target}."
             return
           end
         end
@@ -699,15 +699,13 @@ module Rscons
         result << builder_for_thread(thread).target
       end
       if @builder_sets.size > 0
-        builder = @builder_sets[0].get_next_builder_to_run(targets_still_building)
-      end
-
-      if builder
-        builder.vars = @varset.merge(builder.vars)
-        @build_hooks[:pre].each do |build_hook_block|
-          build_hook_block.call(builder)
+        if builder = @builder_sets[0].get_next_builder_to_run(targets_still_building)
+          builder.vars = @varset.merge(builder.vars)
+          @build_hooks[:pre].each do |build_hook_block|
+            build_hook_block.call(builder)
+          end
+          return run_builder(builder)
         end
-        return run_builder(builder)
       end
 
       if @threads.size > 0
