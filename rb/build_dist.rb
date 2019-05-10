@@ -1,16 +1,12 @@
 #!/usr/bin/env ruby
 
 require "fileutils"
+require "digest/md5"
 
 if File.read("lib/rscons/version.rb") =~ /VERSION = "(.+)"/
   VERSION = $1
 else
   raise "Could not determine version."
-end
-if `git show | head -n 1` =~ /commit\s+([0-9a-f]{7})/i
-  GIT = $1
-else
-  raise "Could not determine git revision."
 end
 PROG_NAME = "rscons"
 START_FILE = "bin/#{PROG_NAME}"
@@ -65,12 +61,13 @@ end
 require "zlib"
 compressed_script = Zlib::Deflate.deflate(stripped_comments.join)
 escaped_compressed_script = compressed_script.gsub("#", "#1").gsub("\n", "#2").gsub("\r", "#3").gsub("\0", "#4")
+hash = Digest::MD5.hexdigest(escaped_compressed_script)
 
 FileUtils.mkdir_p(DIST)
 File.open("#{DIST}/#{PROG_NAME}", "wb", 0755) do |fh|
   fh.write(<<EOF)
 #!/usr/bin/env ruby
-script = ".rscons-#{VERSION}-#{GIT}.rb"
+script = File.join(File.dirname(__FILE__), ".rscons-#{VERSION}-#{hash}.rb")
 unless File.exists?(script)
   if File.read(__FILE__, mode: "rb") =~ /^#==>(.*)/
     escaped_compressed = $1
