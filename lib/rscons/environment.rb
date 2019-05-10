@@ -166,8 +166,6 @@ module Rscons
     #   Create a new {Builders::SimpleBuilder} instance and add it to the
     #   environment.
     #
-    #   @since 1.8.0
-    #
     #   @param name [String,Symbol]
     #     The name of the builder to add.
     #
@@ -216,8 +214,6 @@ module Rscons
     # build operation takes place. Post-build hooks are only invoked if the
     # build operation succeeded. Post-build hooks can register new build
     # targets.
-    #
-    # @since 1.7.0
     #
     # @yield [build_op]
     #   Invoke the given block with the current build operation.
@@ -376,8 +372,6 @@ module Rscons
     # described:
     #   env.build_after("program.o", "gen.c")
     #
-    # @since 1.10.0
-    #
     # @param targets [String, Array<String>]
     #   Target files to wait to build until the prerequisites are finished
     #   building.
@@ -403,8 +397,6 @@ module Rscons
 
     # Manually record the given side effect file(s) as being produced when the
     # named target is produced.
-    #
-    # @since 1.13.0
     #
     # @param target [String]
     #   Target of a build operation.

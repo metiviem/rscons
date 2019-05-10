@@ -201,8 +201,6 @@ module Rscons
 
     # Register build results from a {Command} with the cache.
     #
-    # @since 1.10.0
-    #
     # @param options [Hash]
     #   Builder finalize options.
     # @option options [String] :stdout

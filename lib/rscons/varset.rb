@@ -164,8 +164,6 @@ module Rscons
 
     # Return a Hash containing all variables in the VarSet.
     #
-    # @since 1.8.0
-    #
     # This method is not terribly efficient. It is intended to be used only by
     # debugging code to dump out a VarSet's variables.
     #

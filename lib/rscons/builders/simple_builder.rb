@@ -1,8 +1,6 @@
 module Rscons
   module Builders
     # A Generic builder which has its operation is defined at instantiation.
-    #
-    # @since 1.8.0
     class SimpleBuilder < Builder
 
       # @return [String]

@@ -3,8 +3,6 @@ module Rscons
     # A builder to execute an arbitrary command that will produce the given
     # target based on the given sources.
     #
-    # @since 1.8.0
-    #
     # Example:
     #   env.Command("docs.html", "docs.md",
     #               CMD => %w[pandoc -fmarkdown -thtml -o${_TARGET} ${_SOURCES}])
