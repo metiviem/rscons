@@ -42,7 +42,7 @@ YARD::Rake::YardocTask.new do |yard|
 end
 
 task :gen_large_project, [:size] => :build_dist do |task, args|
-  size = (args.size || 1000).to_i
+  size = (args.size || 10000).to_i
   FileUtils.rm_rf("large_project")
   FileUtils.mkdir_p("large_project/src")
   size.times do |i|
