@@ -4,7 +4,7 @@
 /build_test_run/
 /coverage/
 /dist/
-/doc/
+/large_project/
 /pkg/
 /test/
-/large_project/
+/yard/

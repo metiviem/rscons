@@ -10,7 +10,7 @@ require "yard"
 require "rake/clean"
 require "fileutils"
 
-CLEAN.include %w[build_test_run .yardoc doc coverage test]
+CLEAN.include %w[build_test_run .yardoc yard coverage test]
 CLOBBER.include %w[dist pkg]
 
 task :build_dist do
@@ -39,6 +39,7 @@ end
 
 YARD::Rake::YardocTask.new do |yard|
   yard.files = ['lib/**/*.rb']
+  yard.options = ["-oyard"]
 end
 
 task :gen_large_project, [:size] => :build_dist do |task, args|
