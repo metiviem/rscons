@@ -121,19 +121,22 @@ module Rscons
           rsconscript = DEFAULT_RSCONSCRIPTS.find do |f|
             File.exists?(f)
           end
-          unless rsconscript
-            $stderr.puts "Could not find the Rsconscript to execute."
-            $stderr.puts "Looked for: #{DEFAULT_RSCONSCRIPTS.join(", ")}"
-            exit 1
-          end
         end
 
-        script = Script.new
-        script.load(rsconscript)
+        if rsconscript
+          script = Script.new
+          script.load(rsconscript)
+        end
 
         if do_help
           puts USAGE
           exit 0
+        end
+
+        unless rsconscript
+          $stderr.puts "Could not find the Rsconscript to execute."
+          $stderr.puts "Looked for: #{DEFAULT_RSCONSCRIPTS.join(", ")}"
+          exit 1
         end
 
         operation_options = parse_operation_args(operation, argv) || {}
