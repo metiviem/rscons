@@ -22,7 +22,7 @@ Along the way, Rscons provides a concise syntax for specifying common types of
 build operations, but also provides an extensible framework for performing
 custom build operations as well.
 
-Rscons is written in Ruby, and is inspired by SCons and waf.
+Rscons is written in Ruby, and is inspired by [SCons](https://scons.org/) and [waf](https://waf.io/).
 
 ## Design Principles
 
@@ -79,7 +79,7 @@ Rscons is designed to be distributed as a stand-alone single file script that
 can be copied into and versioned in a project's source tree.
 The only dependency required to run Rscons is to have a Ruby interpreter
 installed.
-The latest release can be downloaded from [TODO].
+The latest release can be downloaded from [https://github.com/holtrop/rscons/releases](https://github.com/holtrop/rscons/releases).
 Simply copy the `rscons` executable script into the desired location within
 the project to be built (typically the root of the repository).
 
