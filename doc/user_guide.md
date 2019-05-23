@@ -40,9 +40,9 @@ A build target will be built whenever:
     the target was built
 
 Importantly, Rscons uses the content of a source (dependency) file to determine
-whether a rebuild is necessary, not simply the timestamp of the file, which can
-lead to an incorrect decision being made to not rebuild when a rebuild is
-necessary.
+whether a rebuild is necessary, not simply the timestamp of the file.
+This is because relying solely on the timestamp of the file can lead to an
+incorrect decision being made to not rebuild when a rebuild is necessary.
 
 ### Build Flexibility
 
