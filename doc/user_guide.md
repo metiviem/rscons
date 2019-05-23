@@ -140,7 +140,40 @@ Such configuration checks can include:
   * verifying presence of a library
   * verifying presence of an executable
 
+## Build Operation
 
+If a `build` operation is requested and a `configure` operation has not yet
+been performed, a `configure` operation will be automatically invoked.
+
+The `build` operation will execute all builders registered to produce build
+targets.
+
+## Clean Operation
+
+A `clean` operation will remove all built target files.
+It will not remove items installed by an `install` operation.
+It will not remove the cached configuration options.
+
+## Distclean Operation
+
+A `distclean` operation will remove all built target files and all cached
+configuration options.
+Generally it will get the project directory back to the state it was in when
+unpacked before any configuration or build operations took place.
+It will not removed items installed by an `install` operation.
+
+## Install Operation
+
+An `install` operation will perform a `build` (and if necessary, first a
+`configure` as well).
+In addition it will execute any `Install` or `InstallDirectory` builders to
+install items into the specified install directory.
+
+## Uninstall Operation
+
+An `uninstall` operation will remove any items installed by an `install`
+operation.
+It will not remove all built target files, just the installed copies.
 
 # Build Script Authoring
 
