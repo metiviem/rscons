@@ -14,9 +14,9 @@ It supports the following features:
 
 At its core, Rscons is mainly an engine to:
 
-  - determine the proper order to perform build operations,
-  - determine whether each build target is up to date or in need of rebuild, and
-  - schedule those build operations across multiple threads as efficiently as possible.
+  * determine the proper order to perform build operations,
+  * determine whether each build target is up to date or in need of rebuild, and
+  * schedule those build operations across multiple threads as efficiently as possible.
 
 Along the way, Rscons provides a concise syntax for specifying common types of
 build operations, but also provides an extensible framework for performing
@@ -175,7 +175,156 @@ An `uninstall` operation will remove any items installed by an `install`
 operation.
 It will not remove all built target files, just the installed copies.
 
-# Build Script Authoring
+# Writing the Build Script
+
+## `configure` Block
+
+A `configure` block is optional.
+It can be used to perform various checks and setup operations for a project.
+Example `configure` block:
+
+    configure do
+      check_cxx_compiler
+      check_c_header "getopt.h"
+    end
+
+### Checking for a Compiler
+
+The following methods can be used within a `configure` block to check for a
+working compiler:
+
+  * `check_c_compiler`
+  * `check_cxx_compiler`
+  * `check_d_compiler`
+
+Each of these methods can take an optional list of compilers to check for.
+If such a list is supplied, the compilers are tested in the order listed.
+
+Here are example calls which also show the default compiler list for each
+supported language:
+
+    configure do
+      check_c_compiler "gcc", "clang"
+      check_cxx_compiler "g++", "clang++"
+      check_d_compiler "gdc", "ldc2"
+    end
+
+### Checking for a Header File
+
+The following methods can be used to check for the presence of a header file:
+
+  * `check_c_header` will check for a C header to be present
+  * `check_cxx_header` will check for a C++ header to be present
+
+Each of these methods take the name of the header file to check for as the
+first argument, and take an optional Hash of arguments as the second argument.
+
+Example calls:
+
+    configure do
+      check_c_header "getopt.h", fail: false, set_define: "HAVE_GETOPT_H"
+      check_c_header "FreeType2.h"
+      check_cxx_header "memory"
+    end
+
+#### Options
+
+##### `:fail`
+
+If the `:fail` option is set to `false`, then the absence of the header file
+will not result in the configure option failing.
+
+##### `:set_define`
+
+If set, a build define of the specified String will be added to the
+`CPPDEFINES` construction variable array if the requested header is found.
+
+### Checking for a D Import
+
+The `check_d_import` method can be used to check for the presence of D import.
+
+This method takes the name of the import to check for as the first argument.
+
+Example calls:
+
+    configure do
+      check_d_import "std.stdio"
+      check_d_import "std.numeric"
+    end
+
+### Checking for a Library
+
+The `check_lib` method can be used to check for the presence of a library.
+
+This method takes the name of the library to check for as the first argument,
+and take an optional Hash of arguments as the second argument.
+
+Example calls:
+
+    configure do
+      check_lib "kpty", fail: false, set_define: "HAVE_LIBKPTY"
+      check_lib "GL"
+    end
+
+#### Options
+
+##### `:fail`
+
+If the `:fail` option is set to `false`, then the absence of the library
+will not result in the configure option failing.
+
+##### `:set_define`
+
+If set, a build define of the specified String will be added to the
+`CPPDEFINES` construction variable array if the requested library is found.
+
+### Checking for a Program
+
+The `check_program` method can check for the existence of an executable in the
+host operating system environment.
+
+Example call:
+
+    configure do
+      check_program "xxd"
+    end
+
+### Checking for a Package Configuration
+
+The `check_cfg` method can be used to check for the existence of a package as
+well as import any build options (e.g. include path, defines, libraries to link
+against, etc...) required to use the package.
+
+This method takes a Hash of options as its only argument.
+
+Example calls:
+
+    configure do
+      check_cfg package: "zlib"
+      check_cfg program: "freetype-config", fail: false, set_define: "HAVE_FREETYPE"
+    end
+
+#### Options
+
+##### `:package`
+
+If the `:package` option is set to a value, the `pkg-config` program will be
+used to look for package configuration flags for the specified package.
+
+##### `:program`
+
+If the `:program` option is given, the program specified will be used to look
+for configuration flags.
+
+##### `:fail`
+
+If the `:fail` option is set to `false`, then the absence of the package or
+program requested will not result in the configure option failing.
+
+##### `:set_define`
+
+If set, a build define of the specified String will be added to the
+`CPPDEFINES` construction variable array if the requested package is found.
 
 # License
 
