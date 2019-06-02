@@ -177,7 +177,7 @@ It will not remove all built target files, just the installed copies.
 
 # Writing the Build Script
 
-## `configure` Block
+## Configuration Operations
 
 A `configure` block is optional.
 It can be used to perform various checks and setup operations for a project.
@@ -325,6 +325,91 @@ program requested will not result in the configure option failing.
 
 If set, a build define of the specified String will be added to the
 `CPPDEFINES` construction variable array if the requested package is found.
+
+## Build Operations
+
+The `build` block is used to create Environments and register build targets.
+An Rscons build script would not be very useful without a `build` block.
+
+Here is an example `build` block demonstrating how to register a build target:
+
+    build do
+      Environment.new do |env|
+        env.Program("myprog.exe", glob("src/**/*.c"))
+      end
+    end
+
+This `Rsconscript` would build an executable called `myprog.exe` from all C
+source files found recursively under the `src` directory.
+
+### Environments
+
+An Environment is a collection of:
+
+  - construction variables
+  - build hooks
+  - registered build targets
+
+All build targets must be registered within an `Environment`.
+
+### Construction Variables
+
+Construction variables are values assigned to keys within an Environment.
+Construction variables are used by Builders to produce output files.
+See [#Default Construction Variables] for a reference of all built-in
+construction variables.
+
+Example:
+
+    build do
+      Environment.new do |env|
+        env["CCFLAGS"] += %w[-O2 -Wall]
+        env["LIBS"] += %w[m]
+      end
+    end
+
+This example modifies the `CCFLAGS` construction variable to add `-O2` and
+`-Wall` to the compilation commands used for C and C++ source files.
+It also instructs the linker to link against the `m` library.
+
+### Build Hooks
+
+A build hook is a Ruby block that is called whenever Rscons is about to invoke
+a builder to produce a build target.
+Rscons also supports post-build hooks which are called after the builder has
+produced the build target.
+A build hook can be used to modify construction variables depending on the
+build target or source file names.
+
+Example:
+
+    build do
+      Environment.new do |env|
+        env["CFLAGS"] << "-Wall"
+        env.add_build_hook do |builder|
+          # Compile sources from under src/tests without the -Wall flag.
+          if builder.sources.first =~ %r{src/tests/}
+            builder.vars["CFLAGS"] -= %w[-Wall]
+          end
+        end
+        env.Program("program.exe", glob("src/**/*.c"))
+      end
+    end
+
+This example script would compile all C sources under the `src` directory with
+the `-Wall` flag except for sources under the `src/tests` directory.
+
+## Extending Rscons
+
+### Adding New Languages
+
+### Adding New Builders
+
+# Reference
+
+## Default Builders
+
+## Default Construction Variables
 
 # License
 
