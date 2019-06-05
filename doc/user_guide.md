@@ -352,6 +352,22 @@ An Environment is a collection of:
 
 All build targets must be registered within an `Environment`.
 
+### Specifying Source Files: The glob Method
+
+The `glob` method can be used to find files matching the patterns specified.
+It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/core-2.5.1/Dir.html#method-c-glob) but operates more deterministically.
+
+Example use:
+
+    build do
+      Environment.new do |env|
+        env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
+      end
+    end
+
+This example would build the `mytests` executable from all `.cc` source files
+found recursively under the `src` or `test` directory.
+
 ### Construction Variables
 
 Construction variables are values assigned to keys within an Environment.
@@ -371,6 +387,198 @@ Example:
 This example modifies the `CCFLAGS` construction variable to add `-O2` and
 `-Wall` to the compilation commands used for C and C++ source files.
 It also instructs the linker to link against the `m` library.
+
+### Builders
+
+Rscons uses builder objects to produce *target* output files from *source*
+input files.
+Each builder is registered by calling a method on the `Environment` object
+that matches the builder's name.
+For example, a `Program` builder is registered by calling the `env.Program`
+method.
+There are several default builders that are built-in to Rscons:
+
+  * `Command`, which executes a user-defined command to produce the target.
+  * `Copy`, which copies files or directories to a specified destination.
+  * `CFile`, which builds a C or C++ source file from a lex or yacc input file.
+  * `Directory`, which creates a directory.
+  * `Disassemble`, which disassembles an object file to a disassembly listing.
+  * `Install`, which installs files or directories to a specified destination.
+  * `InstallDirectory`, which creates a directory during an install operation.
+  * `Library`, which collects object files into a static library archive file.
+  * `Object`, which compiles source files to produce an object file.
+  * `Preprocess`, which invokes the C/C++ preprocessor on a source file.
+  * `Program`, which links object files to produce an executable.
+  * `SharedLibrary`, which links object files to produce a dynamically loadable
+    library.
+  * `SharedObject`, which compiles source files to produce an object file, in a
+    way that is able to be used to create a shared library.
+
+#### The Command Builder
+
+```ruby
+env.Command(target, sources, "CMD" => command)
+# Example
+env.Command("docs.html", "docs.md",
+    "CMD" => ["pandoc", "-fmarkdown", "-thtml", "-o${_TARGET}", "${_SOURCES}"],
+    "CMD_DESC" => "PANDOC")
+```
+
+The `Command` builder executes a user-defined command in order to produce the
+desired target file based on the provided source files.
+
+#### The CFile Builder
+
+```ruby
+env.CFile(target, source)
+# Example
+env.CFile("^/parser/parser.c", "parser.y")
+```
+
+The `CFile` builder will generate a C or C++ source file from a lex (.l, .ll)
+or yacc (.y, .yy) input file.
+
+#### The Copy Builder
+
+```ruby
+env.Copy(destination, sources)
+# Example
+env.Copy("mytests", "^/mytests")
+env.Copy("^/dist/share", "share")
+```
+
+The `Copy` builder can copy files or directories to a target location.
+
+#### The Directory Builder
+
+```ruby
+env.Directory(target)
+# Example
+env.Directory("^/tests")
+```
+
+The `Directory` builder can be used to explicitly create a directory.
+This can also disambiguate whether the target for a subsequent builder
+(e.g. `Copy`) refers to a file path or directory path.
+
+#### The Disassemble Builder
+
+```ruby
+env.Disassemble(target, source)
+# Example
+env.Disassemble("module.dis", "module.o")
+```
+
+The `Disassemble` builder generates a disassembly listing using objdump from
+and object file.
+
+#### The Install Builder
+
+```ruby
+env.Install(destination, sources)
+# Example
+env.Install("${prefix}/bin", "app.exe")
+env.Install("${prefix}/share", "share")
+```
+
+The `Install` builder can install files or directories to their installation
+target location.
+`Install` builders are only processed when the user has requested to perform
+an `install` operation from the command line.
+
+#### The InstallDirectory Builder
+
+```ruby
+env.InstallDirectory(target)
+# Example
+env.InstallDirectory("${prefix}/share")
+```
+
+The `InstallDirectory` builder can be used to explicitly create a directory.
+`InstallDirectory` builders are only processed when the user has requested to
+perform an `install` operation from the command line.
+This can also disambiguate whether the target for a subsequent builder
+(e.g. `Install`) refers to a file path or directory path.
+
+#### The Library Builder
+
+```ruby
+env.Library(target, sources)
+# Example
+env.Library("lib.a", Rscons.glob("src/**/*.c"))
+```
+
+The `Library` builder creates a static library archive from the given source
+files.
+
+#### The Object Builder
+
+```ruby
+env.Object(target, sources)
+# Example
+env.Object("module.o", "module.c")
+```
+
+The `Object` builder compiles the given sources to an object file.
+Although it can be called explicitly, it is more commonly implicitly called by
+the `Program` builder.
+
+#### The Preprocess Builder
+
+```ruby
+env.Preprocess(target, source)
+# Example
+env.Preprocess("module-preprocessed.cc", "module.cc")
+```
+
+The `Preprocess` builder invokes either `${CC}` or `${CXX}` (depending on if
+the source contains an extension in `${CXXSUFFIX}` or not) and writes the
+preprocessed output to the target file.
+
+#### The Program Builder
+
+```ruby
+env.Program(target, sources)
+# Example
+env.Program("myprog", Rscons.glob("src/**/*.cc"))
+```
+
+The `Program` builder compiles and links the given sources to an executable
+file.
+Object files, static library files, or source files can be given as `sources`.
+A platform-dependent program suffix will be appended to the target name if one
+is not specified.
+This can be controlled with the `PROGSUFFIX` construction variable.
+
+#### The SharedLibrary Builder
+
+```ruby
+env.SharedLibrary(target, sources)
+# Example
+env.SharedLibrary("mydll", Rscons.glob("src/**/*.cc"))
+```
+
+The `SharedLibrary` builder compiles and links the given sources to a
+dynamically loadable library.
+Object files or source files can be given as `sources`.
+A platform-dependent prefix and suffix will be appended to the target name if
+they are not specified by the user.
+These values can be controlled by overriding the `SHLIBPREFIX` and
+`SHLIBSUFFIX` construction variables.
+
+#### The SharedObject Builder
+
+```ruby
+env.SharedObject(target, sources)
+# Example
+env.SharedObject("lib_module.o", "lib_module.c")
+```
+
+The `SharedObject` builder compiles the given sources to an object file.
+Any compilation flags necessary to build the object file in a manner that
+allows it to be used to create a shared library are added.
+Although it can be called explicitly, it is more commonly implicitly called by
+the `SharedLibrary` builder.
 
 ### Build Hooks
 
@@ -406,8 +614,6 @@ the `-Wall` flag except for sources under the `src/tests` directory.
 ### Adding New Builders
 
 # Reference
-
-## Default Builders
 
 ## Default Construction Variables
 
