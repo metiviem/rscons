@@ -621,6 +621,10 @@ the `-Wall` flag except for sources under the `src/tests` directory.
 
 Rscons is licensed under the terms of the MIT License.
 
+```
+${include LICENSE.txt}
+```
+
 # Change Log
 
-[TODO]
+${include CHANGELOG.md}
