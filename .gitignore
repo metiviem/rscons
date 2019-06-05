@@ -4,6 +4,7 @@
 /build_test_run/
 /coverage/
 /dist/
+/gen/
 /large_project/
 /pkg/
 /test/
