@@ -93,8 +93,10 @@ The following files should be added to source control:
 Add the following line to `.gitignore` (or the equivalent thereof for different
 version control systems):
 
-    /.rscons*
-    /build/
+```
+/.rscons*
+/build/
+```
 
 # The Build Script
 
@@ -102,11 +104,13 @@ Rscons looks for instructions for what to build by reading a build script file
 called `Rsconscript` (or `Rsconscript.rb`).
 Here is a simple example `Rsconscript` file:
 
-    build do
-      Environment.new do |env|
-        env.Program("myprog.exe", glob("src/**/*.c"))
-      end
-    end
+```ruby
+build do
+  Environment.new do |env|
+    env.Program("myprog.exe", glob("src/**/*.c"))
+  end
+end
+```
 
 This `Rsconscript` file would instruct Rscons to produce a *Program* target
 called `myprog.exe` which is to be built from all C source files found
@@ -183,10 +187,12 @@ A `configure` block is optional.
 It can be used to perform various checks and setup operations for a project.
 Example `configure` block:
 
-    configure do
-      check_cxx_compiler
-      check_c_header "getopt.h"
-    end
+```ruby
+configure do
+  check_cxx_compiler
+  check_c_header "getopt.h"
+end
+```
 
 ### Checking for a Compiler
 
@@ -203,11 +209,13 @@ If such a list is supplied, the compilers are tested in the order listed.
 Here are example calls which also show the default compiler list for each
 supported language:
 
-    configure do
-      check_c_compiler "gcc", "clang"
-      check_cxx_compiler "g++", "clang++"
-      check_d_compiler "gdc", "ldc2"
-    end
+```ruby
+configure do
+  check_c_compiler "gcc", "clang"
+  check_cxx_compiler "g++", "clang++"
+  check_d_compiler "gdc", "ldc2"
+end
+```
 
 ### Checking for a Header File
 
@@ -221,11 +229,13 @@ first argument, and take an optional Hash of arguments as the second argument.
 
 Example calls:
 
-    configure do
-      check_c_header "getopt.h", fail: false, set_define: "HAVE_GETOPT_H"
-      check_c_header "FreeType2.h"
-      check_cxx_header "memory"
-    end
+```ruby
+configure do
+  check_c_header "getopt.h", fail: false, set_define: "HAVE_GETOPT_H"
+  check_c_header "FreeType2.h"
+  check_cxx_header "memory"
+end
+```
 
 #### Options
 
@@ -247,10 +257,12 @@ This method takes the name of the import to check for as the first argument.
 
 Example calls:
 
-    configure do
-      check_d_import "std.stdio"
-      check_d_import "std.numeric"
-    end
+```ruby
+configure do
+  check_d_import "std.stdio"
+  check_d_import "std.numeric"
+end
+```
 
 ### Checking for a Library
 
@@ -261,10 +273,12 @@ and take an optional Hash of arguments as the second argument.
 
 Example calls:
 
-    configure do
-      check_lib "kpty", fail: false, set_define: "HAVE_LIBKPTY"
-      check_lib "GL"
-    end
+```ruby
+configure do
+  check_lib "kpty", fail: false, set_define: "HAVE_LIBKPTY"
+  check_lib "GL"
+end
+```
 
 #### Options
 
@@ -285,9 +299,11 @@ host operating system environment.
 
 Example call:
 
-    configure do
-      check_program "xxd"
-    end
+```ruby
+configure do
+  check_program "xxd"
+end
+```
 
 ### Checking for a Package Configuration
 
@@ -299,10 +315,12 @@ This method takes a Hash of options as its only argument.
 
 Example calls:
 
-    configure do
-      check_cfg package: "zlib"
-      check_cfg program: "freetype-config", fail: false, set_define: "HAVE_FREETYPE"
-    end
+```ruby
+configure do
+  check_cfg package: "zlib"
+  check_cfg program: "freetype-config", fail: false, set_define: "HAVE_FREETYPE"
+end
+```
 
 #### Options
 
@@ -333,11 +351,13 @@ An Rscons build script would not be very useful without a `build` block.
 
 Here is an example `build` block demonstrating how to register a build target:
 
-    build do
-      Environment.new do |env|
-        env.Program("myprog.exe", glob("src/**/*.c"))
-      end
-    end
+```ruby
+build do
+  Environment.new do |env|
+    env.Program("myprog.exe", glob("src/**/*.c"))
+  end
+end
+```
 
 This `Rsconscript` would build an executable called `myprog.exe` from all C
 source files found recursively under the `src` directory.
@@ -359,11 +379,13 @@ It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/
 
 Example use:
 
-    build do
-      Environment.new do |env|
-        env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
-      end
-    end
+```ruby
+build do
+  Environment.new do |env|
+    env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
+  end
+end
+```
 
 This example would build the `mytests` executable from all `.cc` source files
 found recursively under the `src` or `test` directory.
@@ -377,12 +399,14 @@ construction variables.
 
 Example:
 
-    build do
-      Environment.new do |env|
-        env["CCFLAGS"] += %w[-O2 -Wall]
-        env["LIBS"] += %w[m]
-      end
-    end
+```ruby
+build do
+  Environment.new do |env|
+    env["CCFLAGS"] += %w[-O2 -Wall]
+    env["LIBS"] += %w[m]
+  end
+end
+```
 
 This example modifies the `CCFLAGS` construction variable to add `-O2` and
 `-Wall` to the compilation commands used for C and C++ source files.
@@ -420,8 +444,8 @@ There are several default builders that are built-in to Rscons:
 env.Command(target, sources, "CMD" => command)
 # Example
 env.Command("docs.html", "docs.md",
-    "CMD" => ["pandoc", "-fmarkdown", "-thtml", "-o${_TARGET}", "${_SOURCES}"],
-    "CMD_DESC" => "PANDOC")
+  "CMD" => ["pandoc", "-fmarkdown", "-thtml", "-o${_TARGET}", "${_SOURCES}"],
+  "CMD_DESC" => "PANDOC")
 ```
 
 The `Command` builder executes a user-defined command in order to produce the
@@ -591,18 +615,20 @@ build target or source file names.
 
 Example:
 
-    build do
-      Environment.new do |env|
-        env["CFLAGS"] << "-Wall"
-        env.add_build_hook do |builder|
-          # Compile sources from under src/tests without the -Wall flag.
-          if builder.sources.first =~ %r{src/tests/}
-            builder.vars["CFLAGS"] -= %w[-Wall]
-          end
-        end
-        env.Program("program.exe", glob("src/**/*.c"))
+```ruby
+build do
+  Environment.new do |env|
+    env["CFLAGS"] << "-Wall"
+    env.add_build_hook do |builder|
+      # Compile sources from under src/tests without the -Wall flag.
+      if builder.sources.first =~ %r{src/tests/}
+        builder.vars["CFLAGS"] -= %w[-Wall]
       end
     end
+    env.Program("program.exe", glob("src/**/*.c"))
+  end
+end
+```
 
 This example script would compile all C sources under the `src` directory with
 the `-Wall` flag except for sources under the `src/tests` directory.
@@ -619,7 +645,7 @@ the `-Wall` flag except for sources under the `src/tests` directory.
 
 # License
 
-Rscons is licensed under the terms of the MIT License.
+Rscons is licensed under the terms of the MIT License:
 
 ```
 ${include LICENSE.txt}
