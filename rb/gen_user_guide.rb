@@ -63,9 +63,9 @@ class Generator
     end
     if syntax != ""
       convertor = Syntax::Convertors::HTML.for_syntax(syntax)
-      convertor.convert(code)
+      %[<div class="#{syntax}_code">\n#{convertor.convert(code)}\n</div>\n]
     else
-      "<pre>#{code}</pre>"
+      %[<div class="code">\n#{code}\n</div>\n]
     end
   end
 end
