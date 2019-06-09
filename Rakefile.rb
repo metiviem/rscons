@@ -88,7 +88,7 @@ EOF
   FileUtils.cp("dist/rscons", "large_project")
 end
 
-task :gen_user_guide do
+task :user_guide do
   system("ruby", "-Ilib", "rb/gen_user_guide.rb")
 end
 
