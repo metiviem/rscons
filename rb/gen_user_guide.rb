@@ -42,7 +42,7 @@ class Generator
 
     renderer = Redcarpet::Render::HTML.new
     markdown = Redcarpet::Markdown.new(renderer)
-    body = markdown.render(@sections.last.contents)
+    content = markdown.render(@sections.last.contents)
 
     template = File.read("rb/assets/user_guide.html.erb")
     erb = ERB.new(template, nil, "<>")
