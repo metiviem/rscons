@@ -17,12 +17,14 @@ end
 
 class Generator
   class Section
+    attr_reader :number
     attr_reader :title
     attr_reader :new_page
     attr_reader :contents
     attr_reader :anchor
-    def initialize(title, new_page)
-      @title = title
+    def initialize(number, title, new_page)
+      @number = number
+      @title = title.gsub(/[`]/, "")
       @new_page = new_page
       @contents = ""
       @anchor = "s" + title.gsub(/[^a-zA-Z0-9]/, "_")
@@ -45,9 +47,8 @@ class Generator
         level = $1.size
         new_page = !new_page_text.nil?
         section_number = get_next_section_number(level)
-        section_title = "#{section_number} #{title_text}"
-        @sections << Section.new(section_title, new_page)
-        @sections.last.append("#{level_text} #{section_title}")
+        @sections << Section.new(section_number, title_text, new_page)
+        @sections.last.append("#{level_text} #{section_number} #{title_text}")
       elsif @sections.size > 0
         @sections.last.append(line)
       end
@@ -57,7 +58,10 @@ class Generator
     markdown = Redcarpet::Markdown.new(renderer)
     content = %[<h1>Table of Contents</h1>\n]
     @sections.each do |section|
-      content += %[<a href="##{section.anchor}">#{section.title}</a><br/>\n]
+      indent = section.number.split(".").size - 1
+      content += %[<span style="padding-left: #{4 * indent}ex;">]
+      content += %[<a href="##{section.anchor}">#{section.number} #{section.title}</a><br/>\n]
+      content += %[</span>]
     end
     @sections.each do |section|
       content += %[<a name="#{section.anchor}" />]
