@@ -17,13 +17,15 @@ end
 
 class Generator
   class Section
-    attr_reader :name
+    attr_reader :title
     attr_reader :new_page
     attr_reader :contents
-    def initialize(name, new_page)
-      @name = name
+    attr_reader :anchor
+    def initialize(title, new_page)
+      @title = title
       @new_page = new_page
       @contents = ""
+      @anchor = "s" + title.gsub(/[^a-zA-Z0-9]/, "_")
     end
     def append(contents)
       @contents += contents
@@ -31,7 +33,7 @@ class Generator
   end
 
   def initialize(input, output_file, multi_file)
-    @sections = [Section.new("index", false)]
+    @sections = []
     @current_section_number = [0]
     @lines = input.lines
     while @lines.size > 0
@@ -46,16 +48,21 @@ class Generator
         section_title = "#{section_number} #{title_text}"
         @sections << Section.new(section_title, new_page)
         @sections.last.append("#{level_text} #{section_title}")
-      else
+      elsif @sections.size > 0
         @sections.last.append(line)
       end
     end
 
     renderer = Redcarpet::Render::HTML.new
     markdown = Redcarpet::Markdown.new(renderer)
-    content = @sections.map do |section|
-      markdown.render(section.contents)
-    end.join("\n")
+    content = %[<h1>Table of Contents</h1>\n]
+    @sections.each do |section|
+      content += %[<a href="##{section.anchor}">#{section.title}</a><br/>\n]
+    end
+    @sections.each do |section|
+      content += %[<a name="#{section.anchor}" />]
+      content += markdown.render(section.contents)
+    end
 
     template = File.read("rb/assets/user_guide.html.erb")
     erb = ERB.new(template, nil, "<>")
