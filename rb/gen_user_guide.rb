@@ -27,7 +27,7 @@ class Generator
       @title = title.gsub(/[`]/, "")
       @new_page = new_page
       @contents = ""
-      @anchor = "s" + title.gsub(/[^a-zA-Z0-9]/, "_")
+      @anchor = "s" + ("#{number} #{title}").gsub(/[^a-zA-Z0-9]/, "_")
     end
     def append(contents)
       @contents += contents
