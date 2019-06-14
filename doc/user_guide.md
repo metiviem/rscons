@@ -454,6 +454,8 @@ env.BuilderName(target, sources, vars = {})
 The `target` parameter is the path to the output file or directory.
 The `sources` parameter is the path or paths to the input file(s) to be used
 by the builder.
+In the `target` and `sources` parameters, the user can explicitly refer to a
+path within the Environment's build root by beginning the path with "^/".
 The `vars` parameter is an optional Hash which can include construction
 variables to be used for this build target.
 Any construction variable values specified in this parameter will override
