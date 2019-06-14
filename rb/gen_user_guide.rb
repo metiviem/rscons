@@ -79,15 +79,15 @@ class Generator
     @markdown_renderer = Redcarpet::Markdown.new(renderer)
     changelog = @markdown_renderer.render(File.read("CHANGELOG.md"))
 
-    pages = [Page.new("toc", "Table of Contents", render_toc)]
+    @pages = [Page.new("toc", "Table of Contents", render_toc)]
     @sections.each do |section|
-      unless pages.last.name == section.page
-        pages << Page.new(section.page, section.title)
+      unless @pages.last.name == section.page
+        @pages << Page.new(section.page, section.title)
       end
-      pages.last.contents += render_section(section)
+      @pages.last.contents += render_section(section)
     end
 
-    pages.each do |page|
+    @pages.each do |page|
       page.contents.gsub!("${changelog}", changelog)
       page.contents.gsub!(%r{\$\{#(.+?)\}}) do |match|
         section_name = $1
@@ -100,9 +100,10 @@ class Generator
     erb = ERB.new(template, nil, "<>")
 
     if multi_page
-      pages.each do |page|
+      @pages.each_with_index do |page, page_index|
         subpage_title = " - #{page.title}"
         content = page.contents
+        content += render_page_links(page_index)
         html_result = erb.result(binding.clone)
         File.open(File.join(output_file, "#{page.name}.html"), "w") do |fh|
           fh.write(html_result)
@@ -110,7 +111,7 @@ class Generator
       end
     else
       subpage_title = ""
-      content = pages.reduce("") do |result, page|
+      content = @pages.reduce("") do |result, page|
         result + page.contents
       end
       html_result = erb.result(binding.clone)
@@ -118,6 +119,32 @@ class Generator
         fh.write(html_result)
       end
     end
+  end
+
+  def render_page_links(page_index)
+    page_nav_prev =
+      if page_index > 1
+        %[<a href="#{@pages[page_index - 1].name}.html">&laquo; Prev<br/>#{@pages[page_index - 1].title}</a>]
+      else
+        ""
+      end
+    page_nav_toc =
+      if page_index > 0
+        %[<a href="toc.html">Table of Contents</a>]
+      else
+        ""
+      end
+    page_nav_next =
+      if page_index < @pages.size - 1
+        %[<a href="#{@pages[page_index + 1].name}.html">Next &raquo<br/>#{@pages[page_index + 1].title}</a>]
+      else
+        ""
+      end
+    %[<div id="page_nav">] + \
+    %[<div id="page_nav_prev">#{page_nav_prev}</div>] + \
+    %[<div id="page_nav_next">#{page_nav_next}</div>] + \
+    %[<div id="page_nav_toc">#{page_nav_toc}</div>] + \
+    %[</div>]
   end
 
   def render_toc
