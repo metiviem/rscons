@@ -55,7 +55,7 @@ class Generator
     end
 
     renderer = Redcarpet::Render::HTML.new
-    markdown = Redcarpet::Markdown.new(renderer)
+    @markdown_renderer = Redcarpet::Markdown.new(renderer)
     content = %[<h1>Table of Contents</h1>\n]
     @sections.each do |section|
       indent = section.number.split(".").size - 1
@@ -65,8 +65,10 @@ class Generator
     end
     @sections.each do |section|
       content += %[<a name="#{section.anchor}" />]
-      content += markdown.render(section.contents)
+      content += @markdown_renderer.render(section.contents)
     end
+    changelog = @markdown_renderer.render(File.read("CHANGELOG.md"))
+    content.gsub!("${changelog}", changelog)
 
     template = File.read("rb/assets/user_guide.html.erb")
     erb = ERB.new(template, nil, "<>")

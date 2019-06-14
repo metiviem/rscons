@@ -653,4 +653,4 @@ ${include LICENSE.txt}
 
 # Change Log
 
-${include CHANGELOG.md}
+${changelog}
