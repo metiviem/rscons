@@ -100,7 +100,14 @@ class Generator
     erb = ERB.new(template, nil, "<>")
 
     if multi_page
-      # TODO
+      pages.each do |page|
+        subpage_title = " - #{page.title}"
+        content = page.contents
+        html_result = erb.result(binding.clone)
+        File.open(File.join(output_file, "#{page.name}.html"), "w") do |fh|
+          fh.write(html_result)
+        end
+      end
     else
       subpage_title = ""
       content = pages.reduce("") do |result, page|
@@ -118,7 +125,7 @@ class Generator
     @sections.each do |section|
       indent = section.number.split(".").size - 1
       toc_content += %[<span style="padding-left: #{4 * indent}ex;">]
-      toc_content += %[<a href="##{section.anchor}">#{section.number} #{section.title}</a><br/>\n]
+      toc_content += %[<a href="#{section.page}##{section.anchor}">#{section.number} #{section.title}</a><br/>\n]
       toc_content += %[</span>]
     end
     toc_content
@@ -175,3 +182,4 @@ input = load_file("doc/user_guide.md")
 FileUtils.rm_rf("gen/user_guide")
 FileUtils.mkdir_p("gen/user_guide")
 Generator.new(input, "gen/user_guide/user_guide.html", false)
+Generator.new(input, "gen/user_guide", true)
