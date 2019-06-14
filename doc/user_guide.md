@@ -77,8 +77,8 @@ source files.
 
 To use Rscons on your project, you must:
 
-  1. Install the `rscons` script in your project (See [#Installation]).
-  2. Write the `Rsconscript` build script for your project (See [#The Build Script]).
+  1. Install the `rscons` script in your project (See ${#Installation}).
+  2. Write the `Rsconscript` build script for your project (See ${#The Build Script}).
 
 # Installation
 
@@ -418,7 +418,7 @@ found recursively under the `src` or `test` directory.
 
 Construction variables are values assigned to keys within an Environment.
 Construction variables are used by Builders to produce output files.
-See [#Default Construction Variables] for a reference of all built-in
+See ${#Default Construction Variables} for a reference of all built-in
 construction variables.
 
 Example:

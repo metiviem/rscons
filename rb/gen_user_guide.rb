@@ -79,6 +79,11 @@ class Generator
     end
     changelog = @markdown_renderer.render(File.read("CHANGELOG.md"))
     content.gsub!("${changelog}", changelog)
+    content.gsub!(%r{\$\{#(.+?)\}}) do |match|
+      section_name = $1
+      href = get_link_to_section(section_name)
+      %[<a href="#{href}">#{section_name}</a>]
+    end
 
     template = File.read("rb/assets/user_guide.html.erb")
     erb = ERB.new(template, nil, "<>")
@@ -90,6 +95,14 @@ class Generator
 
   def make_anchor(section_number, section_title)
     "s" + ("#{section_number} #{section_title}").gsub(/[^a-zA-Z0-9]/, "_")
+  end
+
+  def get_link_to_section(section_name)
+    section = @sections.find do |section|
+      section.title == section_name
+    end
+    raise "Could not find section #{section_name}" unless section
+    "#{section.page}##{section.anchor}"
   end
 
   def gather_code_section(syntax)
