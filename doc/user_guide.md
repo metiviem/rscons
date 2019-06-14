@@ -440,10 +440,25 @@ It also instructs the linker to link against the `m` library.
 
 Rscons uses builder objects to produce *target* output files from *source*
 input files.
-Each builder is registered by calling a method on the `Environment` object
-that matches the builder's name.
-For example, a `Program` builder is registered by calling the `env.Program`
-method.
+A build target to be built using a builder is registered by calling a method on
+the `Environment` object that matches the builder's name.
+For example, a `Program` build target is registered by calling the
+`env.Program` method.
+
+The general syntax for registering a build target using a builder is:
+
+```ruby
+env.BuilderName(target, sources, vars = {})
+```
+
+The `target` parameter is the path to the output file or directory.
+The `sources` parameter is the path or paths to the input file(s) to be used
+by the builder.
+The `vars` parameter is an optional Hash which can include construction
+variables to be used for this build target.
+Any construction variable values specified in this parameter will override
+those assigned to the Environment.
+
 There are several default builders that are built-in to Rscons:
 
   * `Command`, which executes a user-defined command to produce the target.
