@@ -34,6 +34,17 @@ class Generator
     end
   end
 
+  class Page
+    attr_reader :name
+    attr_reader :title
+    attr_accessor :contents
+    def initialize(name, title, contents = "")
+      @name = name
+      @title = title
+      @contents = contents
+    end
+  end
+
   def initialize(input, output_file, multi_page)
     current_page =
       if multi_page
@@ -68,15 +79,17 @@ class Generator
     @markdown_renderer = Redcarpet::Markdown.new(renderer)
     changelog = @markdown_renderer.render(File.read("CHANGELOG.md"))
 
-    pages = {"toc" => render_toc}
+    pages = [Page.new("toc", "Table of Contents", render_toc)]
     @sections.each do |section|
-      pages[section.page] ||= ""
-      pages[section.page] += render_section(section)
+      unless pages.last.name == section.page
+        pages << Page.new(section.page, section.title)
+      end
+      pages.last.contents += render_section(section)
     end
 
-    pages.each do |title, contents|
-      contents.gsub!("${changelog}", changelog)
-      contents.gsub!(%r{\$\{#(.+?)\}}) do |match|
+    pages.each do |page|
+      page.contents.gsub!("${changelog}", changelog)
+      page.contents.gsub!(%r{\$\{#(.+?)\}}) do |match|
         section_name = $1
         href = get_link_to_section(section_name)
         %[<a href="#{href}">#{section_name}</a>]
@@ -90,8 +103,8 @@ class Generator
       # TODO
     else
       subpage_title = ""
-      content = pages.reduce("") do |result, (title, contents)|
-        result + contents
+      content = pages.reduce("") do |result, page|
+        result + page.contents
       end
       html_result = erb.result(binding.clone)
       File.open(output_file, "w") do |fh|
