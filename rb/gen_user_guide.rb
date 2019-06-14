@@ -19,15 +19,15 @@ class Generator
   class Section
     attr_reader :number
     attr_reader :title
-    attr_reader :new_page
+    attr_reader :page
     attr_reader :contents
     attr_reader :anchor
-    def initialize(number, title, new_page)
+    def initialize(number, title, page, anchor)
       @number = number
       @title = title.gsub(/[`]/, "")
-      @new_page = new_page
+      @page = page
+      @anchor = anchor
       @contents = ""
-      @anchor = "s" + ("#{number} #{title}").gsub(/[^a-zA-Z0-9]/, "_")
     end
     def append(contents)
       @contents += contents
@@ -35,6 +35,12 @@ class Generator
   end
 
   def initialize(input, output_file, multi_file)
+    current_page =
+      if multi_file
+        "index.html"
+      else
+        File.basename(output_file)
+      end
     @sections = []
     @current_section_number = [0]
     @lines = input.lines
@@ -47,7 +53,11 @@ class Generator
         level = $1.size
         new_page = !new_page_text.nil?
         section_number = get_next_section_number(level)
-        @sections << Section.new(section_number, title_text, new_page)
+        anchor = make_anchor(section_number, title_text)
+        if new_page
+          current_page = anchor
+        end
+        @sections << Section.new(section_number, title_text, current_page, anchor)
         @sections.last.append("#{level_text} #{section_number} #{title_text}")
       elsif @sections.size > 0
         @sections.last.append(line)
@@ -76,6 +86,10 @@ class Generator
     File.open(output_file, "w") do |fh|
       fh.write(html_result)
     end
+  end
+
+  def make_anchor(section_number, section_title)
+    "s" + ("#{section_number} #{section_title}").gsub(/[^a-zA-Z0-9]/, "_")
   end
 
   def gather_code_section(syntax)
