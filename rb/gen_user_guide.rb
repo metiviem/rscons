@@ -37,7 +37,7 @@ class Generator
   def initialize(input, output_file, multi_file)
     current_page =
       if multi_file
-        "index.html"
+        nil
       else
         File.basename(output_file)
       end
@@ -54,7 +54,7 @@ class Generator
         new_page = !new_page_text.nil?
         section_number = get_next_section_number(level)
         anchor = make_anchor(section_number, title_text)
-        if new_page
+        if new_page or current_page.nil?
           current_page = anchor
         end
         @sections << Section.new(section_number, title_text, current_page, anchor)
@@ -66,16 +66,9 @@ class Generator
 
     renderer = Redcarpet::Render::HTML.new
     @markdown_renderer = Redcarpet::Markdown.new(renderer)
-    content = %[<h1>Table of Contents</h1>\n]
+    content = render_toc
     @sections.each do |section|
-      indent = section.number.split(".").size - 1
-      content += %[<span style="padding-left: #{4 * indent}ex;">]
-      content += %[<a href="##{section.anchor}">#{section.number} #{section.title}</a><br/>\n]
-      content += %[</span>]
-    end
-    @sections.each do |section|
-      content += %[<a name="#{section.anchor}" />]
-      content += @markdown_renderer.render(section.contents)
+      content += render_section(section)
     end
     changelog = @markdown_renderer.render(File.read("CHANGELOG.md"))
     content.gsub!("${changelog}", changelog)
@@ -91,6 +84,22 @@ class Generator
     File.open(output_file, "w") do |fh|
       fh.write(html_result)
     end
+  end
+
+  def render_toc
+    toc_content = %[<h1>Table of Contents</h1>\n]
+    @sections.each do |section|
+      indent = section.number.split(".").size - 1
+      toc_content += %[<span style="padding-left: #{4 * indent}ex;">]
+      toc_content += %[<a href="##{section.anchor}">#{section.number} #{section.title}</a><br/>\n]
+      toc_content += %[</span>]
+    end
+    toc_content
+  end
+
+  def render_section(section)
+    content = %[<a name="#{section.anchor}" />]
+    content + @markdown_renderer.render(section.contents)
   end
 
   def make_anchor(section_number, section_title)
