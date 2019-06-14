@@ -102,8 +102,8 @@ class Generator
     if multi_page
       @pages.each_with_index do |page, page_index|
         subpage_title = " - #{page.title}"
-        content = page.contents
-        content += render_page_links(page_index)
+        page_nav_bar = render_page_nav_bar(page_index)
+        content = page_nav_bar + separator + page.contents + separator + page_nav_bar
         html_result = erb.result(binding.clone)
         File.open(File.join(output_file, "#{page.name}.html"), "w") do |fh|
           fh.write(html_result)
@@ -121,7 +121,11 @@ class Generator
     end
   end
 
-  def render_page_links(page_index)
+  def separator
+    %[<div class="separator"></div>]
+  end
+
+  def render_page_nav_bar(page_index)
     page_nav_prev =
       if page_index > 1
         %[<a href="#{@pages[page_index - 1].name}.html">&laquo; Prev<br/>#{@pages[page_index - 1].title}</a>]
@@ -140,11 +144,11 @@ class Generator
       else
         ""
       end
-    %[<div id="page_nav">] + \
-    %[<div id="page_nav_prev">#{page_nav_prev}</div>] + \
-    %[<div id="page_nav_next">#{page_nav_next}</div>] + \
-    %[<div id="page_nav_toc">#{page_nav_toc}</div>] + \
-    %[</div>]
+    %[<table class="page_nav"><tr>] + \
+    %[<td class="page_nav_prev">#{page_nav_prev}</td>] + \
+    %[<td class="page_nav_toc">#{page_nav_toc}</td>] + \
+    %[<td class="page_nav_next">#{page_nav_next}</td>] + \
+    %[</tr></table>]
   end
 
   def render_toc
