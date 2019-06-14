@@ -125,7 +125,7 @@ class Generator
     @sections.each do |section|
       indent = section.number.split(".").size - 1
       toc_content += %[<span style="padding-left: #{4 * indent}ex;">]
-      toc_content += %[<a href="#{section.page}##{section.anchor}">#{section.number} #{section.title}</a><br/>\n]
+      toc_content += %[<a href="#{section.page}.html##{section.anchor}">#{section.number} #{section.title}</a><br/>\n]
       toc_content += %[</span>]
     end
     toc_content

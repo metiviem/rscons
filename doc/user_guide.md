@@ -1,4 +1,4 @@
-# Overview
+#> Overview
 
 Rscons is an open-source build system for developers.
 It supports the following features:
@@ -80,7 +80,7 @@ To use Rscons on your project, you must:
   1. Install the `rscons` script in your project (See ${#Installation}).
   2. Write the `Rsconscript` build script for your project (See ${#The Build Script}).
 
-# Installation
+#> Installation
 
 Rscons is designed to be distributed as a stand-alone single file script that
 can be copied into and versioned in a project's source tree.
@@ -105,7 +105,7 @@ version control systems):
 /build/
 ```
 
-# Command-Line Operation
+#> Command-Line Operation
 
 Rscons is typically invoked from the command-line as `./rscons`.
 Rscons supports several build *operations*:
@@ -117,7 +117,7 @@ Rscons supports several build *operations*:
   * install
   * uninstall
 
-## Configure Operation
+##> Configure Operation
 
 The `configure` operation will initialize the Rscons cache file and build
 directory.
@@ -131,7 +131,7 @@ Such configuration checks can include:
   * verifying presence of a library
   * verifying presence of an executable
 
-## Build Operation
+##> Build Operation
 
 If a `build` operation is requested and a `configure` operation has not yet
 been performed, a `configure` operation will be automatically invoked.
@@ -139,13 +139,13 @@ been performed, a `configure` operation will be automatically invoked.
 The `build` operation will execute all builders registered to produce build
 targets.
 
-## Clean Operation
+##> Clean Operation
 
 A `clean` operation will remove all built target files.
 It will not remove items installed by an `install` operation.
 It will not remove the cached configuration options.
 
-## Distclean Operation
+##> Distclean Operation
 
 A `distclean` operation will remove all built target files and all cached
 configuration options.
@@ -153,20 +153,20 @@ Generally it will get the project directory back to the state it was in when
 unpacked before any configuration or build operations took place.
 It will not removed items installed by an `install` operation.
 
-## Install Operation
+##> Install Operation
 
 An `install` operation will perform a `build` (and if necessary, first a
 `configure` as well).
 In addition it will execute any `Install` or `InstallDirectory` builders to
 install items into the specified install directory.
 
-## Uninstall Operation
+##> Uninstall Operation
 
 An `uninstall` operation will remove any items installed by an `install`
 operation.
 It will not remove all built target files, just the installed copies.
 
-# The Build Script
+#> The Build Script
 
 Rscons looks for instructions for what to build by reading a build script file
 called `Rsconscript` (or `Rsconscript.rb`).
@@ -186,7 +186,7 @@ called `myprog.exe` which is to be built from all C source files found
 
 The `Rsconscript` file is a Ruby script.
 
-## Configuration Operations
+##> Configuration Operations
 
 A `configure` block is optional.
 It can be used to perform various checks and setup operations for a project.
@@ -199,7 +199,7 @@ configure do
 end
 ```
 
-### Checking for a Compiler
+###> Checking for a Compiler
 
 The following methods can be used within a `configure` block to check for a
 working compiler:
@@ -222,7 +222,7 @@ configure do
 end
 ```
 
-### Checking for a Header File
+###> Checking for a Header File
 
 The following methods can be used to check for the presence of a header file:
 
@@ -254,7 +254,7 @@ will not result in the configure option failing.
 If set, a build define of the specified String will be added to the
 `CPPDEFINES` construction variable array if the requested header is found.
 
-### Checking for a D Import
+###> Checking for a D Import
 
 The `check_d_import` method can be used to check for the presence of D import.
 
@@ -269,7 +269,7 @@ configure do
 end
 ```
 
-### Checking for a Library
+###> Checking for a Library
 
 The `check_lib` method can be used to check for the presence of a library.
 
@@ -297,7 +297,7 @@ will not result in the configure option failing.
 If set, a build define of the specified String will be added to the
 `CPPDEFINES` construction variable array if the requested library is found.
 
-### Checking for a Program
+###> Checking for a Program
 
 The `check_program` method can check for the existence of an executable in the
 host operating system environment.
@@ -310,7 +310,7 @@ configure do
 end
 ```
 
-### Checking for a Package Configuration
+###> Checking for a Package Configuration
 
 The `check_cfg` method can be used to check for the existence of a package as
 well as import any build options (e.g. include path, defines, libraries to link
@@ -349,7 +349,7 @@ program requested will not result in the configure option failing.
 If set, a build define of the specified String will be added to the
 `CPPDEFINES` construction variable array if the requested package is found.
 
-## Build Operations
+##> Build Operations
 
 The `build` block is used to create Environments and register build targets.
 An Rscons build script would not be very useful without a `build` block.
@@ -367,7 +367,7 @@ end
 This `Rsconscript` would build an executable called `myprog.exe` from all C
 source files found recursively under the `src` directory.
 
-### Environments
+###> Environments
 
 An Environment includes:
 
@@ -396,7 +396,7 @@ source file under the Environment's build root.
 This keeps the intermediate generated build artifacts separate from the source
 files.
 
-### Specifying Source Files: The glob Method
+###> Specifying Source Files: The glob Method
 
 The `glob` method can be used to find files matching the patterns specified.
 It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/core-2.5.1/Dir.html#method-c-glob) but operates more deterministically.
@@ -414,7 +414,7 @@ end
 This example would build the `mytests` executable from all `.cc` source files
 found recursively under the `src` or `test` directory.
 
-### Construction Variables
+###> Construction Variables
 
 Construction variables are values assigned to keys within an Environment.
 Construction variables are used by Builders to produce output files.
@@ -436,7 +436,7 @@ This example modifies the `CCFLAGS` construction variable to add `-O2` and
 `-Wall` to the compilation commands used for C and C++ source files.
 It also instructs the linker to link against the `m` library.
 
-### Builders
+###> Builders
 
 Rscons uses builder objects to produce *target* output files from *source*
 input files.
@@ -479,7 +479,7 @@ There are several default builders that are built-in to Rscons:
   * `SharedObject`, which compiles source files to produce an object file, in a
     way that is able to be used to create a shared library.
 
-#### The Command Builder
+####> The Command Builder
 
 ```ruby
 env.Command(target, sources, "CMD" => command)
@@ -492,7 +492,7 @@ env.Command("docs.html", "docs.md",
 The `Command` builder executes a user-defined command in order to produce the
 desired target file based on the provided source files.
 
-#### The CFile Builder
+####> The CFile Builder
 
 ```ruby
 env.CFile(target, source)
@@ -503,7 +503,7 @@ env.CFile("^/parser/parser.c", "parser.y")
 The `CFile` builder will generate a C or C++ source file from a lex (.l, .ll)
 or yacc (.y, .yy) input file.
 
-#### The Copy Builder
+####> The Copy Builder
 
 ```ruby
 env.Copy(destination, sources)
@@ -514,7 +514,7 @@ env.Copy("^/dist/share", "share")
 
 The `Copy` builder can copy files or directories to a target location.
 
-#### The Directory Builder
+####> The Directory Builder
 
 ```ruby
 env.Directory(target)
@@ -526,7 +526,7 @@ The `Directory` builder can be used to explicitly create a directory.
 This can also disambiguate whether the target for a subsequent builder
 (e.g. `Copy`) refers to a file path or directory path.
 
-#### The Disassemble Builder
+####> The Disassemble Builder
 
 ```ruby
 env.Disassemble(target, source)
@@ -537,7 +537,7 @@ env.Disassemble("module.dis", "module.o")
 The `Disassemble` builder generates a disassembly listing using objdump from
 and object file.
 
-#### The Install Builder
+####> The Install Builder
 
 ```ruby
 env.Install(destination, sources)
@@ -551,7 +551,7 @@ target location.
 `Install` builders are only processed when the user has requested to perform
 an `install` operation from the command line.
 
-#### The InstallDirectory Builder
+####> The InstallDirectory Builder
 
 ```ruby
 env.InstallDirectory(target)
@@ -565,7 +565,7 @@ perform an `install` operation from the command line.
 This can also disambiguate whether the target for a subsequent builder
 (e.g. `Install`) refers to a file path or directory path.
 
-#### The Library Builder
+####> The Library Builder
 
 ```ruby
 env.Library(target, sources)
@@ -576,7 +576,7 @@ env.Library("lib.a", Rscons.glob("src/**/*.c"))
 The `Library` builder creates a static library archive from the given source
 files.
 
-#### The Object Builder
+####> The Object Builder
 
 ```ruby
 env.Object(target, sources)
@@ -588,7 +588,7 @@ The `Object` builder compiles the given sources to an object file.
 Although it can be called explicitly, it is more commonly implicitly called by
 the `Program` builder.
 
-#### The Preprocess Builder
+####> The Preprocess Builder
 
 ```ruby
 env.Preprocess(target, source)
@@ -600,7 +600,7 @@ The `Preprocess` builder invokes either `${CC}` or `${CXX}` (depending on if
 the source contains an extension in `${CXXSUFFIX}` or not) and writes the
 preprocessed output to the target file.
 
-#### The Program Builder
+####> The Program Builder
 
 ```ruby
 env.Program(target, sources)
@@ -615,7 +615,7 @@ A platform-dependent program suffix will be appended to the target name if one
 is not specified.
 This can be controlled with the `PROGSUFFIX` construction variable.
 
-#### The SharedLibrary Builder
+####> The SharedLibrary Builder
 
 ```ruby
 env.SharedLibrary(target, sources)
@@ -631,7 +631,7 @@ they are not specified by the user.
 These values can be controlled by overriding the `SHLIBPREFIX` and
 `SHLIBSUFFIX` construction variables.
 
-#### The SharedObject Builder
+####> The SharedObject Builder
 
 ```ruby
 env.SharedObject(target, sources)
@@ -645,7 +645,7 @@ allows it to be used to create a shared library are added.
 Although it can be called explicitly, it is more commonly implicitly called by
 the `SharedLibrary` builder.
 
-### Build Hooks
+###> Build Hooks
 
 A build hook is a Ruby block that is called whenever Rscons is about to invoke
 a builder to produce a build target.
@@ -674,17 +674,17 @@ end
 This example script would compile all C sources under the `src` directory with
 the `-Wall` flag except for sources under the `src/tests` directory.
 
-## Extending Rscons
+##> Extending Rscons
 
 ### Adding New Languages
 
 ### Adding New Builders
 
-# Reference
+#> Reference
 
 ## Default Construction Variables
 
-# License
+#> License
 
 Rscons is licensed under the terms of the MIT License:
 
@@ -692,6 +692,6 @@ Rscons is licensed under the terms of the MIT License:
 ${include LICENSE.txt}
 ```
 
-# Change Log
+#> Change Log
 
 ${changelog}
