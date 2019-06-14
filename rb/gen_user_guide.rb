@@ -34,9 +34,9 @@ class Generator
     end
   end
 
-  def initialize(input, output_file, multi_file)
+  def initialize(input, output_file, multi_page)
     current_page =
-      if multi_file
+      if multi_page
         nil
       else
         File.basename(output_file)
@@ -66,23 +66,37 @@ class Generator
 
     renderer = Redcarpet::Render::HTML.new
     @markdown_renderer = Redcarpet::Markdown.new(renderer)
-    content = render_toc
-    @sections.each do |section|
-      content += render_section(section)
-    end
     changelog = @markdown_renderer.render(File.read("CHANGELOG.md"))
-    content.gsub!("${changelog}", changelog)
-    content.gsub!(%r{\$\{#(.+?)\}}) do |match|
-      section_name = $1
-      href = get_link_to_section(section_name)
-      %[<a href="#{href}">#{section_name}</a>]
+
+    pages = {"toc" => render_toc}
+    @sections.each do |section|
+      pages[section.page] ||= ""
+      pages[section.page] += render_section(section)
+    end
+
+    pages.each do |title, contents|
+      contents.gsub!("${changelog}", changelog)
+      contents.gsub!(%r{\$\{#(.+?)\}}) do |match|
+        section_name = $1
+        href = get_link_to_section(section_name)
+        %[<a href="#{href}">#{section_name}</a>]
+      end
     end
 
     template = File.read("rb/assets/user_guide.html.erb")
     erb = ERB.new(template, nil, "<>")
-    html_result = erb.result(binding.clone)
-    File.open(output_file, "w") do |fh|
-      fh.write(html_result)
+
+    if multi_page
+      # TODO
+    else
+      subpage_title = ""
+      content = pages.reduce("") do |result, (title, contents)|
+        result + contents
+      end
+      html_result = erb.result(binding.clone)
+      File.open(output_file, "w") do |fh|
+        fh.write(html_result)
+      end
     end
   end
 
@@ -98,8 +112,8 @@ class Generator
   end
 
   def render_section(section)
-    content = %[<a name="#{section.anchor}" />]
-    content + @markdown_renderer.render(section.contents)
+    %[<a name="#{section.anchor}" />] + \
+      @markdown_renderer.render(section.contents)
   end
 
   def make_anchor(section_number, section_title)
