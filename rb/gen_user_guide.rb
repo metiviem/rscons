@@ -82,7 +82,7 @@ class Generator
     @pages = [Page.new("toc", "Table of Contents", render_toc)]
     @sections.each do |section|
       unless @pages.last.name == section.page
-        @pages << Page.new(section.page, section.title)
+        @pages << Page.new(section.page, "#{section.number} #{section.title}")
       end
       @pages.last.contents += render_section(section)
     end
