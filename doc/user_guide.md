@@ -678,7 +678,36 @@ the `-Wall` flag except for sources under the `src/tests` directory.
 
 ### Adding New Languages
 
+The `Object` and `SharedObject` builders that ship with Rscons have an API that
+allows the user to register extra languages that can be suppored by the
+builders.
+In fact, the built-in support for assembly, C, C++, and D compilation all make
+use of this built-in API.
+To see an example of how this API is used, see the
+`lib/rscons/builders/lang/*.rb` files in the Rscons source repository.
+For example, here is how the C++ language is registered:
+
+```ruby
+Rscons::Builders::Object.register(command: "${CXXCMD}", direct_command: "${CXXCMD:direct}", suffix: "${CXXSUFFIX}", preferred_ld: "${CXX}")
+Rscons::Builders::SharedObject.register(command: "${SHCXXCMD}", direct_command: "${SHCXXCMD:direct}", suffix: "${CXXSUFFIX}", preferred_ld: "${SHCXX}")
+```
+
+There are also default construction variables registered to go along with the
+language registration as specified above.
+New default construction variables can be registered globally by assigning to
+the `Rscons::DEFAULT_CONSTRUCTION_VARIABLES` Hash.
+For example:
+
+```ruby
+Rscons::DEFAULT_CONSTRUCTION_VARIABLES["CXXCMD"] = %w[${CXX} -c -o ${_TARGET} ${CXXDEPGEN} ${INCPREFIX}${CPPPATH} ${CPPFLAGS} ${CXXFLAGS} ${CCFLAGS} ${_SOURCES}]
+```
+
 ### Adding New Builders
+
+It is also possible to extend Rscons with new builders.
+This is the most flexible method to extend Rscons.
+Builders can execute a command line program, call another builder, or just use
+plain Ruby code to produce an output file.
 
 #> Reference
 
