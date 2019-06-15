@@ -50,7 +50,7 @@ class Generator
       if multi_page
         nil
       else
-        File.basename(output_file)
+        File.basename(output_file).sub(/\.html$/, "")
       end
     @sections = []
     @current_section_number = [0]
@@ -65,7 +65,7 @@ class Generator
         new_page = !new_page_text.nil?
         section_number = get_next_section_number(level)
         anchor = make_anchor(section_number, title_text)
-        if new_page or current_page.nil?
+        if multi_page and (new_page or current_page.nil?)
           current_page = anchor
         end
         @sections << Section.new(section_number, title_text, current_page, anchor)
