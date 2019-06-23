@@ -79,6 +79,7 @@ To use Rscons on your project, you must:
 
   1. Install the `rscons` script in your project (See ${#Installation}).
   2. Write the `Rsconscript` build script for your project (See ${#The Build Script}).
+  3. Use the `rscons` command in your project (See ${#Command-Line Operation}).
 
 #> Installation
 
