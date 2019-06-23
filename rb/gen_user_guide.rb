@@ -176,7 +176,7 @@ class Generator
       section.title == section_name
     end
     raise "Could not find section #{section_name}" unless section
-    "#{section.page}##{section.anchor}"
+    "#{section.page}.html##{section.anchor}"
   end
 
   def gather_code_section(syntax)
