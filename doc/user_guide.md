@@ -703,12 +703,252 @@ For example:
 Rscons::DEFAULT_CONSTRUCTION_VARIABLES["CXXCMD"] = %w[${CXX} -c -o ${_TARGET} ${CXXDEPGEN} ${INCPREFIX}${CPPPATH} ${CPPFLAGS} ${CXXFLAGS} ${CCFLAGS} ${_SOURCES}]
 ```
 
-### Adding New Builders
+###> Adding Custom Builders
 
 It is also possible to extend Rscons with new builders.
 This is the most flexible method to extend Rscons.
 Builders can execute a command line program, call another builder, or just use
 plain Ruby code to produce an output file.
+
+A builder is a class that inherits from the `Rscons::Builder` base class.
+Rscons provides a `Rscons::Builders` namespacing module which contains the
+built-in builder classes.
+User-provided custom builder classes can also reside in the `Rscons::Builders`
+namespacing module, but this is not required.
+
+####> Adding a Custom Builder to an Environment
+
+The user can add a builder class to an Environment with the `env.add_builder`
+method.
+For example:
+
+```ruby
+class Rscons::Builders::Mine < Rscons::Builder
+end
+
+build do
+  Environment.new do |env|
+    env.add_builder(Rscons::Builders::Mine)
+  end
+end
+```
+
+Alternatively, the builder author can add the name of the custom builder to the
+`Rscons::DEFAULT_BUILDERS` array and then Rscons will automatically add the
+custom builder to every Environment.
+This method only works if the custom builder class is contained within the
+`Rscons::Builders` namespacing module.
+For example:
+
+```ruby
+#SpecialBuilder.rb
+class Rscons::Builders::Special < Rscons::Builder
+end
+Rscons::DEFAULT_BUILDERS << :Special
+
+#Rsconscript
+load "SpecialBuilder.rb"
+
+build do
+  Environment.new do |env|
+    # A build target using the "Special" builder can be registered.
+    env.Special("target", "source")
+  end
+end
+```
+
+####> Builder Name
+
+By default, the builder name is taken from the last component of the class name.
+For example, a class called `Rscons::Builders::Mine` would be usable in the
+Rsconscript with `env.Mine()`.
+A builder author can override the builder name by defining a class method
+within the builder class called `name`.
+For example, with the following builder definition:
+
+```ruby
+class Rscons::Builders::MySpecialBuilder < Rscons::Builder
+  def self.name
+    "Special"
+  end
+end
+```
+
+This builder would be registered in the Rsconscript with `env.Special()`.
+
+####> Custom Builder Constructor
+
+It is optional for a custom builder to provide an `initialize` method.
+If an `initialize` method is provided, it must call `super` to invoke the
+base `Rscons::Builder` class's constructor.
+A single Hash parameter is passed to the builder constructor.
+This Hash contains many parameters describing how the build target was
+registered by the user.
+The base constructor will set several instance attributes within the builder:
+
+  * `@target` will contain the path to the build target
+  * `@sources` will contain the path(s) to the build source(s)
+  * `@cache` will contain a reference to the `Rscons::Cache` object used for
+    the build
+  * `@env` will contain a reference to the Environment object that registered
+    the build target using the builder
+  * `@vars` will contain any user-specified construction variable values that
+    should be used for the build operation (overriding any Environment-wide
+    construction variable values)
+
+####> Custom Builder Operation
+
+In order for a builder to perform a build operation, the builder class must
+implement a the `Builder#run()` method.
+Generally, the `run()` method will use the source file(s) to produce the target
+file.
+Here is an example of a trivial builder:
+
+```ruby
+class Rscons::Builders::Custom < Rscons::Builder
+  def run(options)
+    File.open(@target, "w") do |fh|
+      fh.write("Target file created.")
+    end
+    true
+  end
+end
+```
+
+##### Return Value
+
+If the build operation has completed and failed, the `run` method should return
+`false`.
+In this case, generally the command executed or the builder itself would be
+expected to output something to `$stderr` indicating the reason for the build
+failure.
+If the build operation has completed successfully, the `run` method should
+return `true`.
+If the build operation is not yet complete and is waiting on other operations,
+the `run` method should return the return value from the `Builder#wait_for`
+method.
+See ${#Custom Builder Parallelization}.
+
+##### Printing Build Status
+
+A builder should print a status line when it produces a build target.
+The `Builder#print_run_message` method can be used to print the builder status
+line.
+This method supports a limited markup syntax to identify and color code the
+build target and/or source(s).
+Here is our Custom builder example extended to print its status:
+
+```ruby
+class Rscons::Builders::Custom < Rscons::Builder
+  def run(options)
+    print_run_message("Creating <target>#{@target}<reset> from Custom builder")
+    File.open(@target, "w") do |fh|
+      fh.write("Target file created.")
+    end
+    true
+  end
+end
+```
+
+##### Custom Builder Cache Usage - Only Rebuild When Necessary
+
+Whenever possible, a builder should keep track of information necessary to
+know whether the target file(s) need to be rebuilt.
+The `Rscons::Cache` object is the mechanism by which to keep track of this
+information.
+The Cache object provides two methods: `#up_to_date?` and `#register_build`
+which can be used to check if a built file is still up-to-date, and to
+register build information for a subsequent check.
+Here is a Custom builder which combines its source files similar to what the
+`cat` command would do:
+
+```ruby
+class Rscons::Builders::Custom < Rscons::Builder
+  def run(options)
+    unless @cache.up_to_date?(@target, nil, @sources, @env)
+      print_run_message("Combining <source>#{Util.short_format_paths(@sources)}<reset> => <target>#{@target}<reset>")
+      File.open(@target, "wb") do |fh|
+        @sources.each do |source|
+          fh.write(File.read(source, mode: "rb"))
+        end
+      end
+      @cache.register_build(@target, nil, @sources, @env)
+    end
+    true
+  end
+end
+```
+
+This builder would rebuild the target file and print its run message if the
+target file or any of the source file(s) were changed, but otherwise would be
+silent and not re-combine the source files.
+
+Note that generally the same arguments should be passed to
+`@cache.register_build` and `@cache.up_to_date?`.
+
+##### Custom Builder Parallelization
+
+The Rscons scheduler can parallelize builders to take advantage of multiple
+processor cores.
+Taking advantage of this ability to parallelize requires the builder author to
+author the builder in a particular way.
+The `#run()` method of each builder is called from Rscons in the main program
+thread.
+However, the builder may execute a subcommand, spawn a thread, or register
+other builders to execute as a part of doing its job.
+In any of these cases, the builder's `run` method should make use of
+`Builder#wait_for` to "sleep" until one of the items being waited for has
+completed.
+
+###### Using a Ruby Thread to Parallelize a Build Operation
+
+Here is an example of using a Ruby thread to parallelize a build operation:
+
+```ruby
+${include build_tests/custom_builder/wait_for_thread.rb}
+```
+
+It is up to the author of the thread logic to only perform actions that are
+thread-safe.
+It is not safe to call other Rscons methods, for example, registering other
+builders or using the Cache, from a thread other than the one that calls the
+`#run()` method.
+
+###### Executing a Subcommand from a Custom Builder
+
+It is a very common case that a builder will execute a subcommand which
+produces the build target.
+This is how most of the built-in Rscons builders execute.
+A low-level way to handle this is for the builder to construct an instance of
+the `Rscons::Command` class and then `wait_for` the Command object.
+However, this is a common enough case that Rscons provides a few
+convenience methods to handle this:
+
+  * `Rscons::Builder#register_command`
+  * `Rscons::Builder#standard_command`
+  * `Rscons::Builder#finalize_command`
+
+The `register_command` helper method can be used to create a Command object
+and wait for it to complete.
+The `standard_command` helper does the same thing as `register_command` but
+additionally checks the `@cache` for the target being up to date.
+The `finalize_command` helper can be used in conjunction with either of the
+previous helper methods.
+
+The built-in Rscons builders `Command` and `Disassemble` show examples of how
+to use the `standard_command` and `finalize_command` helper methods.
+
+Example (built-in Command builder):
+
+```ruby
+${include lib/rscons/builders/command.rb}
+```
+
+Example (built-in Disassemble builder):
+
+```ruby
+${include lib/rscons/builders/disassemble.rb}
+```
 
 #> Reference
 
