@@ -993,7 +993,7 @@ Example:
 ${include build_tests/json_to_yaml/Rsconscript}
 ```
 
-#> Reference
+#> Appendix
 
 ## Default Construction Variables
 
@@ -1103,6 +1103,10 @@ build do
   end
 end
 ```
+
+##> YARD API Documentation
+
+See [here](../yard/index.html) for Rscons YARD API Documentation.
 
 #> License
 
