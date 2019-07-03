@@ -39,7 +39,7 @@ end
 
 YARD::Rake::YardocTask.new do |yard|
   yard.files = ['lib/**/*.rb']
-  yard.options = ["-oyard"]
+  yard.options = ["-ogen/yard"]
 end
 
 task :gen_large_project, [:size] => :build_dist do |task, args|
