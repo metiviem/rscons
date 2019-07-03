@@ -954,6 +954,10 @@ ${include lib/rscons/builders/disassemble.rb}
 
 ## Default Construction Variables
 
+```ruby
+${include lib/rscons/default_construction_variables.rb}
+```
+
 #> License
 
 Rscons is licensed under the terms of the MIT License:
