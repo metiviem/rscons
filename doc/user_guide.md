@@ -437,6 +437,12 @@ This example modifies the `CCFLAGS` construction variable to add `-O2` and
 `-Wall` to the compilation commands used for C and C++ source files.
 It also instructs the linker to link against the `m` library.
 
+#### Construction Variable Naming
+
+  * uppercase strings - the default construction variables that Rscons uses
+  * strings beginning with "_" - set and used internally by builders
+  * symbols, lowercase strings - reserved as user-defined construction variables
+
 ###> Builders
 
 Rscons uses builder objects to produce *target* output files from *source*
@@ -646,6 +652,23 @@ allows it to be used to create a shared library are added.
 Although it can be called explicitly, it is more commonly implicitly called by
 the `SharedLibrary` builder.
 
+###> Explicit Dependencies
+
+A target can be marked as depending on another file that Rscons would not
+otherwise know about via the `Environment#depends` function. For example,
+to force the linker to re-link a Program output when a linker script changes:
+
+```ruby
+env.Program("a.out", "foo.c", "LDFLAGS" => %w[-T linker_script.ld])
+env.depends("a.out", "linker_script.ld")
+```
+
+You can pass multiple dependency files to `Environment#depends`:
+
+```ruby
+env.depends("my_app", "config/link.ld", "README.txt", *glob("assets/**/*"))
+```
+
 ###> Build Hooks
 
 A build hook is a Ruby block that is called whenever Rscons is about to invoke
@@ -674,6 +697,11 @@ end
 
 This example script would compile all C sources under the `src` directory with
 the `-Wall` flag except for sources under the `src/tests` directory.
+
+A post-build hook can be added with `env.add_post_build_hook`.
+Post-build hooks are only invoked if the build operation was a success.
+
+Build hooks and post-build hooks can register new build targets.
 
 ##> Extending Rscons
 
@@ -950,12 +978,130 @@ Example (built-in Disassemble builder):
 ${include lib/rscons/builders/disassemble.rb}
 ```
 
+####> Simple custom builders added with add_builder
+
+The `add_builder` method of the `Environment` class optionally allows you to
+define and register a builder by providing a name and action block. This can be
+useful if the builder you are trying to define is easily expressed as a short
+ruby procedure. When `add_builder` is called in this manner a new builder will
+be registered with the environment with the given name. When this builder is
+used it will call the provided block in order to build the target.
+
+Example:
+
+```ruby
+${include build_tests/json_to_yaml/Rsconscript}
+```
+
 #> Reference
 
 ## Default Construction Variables
 
 ```ruby
 ${include lib/rscons/default_construction_variables.rb}
+```
+
+##> Example Build Scripts
+
+### Example: Building a C Program
+
+```ruby
+build do
+  Environment.new do |env|
+    env["CFLAGS"] << "-Wall"
+    env.Program("program", glob("src/**/*.c"))
+  end
+end
+```
+
+### Example: Building a D Program
+
+```ruby
+build do
+  Environment.new do |env|
+    env["DFLAGS"] << "-Wall"
+    env.Program("program", glob("src/**/*.d"))
+  end
+end
+```
+
+### Example: Cloning an Environment
+
+```ruby
+build do
+  main_env = Environment.new do |env|
+    env["CFLAGS"] = ["-DSOME_DEFINE", "-O3"]
+    env["LIBS"] = ["SDL"]
+    env.Program("program", glob("src/**/*.cc"))
+  end
+
+  debug_env = main_env.clone do |env|
+    env["CFLAGS"] -= ["-O3"]
+    env["CFLAGS"] += ["-g", "-O0"]
+    env.Program("program-debug", glob("src/**/*.cc"))
+  end
+end
+```
+
+### Example: Custom Builder
+
+```ruby
+class GenerateFoo < Builder
+  def run(options)
+    target, cache = options.values_at(:target, :cache)
+    cache.mkdir_p(File.dirname(target))
+    File.open(target, "w") do |fh|
+      fh.puts <<EOF
+#define GENERATED 42
+EOF
+    end
+    target
+  end
+end
+
+build do
+  Environment.new do |env|
+    env.add_builder(GenerateFoo)
+    env.GenerateFoo("foo.h", [])
+    env.Program("a.out", glob("*.c"))
+  end
+end
+```
+
+### Example: Using different compilation flags for some sources
+
+```ruby
+build do
+  Environment.new do |env|
+    env["CFLAGS"] = ["-O3", "-Wall"]
+    env.add_build_hook do |build_op|
+      if build_op[:target] =~ %r{build/third-party}
+        build_op[:vars]["CFLAGS"] -= ["-Wall"]
+      end
+    end
+    env.Program("program", glob("**/*.cc"))
+  end
+end
+```
+
+### Example: Creating a static library
+
+```ruby
+build do
+  Environment.new do |env|
+    env.Library("mylib.a", glob("src/**/*.c"))
+  end
+end
+```
+
+### Example: Creating a C++ parser source from a Yacc/Bison input file
+
+```ruby
+build do
+  Environment.new do |env|
+    env.CFile("^/parser.tab.cc", "parser.yy")
+  end
+end
 ```
 
 #> License
@@ -965,6 +1111,20 @@ Rscons is licensed under the terms of the MIT License:
 ```
 ${include LICENSE.txt}
 ```
+
+#> Contributing
+
+Rscons is developed on [github](https://github.com/holtrop/rscons).
+
+Issues may be submitted to [https://github.com/holtrop/rscons/issues](https://github.com/holtrop/rscons/issues).
+
+Pull requests may be submitted as well:
+
+  1. Fork it
+  2. Create your feature branch (`git checkout -b my-new-feature`)
+  3. Commit your changes (`git commit -am 'Add some feature'`)
+  4. Push to the branch (`git push origin my-new-feature`)
+  5. Create new Pull Request
 
 #> Change Log
 
