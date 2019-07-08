@@ -1,3 +1,38 @@
+## v2.0.0
+
+- convert rscons from a Ruby gem to a standalone script
+- compress rscons distributable script
+- add configure operation to detect compilers, check for headers/libraries, etc... (invoked automatically if needed)
+- Environments store builder classes instead of instances of builder classes
+- use a separate Builder instance for each build operation
+- load Rsconscript from Rsconscript/Rsconscript.rb instead of Rsconsfile
+- drop support for builder run methods using the old 5 parameter signature
+- remove Environment#build_dir
+- set Environment build root in configure step
+- remove Builder#finalize (now #run called repeatedly until builder completes)
+- remove Builder#setup
+- remove Builder#features and Builder#produces?
+- add functionality to allow builders to wait on Ruby threads or other builders
+- add install/uninstall/distclean command-line operations
+- preserve makefile dependency files under build directory
+- remove a few deprecated methods
+- pass a Builder instance to build hooks instead of a build operation Hash
+- support a basic markup syntax in builder run messages to colorize target/source files
+- hide (but store) failed compilation command by default so the user doesn't have to scroll back as much to see compiler output
+- refactor to remove some redundancy among built-in builders
+- track object file source language (correctly determine linker when only passed object files previously built by particular toolchains)
+- add barriers
+- add InstallDirectory builder
+- change Install builder to copy files on 'install' operation
+- add "prefix" construction variable based on configured installation prefix
+- allow passing builder objects as sources to build targets
+- differentiate 'build' targets from 'install' targets in cache contents
+- add verbose mode
+- show build progress as a percentage in builder output messages
+- various performance improvements
+- wrote a new user guide
+- added new website ([https://holtrop.github.io/rscons/](https://holtrop.github.io/rscons/))
+
 ## v1.17.0
 
 ### New Features
