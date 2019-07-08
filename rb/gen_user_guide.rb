@@ -59,6 +59,8 @@ class Generator
       line = @lines.slice!(0)
       if line =~ /^```(.*)$/
         @sections.last.append(gather_code_section($1))
+      elsif line.chomp == "${remove}"
+        remove_section
       elsif line =~ /^(#+)(>)?\s*(.*)$/
         level_text, new_page_text, title_text = $1, $2, $3
         level = $1.size
@@ -193,6 +195,15 @@ class Generator
       %[<div class="code #{syntax}_code">\n#{convertor.convert(code)}\n</div>\n]
     else
       %[<div class="code">\n<pre>#{code}</pre>\n</div>\n]
+    end
+  end
+
+  def remove_section
+    loop do
+      line = @lines.slice!(0)
+      if line.chomp == "${/remove}"
+        break
+      end
     end
   end
 

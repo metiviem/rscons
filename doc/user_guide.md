@@ -24,6 +24,15 @@ custom build operations as well.
 
 Rscons is written in Ruby, and is inspired by [SCons](https://scons.org/) and [waf](https://waf.io/).
 
+${remove}
+WARNING: This user guide is meant to be preprocessed and rendered by a custom
+script.
+The markdown source file is not intended to be viewed directly and will not
+include all intended content.
+Visit [https://holtrop.github.io/rscons/index.html](https://holtrop.github.io/rscons/index.html)
+to view the properly rendered version.
+${/remove}
+
 ## Design Principles
 
 ### Build Correctness
