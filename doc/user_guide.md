@@ -1104,6 +1104,42 @@ build do
 end
 ```
 
+##> ./configure && make
+
+You can make your Rscons-based project more familiar to users of
+autoconf-generated projects by creating a `configure` script and a `Makefile`
+for the user.
+Such users may be used to executing:
+
+```
+./configure
+make
+```
+
+to build a project.
+To do this, create a `configure` script with contents similar to the following:
+
+```
+#!/bin/sh
+exec "$(dirname "$0")"/rscons "$@"
+```
+
+and make it executable with `chmod +x configure`.
+
+If you want your users to be able to build/clean a project with `make` but
+still make use of Rscons under the hood, you can create a `Makefile` with
+contents something like this:
+
+```
+.PHONY: all
+all:
+	./rscons build
+
+.PHONY: clean
+clean:
+	./rscons clean
+```
+
 ##> YARD API Documentation
 
 See [here](../yard/index.html) for Rscons YARD API Documentation.
