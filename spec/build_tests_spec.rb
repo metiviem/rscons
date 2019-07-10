@@ -1835,6 +1835,21 @@ EOF
         expect(result.status).to eq 0
         expect(result.stdout).to_not match /-DHAVE_/
       end
+
+      it "modifies CPPPATH based on check_cpppath" do
+        test_dir "configure"
+        FileUtils.mkdir_p("usr1")
+        FileUtils.mkdir_p("usr2")
+        File.open("usr2/frobulous.h", "wb") do |fh|
+          fh.puts("#define FOO 42")
+        end
+        result = run_rscons(rsconscript: "check_c_header_cpppath.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        result = run_rscons(rsconscript: "check_c_header_cpppath.rb", rscons_args: %w[-v])
+        expect(result.stdout).to_not match %r{-I./usr1}
+        expect(result.stdout).to match %r{-I./usr2}
+      end
     end
 
     context "check_cxx_header" do
@@ -1861,6 +1876,21 @@ EOF
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C\+\+ header 'not___found\.h'... not found/
       end
+
+      it "modifies CPPPATH based on check_cpppath" do
+        test_dir "configure"
+        FileUtils.mkdir_p("usr1")
+        FileUtils.mkdir_p("usr2")
+        File.open("usr2/frobulous.h", "wb") do |fh|
+          fh.puts("#define FOO 42")
+        end
+        result = run_rscons(rsconscript: "check_cxx_header_cpppath.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        result = run_rscons(rsconscript: "check_cxx_header_cpppath.rb", rscons_args: %w[-v])
+        expect(result.stdout).to_not match %r{-I./usr1}
+        expect(result.stdout).to match %r{-I./usr2}
+      end
     end
 
     context "check_d_import" do
@@ -1886,6 +1916,21 @@ EOF
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for D import 'not\.found'... not found/
+      end
+
+      it "modifies D_IMPORT_PATH based on check_d_import_path" do
+        test_dir "configure"
+        FileUtils.mkdir_p("usr1")
+        FileUtils.mkdir_p("usr2")
+        File.open("usr2/frobulous.d", "wb") do |fh|
+          fh.puts("int foo = 42;")
+        end
+        result = run_rscons(rsconscript: "check_d_import_d_import_path.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        result = run_rscons(rsconscript: "check_d_import_d_import_path.rb", rscons_args: %w[-v])
+        expect(result.stdout).to_not match %r{-I./usr1}
+        expect(result.stdout).to match %r{-I./usr2}
       end
     end
 

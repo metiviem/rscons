@@ -127,6 +127,7 @@ module Rscons
 
     # Check for a C header.
     def check_c_header(header_name, options = {})
+      check_cpppath = [nil] + (options[:check_cpppath] || [])
       Ansi.write($stdout, "Checking for C header '", :cyan, header_name, :reset, "'... ")
       File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
         fh.puts <<-EOF
@@ -142,13 +143,27 @@ module Rscons
         "_TARGET" => "#{@work_dir}/cfgtest.o",
         "_DEPFILE" => "#{@work_dir}/cfgtest.mf",
       }
-      command = BasicEnvironment.new.build_command("${CCCMD}", vars)
-      _, _, status = log_and_test_command(command)
+      status = 1
+      check_cpppath.each do |cpppath|
+        env = BasicEnvironment.new
+        if cpppath
+          env["CPPPATH"] += Array(cpppath)
+        end
+        command = env.build_command("${CCCMD}", vars)
+        _, _, status = log_and_test_command(command)
+        if status == 0
+          if cpppath
+            store_append({"CPPPATH" => Array(cpppath)}, options)
+          end
+          break
+        end
+      end
       common_config_checks(status, options)
     end
 
     # Check for a C++ header.
     def check_cxx_header(header_name, options = {})
+      check_cpppath = [nil] + (options[:check_cpppath] || [])
       Ansi.write($stdout, "Checking for C++ header '", :cyan, header_name, :reset, "'... ")
       File.open("#{@work_dir}/cfgtest.cxx", "wb") do |fh|
         fh.puts <<-EOF
@@ -164,13 +179,27 @@ module Rscons
         "_TARGET" => "#{@work_dir}/cfgtest.o",
         "_DEPFILE" => "#{@work_dir}/cfgtest.mf",
       }
-      command = BasicEnvironment.new.build_command("${CXXCMD}", vars)
-      _, _, status = log_and_test_command(command)
+      status = 1
+      check_cpppath.each do |cpppath|
+        env = BasicEnvironment.new
+        if cpppath
+          env["CPPPATH"] += Array(cpppath)
+        end
+        command = env.build_command("${CXXCMD}", vars)
+        _, _, status = log_and_test_command(command)
+        if status == 0
+          if cpppath
+            store_append({"CPPPATH" => Array(cpppath)}, options)
+          end
+          break
+        end
+      end
       common_config_checks(status, options)
     end
 
     # Check for a D import.
     def check_d_import(d_import, options = {})
+      check_d_import_path = [nil] + (options[:check_d_import_path] || [])
       Ansi.write($stdout, "Checking for D import '", :cyan, d_import, :reset, "'... ")
       File.open("#{@work_dir}/cfgtest.d", "wb") do |fh|
         fh.puts <<-EOF
@@ -186,8 +215,21 @@ module Rscons
         "_TARGET" => "#{@work_dir}/cfgtest.o",
         "_DEPFILE" => "#{@work_dir}/cfgtest.mf",
       }
-      command = BasicEnvironment.new.build_command("${DCCMD}", vars)
-      _, _, status = log_and_test_command(command)
+      status = 1
+      check_d_import_path.each do |d_import_path|
+        env = BasicEnvironment.new
+        if d_import_path
+          env["D_IMPORT_PATH"] += Array(d_import_path)
+        end
+        command = env.build_command("${DCCMD}", vars)
+        _, _, status = log_and_test_command(command)
+        if status == 0
+          if d_import_path
+            store_append({"D_IMPORT_PATH" => Array(d_import_path)}, options)
+          end
+          break
+        end
+      end
       common_config_checks(status, options)
     end
 
