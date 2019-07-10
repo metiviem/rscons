@@ -139,9 +139,10 @@ module Rscons
       vars = {
         "LD" => "${CC}",
         "_SOURCES" => "#{@work_dir}/cfgtest.c",
-        "_TARGET" => "#{@work_dir}/cfgtest.exe",
+        "_TARGET" => "#{@work_dir}/cfgtest.o",
+        "_DEPFILE" => "#{@work_dir}/cfgtest.mf",
       }
-      command = BasicEnvironment.new.build_command("${LDCMD}", vars)
+      command = BasicEnvironment.new.build_command("${CCCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -160,9 +161,10 @@ module Rscons
       vars = {
         "LD" => "${CXX}",
         "_SOURCES" => "#{@work_dir}/cfgtest.cxx",
-        "_TARGET" => "#{@work_dir}/cfgtest.exe",
+        "_TARGET" => "#{@work_dir}/cfgtest.o",
+        "_DEPFILE" => "#{@work_dir}/cfgtest.mf",
       }
-      command = BasicEnvironment.new.build_command("${LDCMD}", vars)
+      command = BasicEnvironment.new.build_command("${CXXCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
@@ -181,9 +183,10 @@ module Rscons
       vars = {
         "LD" => "${DC}",
         "_SOURCES" => "#{@work_dir}/cfgtest.d",
-        "_TARGET" => "#{@work_dir}/cfgtest.exe",
+        "_TARGET" => "#{@work_dir}/cfgtest.o",
+        "_DEPFILE" => "#{@work_dir}/cfgtest.mf",
       }
-      command = BasicEnvironment.new.build_command("${LDCMD}", vars)
+      command = BasicEnvironment.new.build_command("${DCCMD}", vars)
       _, _, status = log_and_test_command(command)
       common_config_checks(status, options)
     end
