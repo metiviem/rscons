@@ -411,6 +411,8 @@ module Rscons
     #   Common check options.
     # @option options [Boolean] :fail
     #   Whether to fail configuration if the requested item is not found.
+    #   This defaults to true if the :set_define option is not specified,
+    #   otherwise defaults to false if :set_define option is specified.
     # @option options [String] :set_define
     #   A define to set (in CPPDEFINES) if the requested item is found.
     # @option options [String] :success_message
@@ -423,11 +425,17 @@ module Rscons
           store_append("CPPDEFINES" => [options[:set_define]])
         end
       else
-        if options.has_key?(:fail) and not options[:fail]
-          Ansi.write($stdout, :yellow, "not found\n")
-        else
+        should_fail =
+          if options.has_key?(:fail)
+            options[:fail]
+          else
+            !options[:set_define]
+          end
+        if should_fail
           Ansi.write($stdout, :red, "not found\n")
           raise ConfigureFailure.new
+        else
+          Ansi.write($stdout, :yellow, "not found\n")
         end
       end
     end

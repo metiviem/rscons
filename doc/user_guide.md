@@ -247,7 +247,7 @@ Example calls:
 
 ```ruby
 configure do
-  check_c_header "getopt.h", fail: false, set_define: "HAVE_GETOPT_H"
+  check_c_header "getopt.h", set_define: "HAVE_GETOPT_H"
   check_c_header "FreeType2.h"
   check_cxx_header "memory"
 end
@@ -259,6 +259,8 @@ end
 
 If the `:fail` option is set to `false`, then the absence of the header file
 will not result in the configure option failing.
+The `:fail` option defaults to `true` if the `:set_define` option is not
+defined, and defaults to `false` if the `:set_define` option is defined.
 
 ##### `:set_define`
 
@@ -302,6 +304,8 @@ end
 
 If the `:fail` option is set to `false`, then the absence of the library
 will not result in the configure option failing.
+The `:fail` option defaults to `true` if the `:set_define` option is not
+defined, and defaults to `false` if the `:set_define` option is defined.
 
 ##### `:set_define`
 
@@ -354,6 +358,8 @@ for configuration flags.
 
 If the `:fail` option is set to `false`, then the absence of the package or
 program requested will not result in the configure option failing.
+The `:fail` option defaults to `true` if the `:set_define` option is not
+defined, and defaults to `false` if the `:set_define` option is defined.
 
 ##### `:set_define`
 

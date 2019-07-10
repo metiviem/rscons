@@ -1,5 +1,5 @@
 configure do
-  check_c_header "not___found.h", fail: false, set_define: "HAVE_NOT___FOUND_H"
+  check_c_header "not___found.h", set_define: "HAVE_NOT___FOUND_H"
 end
 
 build do
