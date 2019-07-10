@@ -149,6 +149,17 @@ been performed, a `configure` operation will be automatically invoked.
 The `build` operation will execute all builders registered to produce build
 targets.
 
+If a `build` operation fails (e.g. due to a compilation failure), Rscons will
+log the failed commands.
+By default Rscons does not print the failed commands to the console so that it
+is easier for the user to focus on the actual compiler failure messages rather
+than the compilation command itself.
+However, if the user wishes to see the compilation commands, rscons can be
+invoked with the `-v` command-line option to show all complilation commands
+while building, or, alternatively, following a compilation failure, the user
+can invoke rscons with the -F option which will not rebuild but will show the
+failed command log from the previous build operation.
+
 ##> Clean Operation
 
 A `clean` operation will remove all built target files.
