@@ -5,7 +5,7 @@ USAGE = <<EOF
 Usage: #{$0} [global options] [operation] [operation options]
 
 Global options:
-  -F, --show-failure          Show previous failed command(s) and exit
+  -F, --show-failure          Show failed command log from previous build and exit
   --version                   Show rscons version and exit
   -h, --help                  Show rscons help and exit
   -r COLOR, --color=COLOR     Set color mode (off, auto, force)
