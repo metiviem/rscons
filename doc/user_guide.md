@@ -220,6 +220,7 @@ working compiler:
 
 Each of these methods can take an optional list of compilers to check for.
 If such a list is supplied, the compilers are tested in the order listed.
+The first compiler option found which passes a compilation test is used.
 
 Here are example calls which also show the default compiler list for each
 supported language:
