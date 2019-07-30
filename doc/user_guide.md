@@ -730,6 +730,18 @@ Post-build hooks are only invoked if the build operation was a success.
 
 Build hooks and post-build hooks can register new build targets.
 
+###> Barriers
+
+Normally Rscons will parallelize all builders.
+A barrier can be used to separate sets of build targets.
+All build targets registered before the barrier is created will be built before
+Rscons will schedule any build targets after the barrier.
+In other words, build targets are not parallelized across a barrier.
+
+```ruby
+env.barrier
+```
+
 ##> Extending Rscons
 
 ### Adding New Languages
