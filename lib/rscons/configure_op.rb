@@ -235,6 +235,7 @@ module Rscons
 
     # Check for a library.
     def check_lib(lib, options = {})
+      check_libpath = [nil] + (options[:check_libpath] || [])
       Ansi.write($stdout, "Checking for library '", :cyan, lib, :reset, "'... ")
       File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
         fh.puts <<-EOF
@@ -249,8 +250,21 @@ module Rscons
         "_SOURCES" => "#{@work_dir}/cfgtest.c",
         "_TARGET" => "#{@work_dir}/cfgtest.exe",
       }
-      command = BasicEnvironment.new.build_command("${LDCMD}", vars)
-      _, _, status = log_and_test_command(command)
+      status = 1
+      check_libpath.each do |libpath|
+        env = BasicEnvironment.new
+        if libpath
+          env["LIBPATH"] += Array(libpath)
+        end
+        command = env.build_command("${LDCMD}", vars)
+        _, _, status = log_and_test_command(command)
+        if status == 0
+          if libpath
+            store_append({"LIBPATH" => Array(libpath)}, options)
+          end
+          break
+        end
+      end
       if status == 0
         store_append({"LIBS" => [lib]}, options)
       end

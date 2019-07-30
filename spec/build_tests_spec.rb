@@ -1986,6 +1986,23 @@ EOF
         expect(result.stdout).to match /Checking for library 'm'... found/
         expect(result.stdout).to_not match /-lm/
       end
+
+      it "modifies LIBPATH based on check_libpath" do
+        test_dir "configure"
+        FileUtils.mkdir_p("usr1")
+        FileUtils.mkdir_p("usr2")
+        result = run_rscons(rsconscript: "check_lib_libpath1.rb")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        result = run_rscons(rsconscript: "check_lib_libpath2.rb", op: "configure")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        result = run_rscons(rsconscript: "check_lib_libpath2.rb")
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match %r{-L\./usr2}
+        expect(result.stdout).to_not match %r{-L\./usr1}
+      end
     end
 
     context "check_program" do
