@@ -649,6 +649,24 @@ A platform-dependent program suffix will be appended to the target name if one
 is not specified.
 This can be controlled with the `PROGSUFFIX` construction variable.
 
+##### Direct Mode
+
+The Program builder supports a "direct" mode which is activated by specifying
+the `:direct` option.
+In the direct mode, all source files are passed directly to the compiler
+together and compiled and linked in one step, rather than being individually
+compiled to separate object files first.
+This mode allows taking advantage of any multi-file compilation capabilities
+of the compiler.
+However, it also requires recompiling all source files when any one of them
+has changed.
+
+Example use:
+
+```ruby
+env.Program("myprog", Rscons.glob("src/**/*.c"), direct: true)
+```
+
 ####> The SharedLibrary Builder
 
 ```ruby
@@ -664,6 +682,24 @@ A platform-dependent prefix and suffix will be appended to the target name if
 they are not specified by the user.
 These values can be controlled by overriding the `SHLIBPREFIX` and
 `SHLIBSUFFIX` construction variables.
+
+##### Direct Mode
+
+The SharedLibrary builder supports a "direct" mode which is activated by
+specifying the `:direct` option.
+In the direct mode, all source files are passed directly to the compiler
+together and compiled and linked in one step, rather than being individually
+compiled to separate object files first.
+This mode allows taking advantage of any multi-file compilation capabilities
+of the compiler.
+However, it also requires recompiling all source files when any one of them
+has changed.
+
+Example use:
+
+```ruby
+env.SharedLibrary("mydll", Rscons.glob("src/**/*.c"), direct: true)
+```
 
 ####> The SharedObject Builder
 
