@@ -1,6 +1,7 @@
 require "rscons"
 require "optparse"
 
+# CLI usage string.
 USAGE = <<EOF
 Usage: #{$0} [global options] [operation] [operation options]
 

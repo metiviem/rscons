@@ -3,6 +3,7 @@ module Rscons
   # The Script class encapsulates the state of a build script.
   class Script
 
+    # DSL available to the Rsconscript.
     class Dsl
       # Create a Dsl.
       def initialize(script)
@@ -57,6 +58,7 @@ module Rscons
       end
     end
 
+    # DSL available to the 'configure' block.
     class ConfigureDsl
       # Create a ConfigureDsl.
       #

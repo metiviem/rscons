@@ -8,6 +8,7 @@ module Rscons
 
   module Builders
     module Mixins
+      # Mixin for builders needing to build object files.
       module Object
 
         include Depfile

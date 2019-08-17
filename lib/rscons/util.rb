@@ -1,4 +1,5 @@
 module Rscons
+  # A collection of stand-alone utility methods.
   module Util
     class << self
 

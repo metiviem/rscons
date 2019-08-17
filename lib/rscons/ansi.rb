@@ -3,6 +3,7 @@ module Rscons
   module Ansi
     class << self
 
+      # ANSI terminal reset sequence.
       RESET = "\e[0m"
 
       # Write a message to an IO with ANSI escape codes.

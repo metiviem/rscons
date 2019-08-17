@@ -7,6 +7,8 @@ module Rscons
       include Mixins::Object
 
       class << self
+        # Content component to add to build path to separate objects built
+        # using this builder from others.
         def extra_path
           "_shared"
         end

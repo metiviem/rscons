@@ -8,6 +8,8 @@ module Rscons
       include Mixins::Program
 
       class << self
+        # Custom new method which will delegate to the correct class depending
+        # on the options specified.
         def new(options, *more)
           libprefix = options[:env].expand_varref("${SHLIBPREFIX}", options[:vars])
           unless File.basename(options[:target]).start_with?(libprefix)

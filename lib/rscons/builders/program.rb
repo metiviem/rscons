@@ -8,6 +8,8 @@ module Rscons
       include Mixins::Program
 
       class << self
+        # Custom new method which will delegate to the correct class depending
+        # on the options specified.
         def new(options, *more)
           unless File.basename(options[:target])["."]
             options[:target] += options[:env].expand_varref("${PROGSUFFIX}", options[:vars])
