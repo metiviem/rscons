@@ -2086,6 +2086,66 @@ EOF
       end
     end
 
+    context "custom_check" do
+      context "when running a test command" do
+        context "when executing the command fails" do
+          context "when failures are fatal" do
+            it "fails configuration with the correct error message" do
+              test_dir "configure"
+              create_exe "grep", "exit 4"
+              result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+              expect(result.stderr).to eq ""
+              expect(result.stdout).to match /Checking 'grep' version\.\.\. error executing grep/
+              expect(result.status).to_not eq 0
+            end
+          end
+
+          context "when the custom logic indicates a failure" do
+            it "fails configuration with the correct error message" do
+              test_dir "configure"
+              create_exe "grep", "echo 'grep (GNU grep) 1.1'"
+              result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+              expect(result.stderr).to eq ""
+              expect(result.stdout).to match /Checking 'grep' version\.\.\. too old!/
+              expect(result.status).to_not eq 0
+            end
+          end
+        end
+
+        context "when failures are not fatal" do
+          context "when the custom logic indicates a failure" do
+            it "displays the correct message and does not fail configuration" do
+              test_dir "configure"
+              create_exe "grep", "echo 'grep (GNU grep) 2.1'"
+              result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+              expect(result.stderr).to eq ""
+              expect(result.stdout).to match /Checking 'grep' version\.\.\. we'll work with it but you should upgrade/
+              expect(result.status).to eq 0
+              result = run_rscons(rsconscript: "custom_config_check.rb", op: "build")
+              expect(result.stderr).to eq ""
+              expect(result.stdout).to match /GREP_WORKAROUND/
+              expect(result.status).to eq 0
+            end
+          end
+        end
+
+        context "when the custom logic indicates success" do
+          it "passes configuration with the correct message" do
+            test_dir "configure"
+            create_exe "grep", "echo 'grep (GNU grep) 3.0'"
+            result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+            expect(result.stderr).to eq ""
+            expect(result.stdout).to match /Checking 'grep' version\.\.\. good!/
+            expect(result.status).to eq 0
+            result = run_rscons(rsconscript: "custom_config_check.rb", op: "build")
+            expect(result.stderr).to eq ""
+            expect(result.stdout).to match /GREP_FULL/
+            expect(result.status).to eq 0
+          end
+        end
+      end
+    end
+
     it "does everything" do
       test_dir "configure"
       create_exe "pkg-config", "echo '-DMYPACKAGE'"

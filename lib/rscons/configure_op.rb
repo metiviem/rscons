@@ -69,7 +69,7 @@ module Rscons
       cc = ccc.find do |cc|
         test_c_compiler(cc)
       end
-      common_config_checks(cc ? 0 : 1, success_message: cc)
+      complete(cc ? 0 : 1, success_message: cc)
     end
 
     # Check for a working C++ compiler.
@@ -87,7 +87,7 @@ module Rscons
       cc = ccc.find do |cc|
         test_cxx_compiler(cc)
       end
-      common_config_checks(cc ? 0 : 1, success_message: cc)
+      complete(cc ? 0 : 1, success_message: cc)
     end
 
     # Check for a working D compiler.
@@ -105,7 +105,7 @@ module Rscons
       dc = cdc.find do |dc|
         test_d_compiler(dc)
       end
-      common_config_checks(dc ? 0 : 1, success_message: dc)
+      complete(dc ? 0 : 1, success_message: dc)
     end
 
     # Check for a package or configure program output.
@@ -122,7 +122,7 @@ module Rscons
       if status == 0
         store_parse(stdout, options)
       end
-      common_config_checks(status, options)
+      complete(status, options)
     end
 
     # Check for a C header.
@@ -158,7 +158,7 @@ module Rscons
           break
         end
       end
-      common_config_checks(status, options)
+      complete(status, options)
     end
 
     # Check for a C++ header.
@@ -194,7 +194,7 @@ module Rscons
           break
         end
       end
-      common_config_checks(status, options)
+      complete(status, options)
     end
 
     # Check for a D import.
@@ -230,7 +230,7 @@ module Rscons
           break
         end
       end
-      common_config_checks(status, options)
+      complete(status, options)
     end
 
     # Check for a library.
@@ -268,14 +268,113 @@ module Rscons
       if status == 0
         store_append({"LIBS" => [lib]}, options)
       end
-      common_config_checks(status, options)
+      complete(status, options)
     end
 
     # Check for a executable program.
     def check_program(program, options = {})
       Ansi.write($stdout, "Checking for program '", :cyan, program, :reset, "'... ")
       path = Util.find_executable(program)
-      common_config_checks(path ? 0 : 1, options.merge(success_message: path))
+      complete(path ? 0 : 1, options.merge(success_message: path))
+    end
+
+    # Execute a test command and log the result.
+    #
+    # @return [String, String, Process::Status]
+    #   stdout, stderr, status
+    def log_and_test_command(command)
+      begin
+        @log_fh.puts("Command: #{command.join(" ")}")
+        stdout, stderr, status = Open3.capture3(*command)
+        @log_fh.puts("Exit status: #{status.to_i}")
+        @log_fh.write(stdout)
+        @log_fh.write(stderr)
+        [stdout, stderr, status]
+      rescue Errno::ENOENT
+        ["", "", 127]
+      end
+    end
+
+    # Store construction variables for merging into the Cache.
+    #
+    # @param vars [Hash]
+    #   Hash containing the variables to merge.
+    # @param options [Hash]
+    #   Options.
+    def store_merge(vars, options = {})
+      store_vars = store_common(options)
+      store_vars["merge"] ||= {}
+      vars.each_pair do |key, value|
+        store_vars["merge"][key] = value
+      end
+    end
+
+    # Store construction variables for appending into the Cache.
+    #
+    # @param vars [Hash]
+    #   Hash containing the variables to append.
+    # @param options [Hash]
+    #   Options.
+    def store_append(vars, options = {})
+      store_vars = store_common(options)
+      store_vars["append"] ||= {}
+      vars.each_pair do |key, value|
+        if store_vars["append"][key].is_a?(Array) and value.is_a?(Array)
+          store_vars["append"][key] += value
+        else
+          store_vars["append"][key] = value
+        end
+      end
+    end
+
+    # Store flags to be parsed into the Cache.
+    #
+    # @param flags [String]
+    #   String containing the flags to parse.
+    # @param options [Hash]
+    #   Options.
+    def store_parse(flags, options = {})
+      store_vars = store_common(options)
+      store_vars["parse"] ||= []
+      store_vars["parse"] << flags
+    end
+
+    # Perform processing common to several configure checks.
+    #
+    # @param status [Process::Status, Integer]
+    #   Process exit code. 0 for success, non-zero for error.
+    # @param options [Hash]
+    #   Common check options.
+    # @option options [Boolean] :fail
+    #   Whether to fail configuration if the requested item is not found.
+    #   This defaults to true if the :set_define option is not specified,
+    #   otherwise defaults to false if :set_define option is specified.
+    # @option options [String] :set_define
+    #   A define to set (in CPPDEFINES) if the requested item is found.
+    # @option options [String] :success_message
+    #   Message to print on success (default "found").
+    def complete(status, options)
+      success_message = options[:success_message] || "found"
+      fail_message = options[:fail_message] || "not found"
+      if status == 0
+        Ansi.write($stdout, :green, "#{success_message}\n")
+        if options[:set_define]
+          store_append("CPPDEFINES" => [options[:set_define]])
+        end
+      else
+        should_fail =
+          if options.has_key?(:fail)
+            options[:fail]
+          else
+            !options[:set_define]
+          end
+        if should_fail
+          Ansi.write($stdout, :red, "#{fail_message}\n")
+          raise ConfigureFailure.new
+        else
+          Ansi.write($stdout, :yellow, "#{fail_message}\n")
+        end
+      end
     end
 
     private
@@ -381,64 +480,6 @@ module Rscons
       end
     end
 
-    # Execute a test command and log the result.
-    def log_and_test_command(command)
-      begin
-        @log_fh.puts("Command: #{command.join(" ")}")
-        stdout, stderr, status = Open3.capture3(*command)
-        @log_fh.puts("Exit status: #{status.to_i}")
-        @log_fh.write(stdout)
-        @log_fh.write(stderr)
-        [stdout, stderr, status]
-      rescue Errno::ENOENT
-        ["", "", 127]
-      end
-    end
-
-    # Store construction variables for merging into the Cache.
-    #
-    # @param vars [Hash]
-    #   Hash containing the variables to merge.
-    # @param options [Hash]
-    #   Options.
-    def store_merge(vars, options = {})
-      store_vars = store_common(options)
-      store_vars["merge"] ||= {}
-      vars.each_pair do |key, value|
-        store_vars["merge"][key] = value
-      end
-    end
-
-    # Store construction variables for appending into the Cache.
-    #
-    # @param vars [Hash]
-    #   Hash containing the variables to append.
-    # @param options [Hash]
-    #   Options.
-    def store_append(vars, options = {})
-      store_vars = store_common(options)
-      store_vars["append"] ||= {}
-      vars.each_pair do |key, value|
-        if store_vars["append"][key].is_a?(Array) and value.is_a?(Array)
-          store_vars["append"][key] += value
-        else
-          store_vars["append"][key] = value
-        end
-      end
-    end
-
-    # Store flags to be parsed into the Cache.
-    #
-    # @param flags [String]
-    #   String containing the flags to parse.
-    # @param options [Hash]
-    #   Options.
-    def store_parse(flags, options = {})
-      store_vars = store_common(options)
-      store_vars["parse"] ||= []
-      store_vars["parse"] << flags
-    end
-
     # Common functionality for all store methods.
     #
     # @param options [Hash]
@@ -459,43 +500,6 @@ module Rscons
         cache = Cache.instance
         cache["configuration_data"]["vars"] ||= {}
         cache["configuration_data"]["vars"][usename] ||= {}
-      end
-    end
-
-    # Perform processing common to several configure checks.
-    #
-    # @param status [Process::Status, Integer]
-    #   Process exit code.
-    # @param options [Hash]
-    #   Common check options.
-    # @option options [Boolean] :fail
-    #   Whether to fail configuration if the requested item is not found.
-    #   This defaults to true if the :set_define option is not specified,
-    #   otherwise defaults to false if :set_define option is specified.
-    # @option options [String] :set_define
-    #   A define to set (in CPPDEFINES) if the requested item is found.
-    # @option options [String] :success_message
-    #   Message to print on success (default "found").
-    def common_config_checks(status, options)
-      success_message = options[:success_message] || "found"
-      if status == 0
-        Ansi.write($stdout, :green, "#{success_message}\n")
-        if options[:set_define]
-          store_append("CPPDEFINES" => [options[:set_define]])
-        end
-      else
-        should_fail =
-          if options.has_key?(:fail)
-            options[:fail]
-          else
-            !options[:set_define]
-          end
-        if should_fail
-          Ansi.write($stdout, :red, "not found\n")
-          raise ConfigureFailure.new
-        else
-          Ansi.write($stdout, :yellow, "not found\n")
-        end
       end
     end
 

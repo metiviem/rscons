@@ -81,6 +81,19 @@ module Rscons
           @configure_op.__send__(method_name, *args)
         end
       end
+
+      # Perform a custom configuration check.
+      #
+      # @param message [String]
+      #   Custom configuration check message (e.g. "Checking for foo").
+      #   rscons will add "... " to the end of the message.
+      # @yieldparam configure_op [ConfigureOp]
+      #   {ConfigureOp} object.
+      # @return [void]
+      def custom_check(message, &block)
+        $stdout.write(message + "... ")
+        block[@configure_op]
+      end
     end
 
     # @return [String, nil]
