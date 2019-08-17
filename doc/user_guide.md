@@ -140,6 +140,7 @@ Such configuration checks can include:
   * verifying presence of a D import
   * verifying presence of a library
   * verifying presence of an executable
+  * any custom user-supplied configuration check
 
 ##> Build Operation
 
@@ -266,6 +267,10 @@ end
 
 #### Options
 
+##### `:check_cpppath`
+
+Optionally specifies an array of paths to look for the header file in.
+
 ##### `:fail`
 
 If the `:fail` option is set to `false`, then the absence of the header file
@@ -293,6 +298,12 @@ configure do
 end
 ```
 
+#### Options
+
+##### `:check_d_import_path`
+
+Optionally specifies an array of paths to look for the module in.
+
 ###> Checking for a Library
 
 The `check_lib` method can be used to check for the presence of a library.
@@ -310,6 +321,10 @@ end
 ```
 
 #### Options
+
+##### `:check_libpath`
+
+Optionally specifies an array of paths to look for the library in.
 
 ##### `:fail`
 
@@ -490,7 +505,8 @@ files.
 
 ###> Specifying Source Files: The glob Method
 
-The `glob` method can be used to find files matching the patterns specified.
+The [`glob`](../yard/Rscons/Script/Dsl.html#glob-instance_method) method can be
+used to find files matching the patterns specified.
 It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/core-2.5.1/Dir.html#method-c-glob) but operates more deterministically.
 
 Example use:
@@ -1091,9 +1107,9 @@ the `Rscons::Command` class and then `wait_for` the Command object.
 However, this is a common enough case that Rscons provides a few
 convenience methods to handle this:
 
-  * `Rscons::Builder#register_command`
-  * `Rscons::Builder#standard_command`
-  * `Rscons::Builder#finalize_command`
+  * [`Rscons::Builder#register_command`](../yard/Rscons/Builder.html#register_command-instance_method)
+  * [`Rscons::Builder#standard_command`](../yard/Rscons/Builder.html#standard_command-instance_method)
+  * [`Rscons::Builder#finalize_command`](../yard/Rscons/Builder.html#finalize_command-instance_method)
 
 The `register_command` helper method can be used to create a Command object
 and wait for it to complete.
