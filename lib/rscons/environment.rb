@@ -59,6 +59,9 @@ module Rscons
     #   :command, :short, or :off (default :short)
     # @option options [Boolean] :exclude_builders
     #   Whether to omit adding default builders (default false)
+    # @option options [String, Array<String>] :use
+    #   Use flag(s). If specified, any configuration flags which were saved
+    #   with a corresponding `:use` value will be applied to this Environment.
     #
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.

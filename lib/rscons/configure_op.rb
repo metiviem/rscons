@@ -301,6 +301,10 @@ module Rscons
     #   Hash containing the variables to merge.
     # @param options [Hash]
     #   Options.
+    # @option options [String] :use
+    #   A 'use' name. If specified, the construction variables are only applied
+    #   to an Environment if the Environment is constructed with a matching
+    #   `:use` value.
     def store_merge(vars, options = {})
       store_vars = store_common(options)
       store_vars["merge"] ||= {}
@@ -315,6 +319,10 @@ module Rscons
     #   Hash containing the variables to append.
     # @param options [Hash]
     #   Options.
+    # @option options [String] :use
+    #   A 'use' name. If specified, the construction variables are only applied
+    #   to an Environment if the Environment is constructed with a matching
+    #   `:use` value.
     def store_append(vars, options = {})
       store_vars = store_common(options)
       store_vars["append"] ||= {}
@@ -333,6 +341,10 @@ module Rscons
     #   String containing the flags to parse.
     # @param options [Hash]
     #   Options.
+    # @option options [String] :use
+    #   A 'use' name. If specified, the construction variables are only applied
+    #   to an Environment if the Environment is constructed with a matching
+    #   `:use` value.
     def store_parse(flags, options = {})
       store_vars = store_common(options)
       store_vars["parse"] ||= []

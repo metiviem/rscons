@@ -323,6 +323,12 @@ defined, and defaults to `false` if the `:set_define` option is defined.
 If set, a build define of the specified String will be added to the
 `CPPDEFINES` construction variable array if the requested library is found.
 
+##### `:use`
+
+If not set, the library will be used by default in all `Environment` objects.
+If set, the library will only be used in `Environment` objects that have a
+matching `:use` flag set.
+
 ###> Checking for a Program
 
 The `check_program` method can check for the existence of an executable in the
@@ -376,6 +382,12 @@ defined, and defaults to `false` if the `:set_define` option is defined.
 
 If set, a build define of the specified String will be added to the
 `CPPDEFINES` construction variable array if the requested package is found.
+
+##### `:use`
+
+If not set, the library will be used by default in all `Environment` objects.
+If set, the library will only be used in `Environment` objects that have a
+matching `:use` flag set.
 
 ###> Custom Configuration Checks
 

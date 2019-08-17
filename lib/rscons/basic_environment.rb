@@ -4,10 +4,11 @@ module Rscons
 
     # Create a BasicEnvironment object.
     #
-    # @api private
-    #
     # @param options [Hash]
     #   Construction options.
+    # @option options [String, Array<String>] :use
+    #   Use flag(s). If specified, any configuration flags which were saved
+    #   with a corresponding `:use` value will be applied to this Environment.
     def initialize(options = {})
       @varset = VarSet.new(Rscons::DEFAULT_CONSTRUCTION_VARIABLES)
       load_configuration_data!(options)
