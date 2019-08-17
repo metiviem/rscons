@@ -377,6 +377,58 @@ defined, and defaults to `false` if the `:set_define` option is defined.
 If set, a build define of the specified String will be added to the
 `CPPDEFINES` construction variable array if the requested package is found.
 
+###> Custom Configuration Checks
+
+The `Rsconscript` author can add custom configuration checks to be performed
+during the rscons `configure` operation.
+
+Here is an example from `build_tests/configure/custom_config_check.rb` showing
+a custom configuration check:
+
+```ruby
+${include build_tests/configure/custom_config_check.rb}
+```
+
+A custom configuration check is created by calling the `custom_check` method
+and passing a block.
+The contents of the block should perform the custom configuration checking
+logic.
+This logic can include executing a test command or other arbitrary operations.
+An argument `op` is passed to the block.
+This object is an instance of the [`ConfigureOp` class](../yard/Rscons/ConfigureOp.html)
+class and provides several methods that can be used to aid with the custom
+configuration check.
+The [`log_and_test_command`](../yard/Rscons/ConfigureOp.html#log_and_test_command-instance_method)
+method can be used to execute a test command and retrieve its results.
+The command and its output are also logged to the config.log file.
+The [`store_merge`](../yard/Rscons/ConfigureOp.html#store_merge-instance_method),
+[`store_append`](../yard/Rscons/ConfigureOp.html#store_append-instance_method),
+and [`store_parse`](../yard/Rscons/ConfigureOp.html#store_parse-instance_method)
+methods can be used to store construction variables for Environments created
+during the `build` operation.
+Finally, the [`complete`](../yard/Rscons/ConfigureOp.html#complete-instance_method)
+method can be used to complete the configuration check and indicate a success
+or failure.
+
+While performing a custom configuration check, it can sometimes be useful to
+be able to construct an Environment to use the set of default construction
+variables as defined so far in the configuration block, for example to expand
+construction variables to build a test command.
+The normal `Environment` class cannot be used within the `configure` block,
+however the [`BasicEnvironment`](../yard/Rscons/BasicEnvironment.html) class
+can be used for such a purpose.
+
+For example, to expand the current `${CCCMD}` value:
+
+```ruby
+configure do
+  custom_check("Checking something to do with CCCMD") do
+    command = BasicEnvironment.new.expand_varref("${CCCMD}")
+    # ...
+  end
+end
+```
+
 ##> Build Operations
 
 The `build` block is used to create Environments and register build targets.
