@@ -589,7 +589,7 @@ EOF
   end
 
   unless ENV["omit_gdc_tests"]
-    it "supports building D sources" do
+    it "supports building D sources with gdc" do
       test_dir("d")
       result = run_rscons
       expect(result.stderr).to eq ""
@@ -598,6 +598,39 @@ EOF
       verify_lines(slines, [%r{gdc -c -o build/e.1/mod.o -MMD -MF build/e.1/mod.mf mod.d}])
       verify_lines(slines, [%r{gdc -o hello-d.exe build/e.1/main.o build/e.1/mod.o}])
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
+    end
+
+    it "supports building D sources with ldc2" do
+      test_dir("d")
+      result = run_rscons(rsconscript: "build-ldc2.rb")
+      expect(result.stderr).to eq ""
+      slines = lines(result.stdout)
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o -deps=build/e.1/main.mf main.d}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o -deps=build/e.1/mod.mf mod.d}])
+      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+      expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
+    end
+
+    it "rebuilds D modules with ldc2 when deep dependencies change" do
+      test_dir("d")
+      result = run_rscons(rsconscript: "build-ldc2.rb")
+      expect(result.stderr).to eq ""
+      slines = lines(result.stdout)
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o -deps=build/e.1/main.mf main.d}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o -deps=build/e.1/mod.mf mod.d}])
+      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+      expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
+      contents = File.read("mod.d", mode: "rb").sub("42", "33")
+      File.open("mod.d", "wb") do |fh|
+        fh.write(contents)
+      end
+      result = run_rscons(rsconscript: "build-ldc2.rb")
+      expect(result.stderr).to eq ""
+      slines = lines(result.stdout)
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o -deps=build/e.1/main.mf main.d}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o -deps=build/e.1/mod.mf mod.d}])
+      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+      expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 33!"
     end
 
     it "links with the D linker when object files were built from D sources" do

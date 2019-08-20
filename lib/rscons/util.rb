@@ -160,7 +160,7 @@ module Rscons
         end
       end
 
-      # Parse dependencies from a Makefile.
+      # Parse dependencies from a Makefile or ldc2 dependency file.
       #
       # This method is used internally by Rscons builders.
       #
@@ -169,7 +169,7 @@ module Rscons
       #
       # @return [Array<String>]
       #   Paths of dependency files.
-      def parse_makefile_deps(mf_fname)
+      def parse_dependency_file(mf_fname)
         deps = []
         buildup = ''
         File.read(mf_fname).each_line do |line|
@@ -177,7 +177,11 @@ module Rscons
             buildup += ' ' + $1
           else
             buildup += ' ' + line
-            if buildup =~ /^.*: (.*)$/
+            if buildup =~ /^[^:]+\(\S+\)\s*:.*?:[^:]+\((\S+)\)/
+              # ldc2-style dependency line
+              deps << $1
+            elsif buildup =~ /^.*: (.*)$/
+              # Makefile-style dependency line
               mf_deps = $1
               deps += mf_deps.split(' ').map(&:strip)
             end

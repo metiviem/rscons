@@ -1,5 +1,5 @@
 configure do
-  check_d_compiler "gdc"
+  check_d_compiler "ldc2"
 end
 
 build do

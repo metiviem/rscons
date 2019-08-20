@@ -197,12 +197,12 @@ EOF
       end
     end
 
-    describe ".parse_makefile_deps" do
+    describe ".parse_dependency_file" do
       it 'handles dependencies on one line' do
         expect(File).to receive(:read).with('makefile').and_return(<<EOS)
 module.o: source.cc
 EOS
-        expect(Util.parse_makefile_deps('makefile')).to eq ['source.cc']
+        expect(Util.parse_dependency_file('makefile')).to eq ['source.cc']
       end
 
       it 'handles dependencies split across many lines' do
@@ -211,8 +211,21 @@ module.o: module.c \\
   module.h \\
   other.h
 EOS
-        expect(Util.parse_makefile_deps('makefile')).to eq [
+        expect(Util.parse_dependency_file('makefile')).to eq [
           'module.c', 'module.h', 'other.h']
+      end
+
+      it "parses ldc2-style dependency lines" do
+        expect(File).to receive(:read).with("deps.out").and_return(<<EOS)
+std.traits (/usr/lib/ldc/x86_64-linux-gnu/include/d/std/traits.d) : private : std.meta (/usr/lib/ldc/x86_64-linux-gnu/include/d/std/meta.d):staticIndexOf
+std.conv (/usr/lib/ldc/x86_64-linux-gnu/include/d/std/conv.d) : private : std.array (/usr/lib/ldc/x86_64-linux-gnu/include/d/std/array.d):array
+std.stdio (/usr/lib/ldc/x86_64-linux-gnu/include/d/std/stdio.d) : private static : core.sys.posix.sys.socket (/usr/lib/ldc/x86_64-linux-gnu/include/d/core/sys/posix/sys/socket.d) -> sock
+EOS
+        expect(Util.parse_dependency_file("deps.out")).to eq [
+          "/usr/lib/ldc/x86_64-linux-gnu/include/d/std/meta.d",
+          "/usr/lib/ldc/x86_64-linux-gnu/include/d/std/array.d",
+          "/usr/lib/ldc/x86_64-linux-gnu/include/d/core/sys/posix/sys/socket.d",
+        ]
       end
     end
 

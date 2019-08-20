@@ -479,6 +479,7 @@ module Rscons
             "DC" => dc,
             "DCCMD" => env["DCCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
             "LDCMD" => env["LDCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
+            "DDEPGEN" => ["-deps=${_DEPFILE}"],
           }
         end
         _, _, status = log_and_test_command(command)
