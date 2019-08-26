@@ -608,9 +608,9 @@ EOF
       result = run_rscons(rsconscript: "build-ldc2.rb")
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o -deps=build/e.1/main.mf main.d}])
-      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o -deps=build/e.1/mod.mf mod.d}])
-      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o(bj)? -deps=build/e.1/main.mf main.d}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o(bj)? -deps=build/e.1/mod.mf mod.d}])
+      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o(bj)? build/e.1/mod.o(bj)?}])
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
     end
 
@@ -619,9 +619,9 @@ EOF
       result = run_rscons(rsconscript: "build-ldc2.rb")
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o -deps=build/e.1/main.mf main.d}])
-      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o -deps=build/e.1/mod.mf mod.d}])
-      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o(bj)? -deps=build/e.1/main.mf main.d}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o(bj)? -deps=build/e.1/mod.mf mod.d}])
+      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o(bj)? build/e.1/mod.o(bj)?}])
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
       contents = File.read("mod.d", mode: "rb").sub("42", "33")
       File.open("mod.d", "wb") do |fh|
@@ -630,9 +630,9 @@ EOF
       result = run_rscons(rsconscript: "build-ldc2.rb")
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o -deps=build/e.1/main.mf main.d}])
-      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o -deps=build/e.1/mod.mf mod.d}])
-      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o(bj)? -deps=build/e.1/main.mf main.d}])
+      verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o(bj)? -deps=build/e.1/mod.mf mod.d}])
+      verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o(bj)? build/e.1/mod.o(bj)?}])
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 33!"
     end
 

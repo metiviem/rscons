@@ -481,6 +481,10 @@ module Rscons
             "LDCMD" => env["LDCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
             "DDEPGEN" => ["-deps=${_DEPFILE}"],
           }
+          if RUBY_PLATFORM =~ /mingw/
+            # ldc2 on Windows expect an object file suffix of .obj.
+            merge["OBJSUFFIX"] = %w[.obj]
+          end
         end
         _, _, status = log_and_test_command(command)
         if status == 0
