@@ -59,9 +59,10 @@ combined_file.each do |line|
 end
 
 require "zlib"
+require "base64"
 compressed_script = Zlib::Deflate.deflate(stripped_comments.join)
-escaped_compressed_script = compressed_script.gsub("#", "#1").gsub("\n", "#2").gsub("\r", "#3").gsub("\0", "#4")
-hash = Digest::MD5.hexdigest(escaped_compressed_script)
+encoded_compressed_script = Base64.encode64(compressed_script).gsub("\n", "")
+hash = Digest::MD5.hexdigest(encoded_compressed_script)
 
 FileUtils.mkdir_p(DIST)
 File.open("#{DIST}/#{PROG_NAME}", "wb", 0755) do |fh|
@@ -70,9 +71,10 @@ File.open("#{DIST}/#{PROG_NAME}", "wb", 0755) do |fh|
 script = File.join(File.dirname(__FILE__), ".rscons-#{VERSION}-#{hash}.rb")
 unless File.exists?(script)
   if File.read(__FILE__, mode: "rb") =~ /^#==>(.*)/
-    escaped_compressed = $1
-    unescaped_compressed = escaped_compressed.gsub("#4", "\\0").gsub("#3", "\\r").gsub("#2", "\\n").gsub("#1", "#")
     require "zlib"
+    require "base64"
+    encoded_compressed = $1
+    unescaped_compressed = Base64.decode64(encoded_compressed)
     inflated = Zlib::Inflate.inflate(unescaped_compressed)
     File.open(script, "wb") do |fh|
       fh.write(inflated)
@@ -85,6 +87,6 @@ load script
 if __FILE__ == $0
   Rscons::Cli.run(ARGV)
 end
-#==>#{escaped_compressed_script}
+#==>#{encoded_compressed_script}
 EOF
 end
