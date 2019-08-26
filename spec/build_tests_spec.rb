@@ -65,6 +65,9 @@ describe Rscons do
 
   def create_exe(exe_name, contents)
     exe_file = "#{@build_test_run_dir}/_bin/#{exe_name}"
+    if RUBY_PLATFORM =~ /mingw/
+      exe_file += ".bat"
+    end
     File.open(exe_file, "wb") do |fh|
       fh.puts("#!/bin/sh")
       fh.puts(contents)
