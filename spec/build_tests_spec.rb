@@ -669,11 +669,7 @@ EOF
       test_dir("shared_library")
 
       result = run_rscons(rsconscript: "shared_library_d.rb")
-      # Currently gdc produces an error while trying to build the shared
-      # library. Since this isn't really an rscons problem, I'm commenting out
-      # this check. I'm not sure what I want to do about D support at this
-      # point anyway...
-      #expect(result.stderr).to eq ""
+      expect(result.stderr).to eq ""
       slines = lines(result.stdout)
       if RUBY_PLATFORM =~ /mingw/
         verify_lines(slines, [%r{Linking mine.dll}])
