@@ -1,6 +1,6 @@
 build do
   Environment.new do |env|
-    env["LIBS"] += ["c"]
+    env["LIBS"] += ["m"]
     env.Program('simple.exe', Dir['*.c'])
   end
 end
