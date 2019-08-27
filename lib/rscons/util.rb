@@ -204,16 +204,18 @@ module Rscons
           File.file?(path) and File.executable?(path)
         end
         if RbConfig::CONFIG["host_os"] =~ /mswin|windows|mingw/i
-          executable = executable.downcase
-          dir_entries = Dir.entries(path_entry)
-          dir_entries.find do |entry|
-            path = "#{path_entry}/#{entry}"
-            entry = entry.downcase
-            if ((entry == executable) or
-                (entry == "#{executable}.exe") or
-                (entry == "#{executable}.com") or
-                (entry == "#{executable}.bat")) and is_executable[path]
-              return path
+          if File.directory?(path_entry)
+            executable = executable.downcase
+            dir_entries = Dir.entries(path_entry)
+            dir_entries.find do |entry|
+              path = "#{path_entry}/#{entry}"
+              entry = entry.downcase
+              if ((entry == executable) or
+                  (entry == "#{executable}.exe") or
+                  (entry == "#{executable}.com") or
+                  (entry == "#{executable}.bat")) and is_executable[path]
+                return path
+              end
             end
           end
         else

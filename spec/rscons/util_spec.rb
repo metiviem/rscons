@@ -121,7 +121,10 @@ EOF
           before(:each) do
             stub_const("File::PATH_SEPARATOR", ";")
             stub_const("RbConfig::CONFIG", "host_os" => "mingw")
-            expect(ENV).to receive(:[]).with("PATH").and_return("C:\\bin;C:\\Windows")
+            expect(ENV).to receive(:[]).with("PATH").and_return("C:\\none;C:\\bin;C:\\Windows")
+            allow(File).to receive(:directory?).with("C:\\none").and_return(false)
+            allow(File).to receive(:directory?).with("C:\\bin").and_return(true)
+            allow(File).to receive(:directory?).with("C:\\Windows").and_return(true)
             allow(Dir).to receive(:entries).with("C:\\bin").and_return(%w[one.com])
             allow(Dir).to receive(:entries).with("C:\\Windows").and_return(%w[two.exe Three.bat])
           end

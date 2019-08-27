@@ -145,7 +145,11 @@ EOF
     stdout, stderr, status = nil, nil, nil
     Bundler.with_clean_env do
       env = ENV.to_h
-      env["PATH"] = "#{@build_test_run_dir}/_bin#{File::PATH_SEPARATOR}#{env["PATH"]}"
+      path = ["#{@build_test_run_dir}/_bin", "#{env["PATH"]}"]
+      if options[:path]
+        path = Array(options[:path]) + path
+      end
+      env["PATH"] = path.join(File::PATH_SEPARATOR)
       stdout, stderr, status = Open3.capture3(env, *command)
       File.open("#{@build_test_run_dir}/.stdout", "wb") do |fh|
         fh.write(stdout)
@@ -2046,6 +2050,16 @@ EOF
         expect(result.stdout).to match /Checking for program 'find'... .*find/
       end
 
+      context "with non-existent PATH entries" do
+        it "succeeds when the requested program is found" do
+          test_dir "configure"
+          result = run_rscons(rsconscript: "check_program_success.rb", op: "configure", path: "/foo/bar")
+          expect(result.stderr).to eq ""
+          expect(result.status).to eq 0
+          expect(result.stdout).to match /Checking for program 'find'... .*find/
+        end
+      end
+
       it "fails when the requested program is not found" do
         test_dir "configure"
         result = run_rscons(rsconscript: "check_program_failure.rb", op: "configure")
@@ -2188,8 +2202,8 @@ EOF
       expect(result.stdout).to match /Setting build directory\.\.\. bb/
       expect(result.stdout).to match %r{Setting prefix\.\.\. /my/prefix}
       expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
-      expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. g++/
-      expect(result.stdout).to match /Checking for D compiler\.\.\. gdc/
+      expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. g\+\+/
+      expect(result.stdout).to match /Checking for D compiler\.\.\. (gdc|ldc2)/
       expect(result.stdout).to match /Checking for package 'mypackage'\.\.\. found/
       expect(result.stdout).to match /Checking for C header 'stdio.h'\.\.\. found/
       expect(result.stdout).to match /Checking for C\+\+ header 'iostream'\.\.\. found/
