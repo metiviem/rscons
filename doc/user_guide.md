@@ -8,7 +8,7 @@ It supports the following features:
   * built-in builders for several common operations
   * out-of-the-box support for C, C++, and D languages
   * extensibility for other languages or custom builders
-  * compatible with Windows, Linux, and OS X
+  * compatible with Windows, Linux, OS X, and FreeBSD
   * colorized output with build progress
   * build hooks
 
