@@ -280,12 +280,19 @@ module Rscons
 
     # Execute a test command and log the result.
     #
+    # @param command [Array<String>]
+    #   Command to execute.
+    # @param options [Hash]
+    #   Optional arguments.
+    # @option options [String] :stdin
+    #   Data to send to standard input stream of the executed command.
+    #
     # @return [String, String, Process::Status]
     #   stdout, stderr, status
-    def log_and_test_command(command)
+    def log_and_test_command(command, options = {})
       begin
         @log_fh.puts("Command: #{command.join(" ")}")
-        stdout, stderr, status = Open3.capture3(*command)
+        stdout, stderr, status = Open3.capture3(*command, stdin_data: options[:stdin])
         @log_fh.puts("Exit status: #{status.to_i}")
         @log_fh.write(stdout)
         @log_fh.write(stderr)

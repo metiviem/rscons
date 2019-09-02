@@ -2189,6 +2189,14 @@ EOF
             expect(result.status).to eq 0
           end
         end
+
+        it "allows passing standard input data to the executed command" do
+          test_dir "configure"
+          result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+          expect(result.stderr).to eq ""
+          expect(result.stdout).to match /Checking sed -E flag\.\.\. good/
+          expect(result.status).to eq 0
+        end
       end
     end
 

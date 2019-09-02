@@ -17,6 +17,10 @@ configure do
     end
     op.complete(status, success_message: "good!", fail_message: fail_message, fail: should_fail)
   end
+  custom_check("Checking sed -E flag") do |op|
+    stdout, stderr, status = op.log_and_test_command(%w[sed -E -e s/ab+/rep/], stdin: "abbbc")
+    op.complete(stdout =~ /repc/ ? 0 : 1, success_message: "good", fail_message: "fail")
+  end
 end
 
 build do
