@@ -32,6 +32,7 @@
 - various performance improvements
 - wrote a new user guide
 - added new website ([https://holtrop.github.io/rscons/](https://holtrop.github.io/rscons/))
+- added new logo
 
 ## v1.17.0
 
