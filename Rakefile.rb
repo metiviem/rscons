@@ -93,3 +93,10 @@ task :user_guide do
 end
 
 task :default => :spec
+
+task :all => [
+  :build_dist,
+  :spec,
+  :yard,
+  :user_guide,
+]
