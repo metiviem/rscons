@@ -98,7 +98,8 @@ The only dependency required to run Rscons is to have a Ruby interpreter
 installed.
 The latest release can be downloaded from [https://github.com/holtrop/rscons/releases](https://github.com/holtrop/rscons/releases).
 Simply copy the `rscons` executable script into the desired location within
-the project to be built (typically the root of the repository).
+the project to be built (typically the root of the repository) and mark it
+executable.
 
 ## Version Control Setup
 
