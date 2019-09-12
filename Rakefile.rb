@@ -11,7 +11,7 @@ require "rake/clean"
 require "fileutils"
 
 CLEAN.include %w[build_test_run .yardoc yard coverage test]
-CLOBBER.include %w[dist pkg]
+CLOBBER.include %w[dist gen pkg]
 
 task :build_dist do
   sh "ruby rb/build_dist.rb"
