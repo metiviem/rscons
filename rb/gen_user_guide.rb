@@ -154,7 +154,8 @@ class Generator
   end
 
   def render_toc
-    toc_content = %[<h1>Table of Contents</h1>\n]
+    toc_content = %[<img class="img_block_center" src="rscons_logo_1000.png" />]
+    toc_content += %[<h1>Table of Contents</h1>\n]
     @sections.each do |section|
       indent = section.number.split(".").size - 1
       toc_content += %[<span style="padding-left: #{4 * indent}ex;">]
@@ -223,5 +224,6 @@ end
 input = load_file("doc/user_guide.md")
 FileUtils.rm_rf("gen/user_guide")
 FileUtils.mkdir_p("gen/user_guide")
+FileUtils.cp("img/rscons_logo_1000.png", "gen/user_guide")
 Generator.new(input, "gen/user_guide/user_guide.html", false)
 Generator.new(input, "gen/user_guide", true)
