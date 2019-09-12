@@ -1,5 +1,7 @@
 # Rscons
 
+![rscons logo](img/rscons_logo_1000.png)
+
 Rscons (https://github.com/holtrop/rscons) is an open-source build system
 for developers.
 
