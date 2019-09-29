@@ -57,6 +57,7 @@ module Rscons
                 printed_message = true
               end
               @cache.mkdir_p(File.dirname(dest), install: @install_builder)
+              FileUtils.rm_f(dest)
               FileUtils.cp(src, dest, :preserve => true)
             end
             @cache.register_build(dest, :Copy, [src], @env, install: @install_builder)

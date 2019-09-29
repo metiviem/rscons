@@ -337,6 +337,20 @@ EOF
     expect(result.stderr).to match /Could not find a registered build target "foo"/
   end
 
+  it "allows replacing a running executable when performing an 'install' operation" do
+    test_dir("install_running_exe")
+    result = run_rscons(op: "install")
+    expect(result.stderr).to eq ""
+    fcontents = File.read("program.c", mode: "rb")
+    File.open("program.c", "wb") do |fh|
+      fh.write(fcontents.sub(/2/, '3'))
+    end
+    pid = Process.spawn("install/program.exe")
+    result = run_rscons(op: "install")
+    expect(result.stderr).to eq ""
+    Process.wait(pid)
+  end
+
   context "clean operation" do
     it 'cleans built files' do
       test_dir("simple")
