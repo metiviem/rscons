@@ -1,3 +1,9 @@
+## v2.0.1
+
+### Fixes
+
+- #112 - Install builder cannot replace a currently executing binary on Linux
+
 ## v2.0.0
 
 - convert rscons from a Ruby gem to a standalone script
