@@ -11,11 +11,13 @@ module Rscons
       append(vars)
     end
 
-    # Access the value of variable.
+    # Access the value of a variable.
     #
-    # @param key [String, Symbol] The variable name.
+    # @param key [String, Symbol]
+    #   The variable name.
     #
-    # @return [Object] The variable's value.
+    # @return [Object]
+    #   The variable's value.
     def [](key)
       if @my_vars.include?(key)
         @my_vars[key]
@@ -30,11 +32,38 @@ module Rscons
       end
     end
 
+    # Access the value of a variable.
+    #
+    # This method is similar to #[] but does not make a copy-on-access copy of
+    # the variable accessed. This means that the returned value is NOT safe to
+    # be modified by the caller. Thus the caller must guarantee that it does
+    # not modify the returned value.
+    #
+    # @param key [String, Symbol]
+    #   The variable name.
+    #
+    # @return [Object]
+    #   The variable's value.
+    def get_var(key)
+      if @my_vars.include?(key)
+        @my_vars[key]
+      else
+        @coa_vars.each do |coa_vars|
+          if coa_vars.include?(key)
+            return coa_vars[key]
+          end
+        end
+        nil
+      end
+    end
+
     # Assign a value to a variable.
     #
-    # @param key [String, Symbol] The variable name.
+    # @param key [String, Symbol]
+    #   The variable name.
     #
-    # @param val [Object] The value to set.
+    # @param val [Object]
+    #   The value to set.
     def []=(key, val)
       @my_vars[key] = val
     end
@@ -95,29 +124,27 @@ module Rscons
     #   Expanded value with "$!{var}" variable references replaced.
     def expand_varref(varref, lambda_args)
       case varref
-      when Symbol, true, false, nil
-        varref
       when String
         if varref =~ /^(.*)\$\{([^}]+)\}(.*)$/
           prefix, varname, suffix = $1, $2, $3
           prefix = expand_varref(prefix, lambda_args) unless prefix.empty?
-          varval = expand_varref(self[varname], lambda_args)
+          varval = expand_varref(get_var(varname), lambda_args)
           # suffix needs no expansion since the regex matches the last occurence
           case varval
-          when Symbol, true, false, nil, String
-            if prefix.is_a?(Array)
-              prefix.map {|p| "#{p}#{varval}#{suffix}"}
-            else
-              "#{prefix}#{varval}#{suffix}"
-            end
           when Array
             if prefix.is_a?(Array)
               varval.map {|vv| prefix.map {|p| "#{p}#{vv}#{suffix}"}}.flatten
             else
               varval.map {|vv| "#{prefix}#{vv}#{suffix}"}
             end
+          when String, Symbol, true, false, nil
+            if prefix.is_a?(Array)
+              prefix.map {|p| "#{p}#{varval}#{suffix}"}
+            else
+              "#{prefix}#{varval}#{suffix}"
+            end
           else
-            raise "Unknown construction variable type: #{varval.class} (from #{varname.inspect} => #{self[varname].inspect})"
+            raise "Unknown construction variable type: #{varval.class} (from #{varname.inspect} => #{get_var(varname).inspect})"
           end
         else
           varref
@@ -126,6 +153,8 @@ module Rscons
         varref.map do |ent|
           expand_varref(ent, lambda_args)
         end.flatten
+      when Symbol, true, false, nil
+        varref
       when Proc
         expand_varref(varref[*lambda_args], lambda_args)
       else
@@ -194,16 +223,16 @@ module Rscons
     #
     # @return [Object] Deep copied value.
     def deep_dup(obj)
-      obj_class = obj.class
-      if obj_class == Hash
+      case obj
+      when String
+        obj.dup
+      when Array
+        obj.map { |v| deep_dup(v) }
+      when Hash
         obj.reduce({}) do |result, (k, v)|
           result[k] = deep_dup(v)
           result
         end
-      elsif obj_class == Array
-        obj.map { |v| deep_dup(v) }
-      elsif obj_class == String
-        obj.dup
       else
         obj
       end

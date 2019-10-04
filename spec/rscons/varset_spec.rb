@@ -169,7 +169,7 @@ module Rscons
         expect { v.expand_varref({a: :b}, :lambda_args) }.to raise_error /Unknown construction variable type: Hash/
       end
       it "raises an error when an expanded variable is an unexpected type" do
-        expect(v).to receive(:[]).at_least(1).times.with("bad").and_return("bad_val")
+        expect(v).to receive(:get_var).at_least(1).times.with("bad").and_return("bad_val")
         expect(v).to receive(:expand_varref).with("bad_val", :lambda_args).and_return({a: :b})
         expect(v).to receive(:expand_varref).and_call_original
         expect { v.expand_varref("${bad}", :lambda_args) }.to raise_error /Unknown construction variable type: Hash/
