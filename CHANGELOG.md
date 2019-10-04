@@ -1,5 +1,18 @@
 ## ChangeLog
 
+### v1.18.0
+
+#### Performance Improvements
+
+- Backport 2.x VarSet performance improvements to 1.x branch.
+- Remove Cache dirty-tracking
+- Reduce recursion of VarSet#expand_varref by expanding vars earlier.
+
+#### Fixes
+
+- #73 - fix inconsistent type handling in VarSet#expand_varref
+- #75 - avoid mkdir() race conditions
+
 ### v1.17.0
 
 #### New Features
