@@ -1025,7 +1025,7 @@ Here is our Custom builder example extended to print its status:
 ```ruby
 class Rscons::Builders::Custom < Rscons::Builder
   def run(options)
-    print_run_message("Creating <target>#{@target}<reset> from Custom builder")
+    print_run_message("Creating <target>#{@target}<reset> from Custom builder", nil)
     File.open(@target, "w") do |fh|
       fh.write("Target file created.")
     end
@@ -1050,7 +1050,7 @@ Here is a Custom builder which combines its source files similar to what the
 class Rscons::Builders::Custom < Rscons::Builder
   def run(options)
     unless @cache.up_to_date?(@target, nil, @sources, @env)
-      print_run_message("Combining <source>#{Util.short_format_paths(@sources)}<reset> => <target>#{@target}<reset>")
+      print_run_message("Combining <source>#{Util.short_format_paths(@sources)}<reset> => <target>#{@target}<reset>", nil)
       File.open(@target, "wb") do |fh|
         @sources.each do |source|
           fh.write(File.read(source, mode: "rb"))
