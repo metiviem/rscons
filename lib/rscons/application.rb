@@ -75,6 +75,8 @@ module Rscons
           end
           if rv == 0
             build(operation_options)
+          else
+            rv
           end
         when "clean"
           clean

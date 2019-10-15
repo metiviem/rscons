@@ -2257,6 +2257,7 @@ EOF
       result = run_rscons(rsconscript: "autoconf_fail.rb")
       expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
       expect(result.status).to_not eq 0
+      expect(result.stderr).to_not match /from\s/
     end
 
     it "exits with an error if configuration has not been performed before attempting to create an environment" do
