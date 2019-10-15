@@ -1277,7 +1277,7 @@ To do this, create a `configure` script with contents similar to the following:
 
 ```
 #!/bin/sh
-exec "$(dirname "$0")"/rscons "$@"
+exec "$(dirname "$0")"/rscons configure "$@"
 ```
 
 and make it executable with `chmod +x configure`.
