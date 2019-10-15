@@ -194,6 +194,7 @@ module Rscons
       begin
         @script.configure(co)
       rescue ConfigureOp::ConfigureFailure
+        Ansi.write($stderr, :red, "Configuration failed", :reset, "\n")
         rv = 1
       end
       co.close(rv == 0)

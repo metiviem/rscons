@@ -1725,7 +1725,7 @@ EOF
             create_exe "gcc", "exit 1"
             create_exe "clang", "exit 1"
             result = run_rscons(rsconscript: rsconscript, op: "configure")
-            expect(result.stderr).to eq ""
+            expect(result.stderr).to match /Configuration failed/
             expect(result.status).to_not eq 0
             expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
           end
@@ -1768,7 +1768,7 @@ EOF
             create_exe "g++", "exit 1"
             create_exe "clang++", "exit 1"
             result = run_rscons(rsconscript: rsconscript, op: "configure")
-            expect(result.stderr).to eq ""
+            expect(result.stderr).to match /Configuration failed/
             expect(result.status).to_not eq 0
             expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. not found/
           end
@@ -1811,7 +1811,7 @@ EOF
             create_exe "gdc", "exit 1"
             create_exe "ldc2", "exit 1"
             result = run_rscons(rsconscript: rsconscript, op: "configure")
-            expect(result.stderr).to eq ""
+            expect(result.stderr).to match /Configuration failed/
             expect(result.status).to_not eq 0
             expect(result.stdout).to match /Checking for D compiler\.\.\. not found/
           end
@@ -1849,7 +1849,7 @@ EOF
       it "fails when the requested header is not found" do
         test_dir "configure"
         result = run_rscons(rsconscript: "check_c_header_failure.rb", op: "configure")
-        expect(result.stderr).to eq ""
+        expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for C header 'not___found\.h'... not found/
       end
@@ -1914,7 +1914,7 @@ EOF
       it "fails when the requested header is not found" do
         test_dir "configure"
         result = run_rscons(rsconscript: "check_cxx_header_failure.rb", op: "configure")
-        expect(result.stderr).to eq ""
+        expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for C\+\+ header 'not___found\.h'... not found/
       end
@@ -1955,7 +1955,7 @@ EOF
       it "fails when the requested import is not found" do
         test_dir "configure"
         result = run_rscons(rsconscript: "check_d_import_failure.rb", op: "configure")
-        expect(result.stderr).to eq ""
+        expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for D import 'not\.found'... not found/
       end
@@ -1996,7 +1996,7 @@ EOF
       it "fails when the requested library is not found" do
         test_dir "configure"
         result = run_rscons(rsconscript: "check_lib_failure.rb", op: "configure")
-        expect(result.stderr).to eq ""
+        expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for library 'mfoofoo'... not found/
       end
@@ -2077,7 +2077,7 @@ EOF
       it "fails when the requested program is not found" do
         test_dir "configure"
         result = run_rscons(rsconscript: "check_program_failure.rb", op: "configure")
-        expect(result.stderr).to eq ""
+        expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for program 'program-that-is-not-found'... not found/
       end
@@ -2109,7 +2109,7 @@ EOF
         it "fails when the configure program given does not exist" do
           test_dir "configure"
           result = run_rscons(rsconscript: "check_cfg.rb", op: "configure")
-          expect(result.stderr).to eq ""
+          expect(result.stderr).to match /Configuration failed/
           expect(result.status).to_not eq 0
           expect(result.stdout).to match /Checking 'my-config'\.\.\. not found/
         end
@@ -2154,7 +2154,7 @@ EOF
               test_dir "configure"
               create_exe "grep", "exit 4"
               result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
-              expect(result.stderr).to eq ""
+              expect(result.stderr).to match /Configuration failed/
               expect(result.stdout).to match /Checking 'grep' version\.\.\. error executing grep/
               expect(result.status).to_not eq 0
             end
@@ -2165,7 +2165,7 @@ EOF
               test_dir "configure"
               create_exe "grep", "echo 'grep (GNU grep) 1.1'"
               result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
-              expect(result.stderr).to eq ""
+              expect(result.stderr).to match /Configuration failed/
               expect(result.stdout).to match /Checking 'grep' version\.\.\. too old!/
               expect(result.status).to_not eq 0
             end
@@ -2252,12 +2252,13 @@ EOF
       expect(result.status).to_not eq 0
     end
 
-    it "exits with an error if configuration fails during autoconf" do
+    it "exits with an error code and message if configuration fails during autoconf" do
       test_dir "configure"
       result = run_rscons(rsconscript: "autoconf_fail.rb")
       expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
       expect(result.status).to_not eq 0
       expect(result.stderr).to_not match /from\s/
+      expect(lines(result.stderr).last).to eq "Configuration failed"
     end
 
     it "exits with an error if configuration has not been performed before attempting to create an environment" do
