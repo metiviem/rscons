@@ -78,7 +78,7 @@ module Rscons
               if @vars[:direct]
                 @env.get_build_fname(target, depfilesuffix, self.class)
               else
-                Rscons.set_suffix(target, depfilesuffix)
+                "#{target}#{depfilesuffix}"
               end
             @cache.mkdir_p(File.dirname(@vars["_DEPFILE"]))
             command = @env.build_command(@command_template, @vars)

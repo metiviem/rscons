@@ -1,15 +1,5 @@
 describe Rscons do
 
-  describe ".set_suffix" do
-    it "changes the suffix to the new one" do
-      expect(Rscons.set_suffix("foo.c", ".h")).to eq("foo.h")
-    end
-
-    it "appends a suffix if the given file name does not have one" do
-      expect(Rscons.set_suffix("bazz", ".d")).to eq("bazz.d")
-    end
-  end
-
   describe ".get_system_shell" do
     before(:each) do
       Rscons.instance_variable_set(:@shell, nil)

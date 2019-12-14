@@ -195,7 +195,7 @@ EOF
     test_dir('simple')
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(File.exists?('build/e.1/simple.o')).to be_truthy
+    expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
   end
 
@@ -212,8 +212,8 @@ EOF
     result = run_rscons(rsconscript: "command.rb")
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/simple.o -MMD -MF build/e.1/simple.mf simple.c},
-      %r{gcc -o simple.exe build/e.1/simple.o},
+      %r{gcc -c -o build/e.1/simple.c.o -MMD -MF build/e.1/simple.c.o.mf simple.c},
+      %r{gcc -o simple.exe build/e.1/simple.c.o},
     ])
   end
 
@@ -231,7 +231,7 @@ EOF
     test_dir('header')
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(File.exists?('build/e.1/header.o')).to be_truthy
+    expect(File.exists?('build/e.1/header.c.o')).to be_truthy
     expect(`./header.exe`).to eq "The value is 2\n"
   end
 
@@ -281,13 +281,13 @@ EOF
     result = run_rscons(rsconscript: "command.rb")
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/simple.o -MMD -MF build/e.1/simple.mf simple.c},
-      %r{gcc -o simple.exe build/e.1/simple.o},
+      %r{gcc -c -o build/e.1/simple.c.o -MMD -MF build/e.1/simple.c.o.mf simple.c},
+      %r{gcc -o simple.exe build/e.1/simple.c.o},
     ])
     result = run_rscons(rsconscript: "link_flag_change.rb")
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -o simple.exe build/e.1/simple.o -Llibdir},
+      %r{gcc -o simple.exe build/e.1/simple.c.o -Llibdir},
     ])
   end
 
@@ -317,9 +317,9 @@ EOF
     result = run_rscons(rsconscript: "carat.rb")
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/one.o -MMD -MF build/e.1/one.mf -Isrc -Isrc/one -Isrc/two build/e.1/one.c},
-      %r{gcc -c -o build/e.1/src/two/two.o -MMD -MF build/e.1/src/two/two.mf -Isrc -Isrc/one -Isrc/two src/two/two.c},
-      %r{gcc -o program.exe build/e.1/src/two/two.o build/e.1/one.o},
+      %r{gcc -c -o build/e.1/one.o -MMD -MF build/e.1/one.o.mf -Isrc -Isrc/one -Isrc/two build/e.1/one.c},
+      %r{gcc -c -o build/e.1/src/two/two.c.o -MMD -MF build/e.1/src/two/two.c.o.mf -Isrc -Isrc/one -Isrc/two src/two/two.c},
+      %r{gcc -o program.exe build/e.1/src/two/two.c.o build/e.1/one.o},
     ])
   end
 
@@ -357,9 +357,9 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       expect(`./simple.exe`).to match /This is a simple C program/
-      expect(File.exists?('build/e.1/simple.o')).to be_truthy
+      expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
       result = run_rscons(op: %w[clean])
-      expect(File.exists?('build/e.1/simple.o')).to be_falsey
+      expect(File.exists?('build/e.1/simple.c.o')).to be_falsey
       expect(File.exists?('build/e.1')).to be_falsey
       expect(File.exists?('simple.exe')).to be_falsey
       expect(File.exists?('simple.c')).to be_truthy
@@ -370,7 +370,7 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       expect(`./simple.exe`).to match /This is a simple C program/
-      expect(File.exists?('build/e.1/simple.o')).to be_truthy
+      expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
       File.open('build/e.1/dum', 'w') { |fh| fh.puts "dum" }
       result = run_rscons(op: %w[clean])
       expect(File.exists?('build/e.1')).to be_truthy
@@ -387,12 +387,12 @@ EOF
         result = run_rscons(rsconscript: "install.rb", op: %W[install])
         expect(result.stderr).to eq ""
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
+        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_truthy
 
         result = run_rscons(rsconscript: "install.rb", op: %W[clean])
         expect(result.stderr).to eq ""
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("build/e.1/src/one/one.o")).to be_falsey
+        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_falsey
       end
     end
 
@@ -409,7 +409,7 @@ EOF
         result = run_rscons(rsconscript: "install.rb", op: %W[clean])
         expect(result.stderr).to eq ""
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("build/e.1/src/one/one.o")).to be_falsey
+        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_falsey
 
         result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
         expect(result.stderr).to eq ""
@@ -491,10 +491,10 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/src/program.o -MMD -MF build/e.1/src/program.mf '-DSTRING="Debug Version"' -O2 src/program.c},
-      %r{gcc -o program-debug.exe build/e.1/src/program.o},
-      %r{gcc -c -o build/e.2/src/program.o -MMD -MF build/e.2/src/program.mf '-DSTRING="Release Version"' -O2 src/program.c},
-      %r{gcc -o program-release.exe build/e.2/src/program.o},
+      %r{gcc -c -o build/e.1/src/program.c.o -MMD -MF build/e.1/src/program.c.o.mf '-DSTRING="Debug Version"' -O2 src/program.c},
+      %r{gcc -o program-debug.exe build/e.1/src/program.c.o},
+      %r{gcc -c -o build/e.2/src/program.c.o -MMD -MF build/e.2/src/program.c.o.mf '-DSTRING="Release Version"' -O2 src/program.c},
+      %r{gcc -o program-release.exe build/e.2/src/program.c.o},
     ])
   end
 
@@ -503,12 +503,12 @@ EOF
     result = run_rscons(rsconscript: "clone_all.rb")
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/src/program.o -MMD -MF build/e.1/src/program.mf -DSTRING="Hello" -O2 src/program.c},
-      %r{post build/e.1/src/program.o},
-      %r{gcc -o program.exe build/e.1/src/program.o},
+      %r{gcc -c -o build/e.1/src/program.c.o -MMD -MF build/e.1/src/program.c.o.mf -DSTRING="Hello" -O2 src/program.c},
+      %r{post build/e.1/src/program.c.o},
+      %r{gcc -o program.exe build/e.1/src/program.c.o},
       %r{post program.exe},
-      %r{post build/e.2/src/program.o},
-      %r{gcc -o program2.exe build/e.2/src/program.o},
+      %r{post build/e.2/src/program.c.o},
+      %r{gcc -o program2.exe build/e.2/src/program.c.o},
       %r{post program2.exe},
     ])
   end
@@ -517,7 +517,7 @@ EOF
     test_dir('simple_cc')
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(File.exists?('build/e.1/simple.o')).to be_truthy
+    expect(File.exists?('build/e.1/simple.cc.o')).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C++ program\n"
   end
 
@@ -534,9 +534,9 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o one.o -MMD -MF one.mf -DONE one.c},
-      %r{gcc -c -o build/e.1/two.o -MMD -MF build/e.1/two.mf two.c},
-      %r{gcc -o two_sources.exe one.o build/e.1/two.o},
+      %r{gcc -c -o one.o -MMD -MF one.o.mf -DONE one.c},
+      %r{gcc -c -o build/e.1/two.c.o -MMD -MF build/e.1/two.c.o.mf two.c},
+      %r{gcc -o two_sources.exe one.o build/e.1/two.c.o},
     ])
     expect(File.exists?("two_sources.exe")).to be_truthy
     expect(`./two_sources.exe`).to eq "This is a C program with two sources.\n"
@@ -547,14 +547,14 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/one.o -MMD -MF build/e.1/one.mf -Dmake_lib one.c},
-      %r{gcc -c -o build/e.1/two.o -MMD -MF build/e.1/two.mf -Dmake_lib two.c},
-      %r{ar rcs lib.a build/e.1/one.o build/e.1/two.o},
-      %r{gcc -c -o build/e.1/three.o -MMD -MF build/e.1/three.mf three.c},
-      %r{gcc -o library.exe lib.a build/e.1/three.o},
+      %r{gcc -c -o build/e.1/one.c.o -MMD -MF build/e.1/one.c.o.mf -Dmake_lib one.c},
+      %r{gcc -c -o build/e.1/two.c.o -MMD -MF build/e.1/two.c.o.mf -Dmake_lib two.c},
+      %r{ar rcs lib.a build/e.1/one.c.o build/e.1/two.c.o},
+      %r{gcc -c -o build/e.1/three.c.o -MMD -MF build/e.1/three.c.o.mf three.c},
+      %r{gcc -o library.exe lib.a build/e.1/three.c.o},
     ])
     expect(File.exists?("library.exe")).to be_truthy
-    expect(`ar t lib.a`).to eq "one.o\ntwo.o\n"
+    expect(`ar t lib.a`).to eq "one.c.o\ntwo.c.o\n"
   end
 
   it 'supports build hooks to override construction variables' do
@@ -562,9 +562,9 @@ EOF
     result = run_rscons(rsconscript: "build_hooks.rb")
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/src/one/one.o -MMD -MF build/e.1/src/one/one.mf -Isrc/one -Isrc/two -O1 src/one/one.c},
-      %r{gcc -c -o build/e.1/src/two/two.o -MMD -MF build/e.1/src/two/two.mf -Isrc/one -Isrc/two -O2 src/two/two.c},
-      %r{gcc -o build_hook.exe build/e.1/src/one/one.o build/e.1/src/two/two.o},
+      %r{gcc -c -o build/e.1/src/one/one.c.o -MMD -MF build/e.1/src/one/one.c.o.mf -Isrc/one -Isrc/two -O1 src/one/one.c},
+      %r{gcc -c -o build/e.1/src/two/two.c.o -MMD -MF build/e.1/src/two/two.c.o.mf -Isrc/one -Isrc/two -O2 src/two/two.c},
+      %r{gcc -o build_hook.exe build/e.1/src/one/one.c.o build/e.1/src/two/two.c.o},
     ])
     expect(`./build_hook.exe`).to eq "Hello from two()\n"
   end
@@ -574,8 +574,8 @@ EOF
     result = run_rscons(rsconscript: "build_hooks_override_vars.rb")
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o one.o -MMD -MF one.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c},
-      %r{gcc -c -o two.o -MMD -MF two.mf -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c},
+      %r{gcc -c -o one.o -MMD -MF one.o.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c},
+      %r{gcc -c -o two.o -MMD -MF two.o.mf -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c},
     ])
     expect(File.exists?('one.o')).to be_truthy
     expect(File.exists?('two.o')).to be_truthy
@@ -591,7 +591,7 @@ EOF
       %r{Compiling simple.c},
       %r{Linking simple.exe},
     ])
-    expect(File.exists?('build/e.1/simple.o')).to be_truthy
+    expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
 
     File.open("program.ld", "w") {|fh| fh.puts("2")}
@@ -614,9 +614,9 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    verify_lines(slines, [%r{gdc -c -o build/e.1/main.o -MMD -MF build/e.1/main.mf main.d}])
-    verify_lines(slines, [%r{gdc -c -o build/e.1/mod.o -MMD -MF build/e.1/mod.mf mod.d}])
-    verify_lines(slines, [%r{gdc -o hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+    verify_lines(slines, [%r{gdc -c -o build/e.1/main.d.o -MMD -MF build/e.1/main.d.o.mf main.d}])
+    verify_lines(slines, [%r{gdc -c -o build/e.1/mod.d.o -MMD -MF build/e.1/mod.d.o.mf mod.d}])
+    verify_lines(slines, [%r{gdc -o hello-d.exe build/e.1/main.d.o build/e.1/mod.d.o}])
     expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
   end
 
@@ -625,9 +625,9 @@ EOF
     result = run_rscons(rsconscript: "build-ldc2.rb")
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o(bj)? -deps=build/e.1/main.mf main.d}])
-    verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o(bj)? -deps=build/e.1/mod.mf mod.d}])
-    verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o(bj)? build/e.1/mod.o(bj)?}])
+    verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.d.o(bj)? -deps=build/e.1/main.d.o.mf main.d}])
+    verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.d.o(bj)? -deps=build/e.1/mod.d.o.mf mod.d}])
+    verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.d.o(bj)? build/e.1/mod.d.o(bj)?}])
     expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
   end
 
@@ -636,9 +636,9 @@ EOF
     result = run_rscons(rsconscript: "build-ldc2.rb")
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o(bj)? -deps=build/e.1/main.mf main.d}])
-    verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o(bj)? -deps=build/e.1/mod.mf mod.d}])
-    verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o(bj)? build/e.1/mod.o(bj)?}])
+    verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.d.o(bj)? -deps=build/e.1/main.d.o.mf main.d}])
+    verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.d.o(bj)? -deps=build/e.1/mod.d.o.mf mod.d}])
+    verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.d.o(bj)? build/e.1/mod.d.o(bj)?}])
     expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
     contents = File.read("mod.d", mode: "rb").sub("42", "33")
     File.open("mod.d", "wb") do |fh|
@@ -647,9 +647,9 @@ EOF
     result = run_rscons(rsconscript: "build-ldc2.rb")
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.o(bj)? -deps=build/e.1/main.mf main.d}])
-    verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.o(bj)? -deps=build/e.1/mod.mf mod.d}])
-    verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.o(bj)? build/e.1/mod.o(bj)?}])
+    verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.d.o(bj)? -deps=build/e.1/main.d.o.mf main.d}])
+    verify_lines(slines, [%r{ldc2 -c -of build/e.1/mod.d.o(bj)? -deps=build/e.1/mod.d.o.mf mod.d}])
+    verify_lines(slines, [%r{ldc2 -of hello-d.exe build/e.1/main.d.o(bj)? build/e.1/mod.d.o(bj)?}])
     expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 33!"
   end
 
@@ -668,18 +668,18 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      verify_lines(slines, [%r{gdc -c -o build/e.1/main.o -MMD -MF build/e.1/main.mf main.d}])
-      verify_lines(slines, [%r{gdc -c -o build/e.1/mod.o -MMD -MF build/e.1/mod.mf mod.d}])
-      verify_lines(slines, [%r{gdc -o hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+      verify_lines(slines, [%r{gdc -c -o build/e.1/main.d.o -MMD -MF build/e.1/main.d.o.mf main.d}])
+      verify_lines(slines, [%r{gdc -c -o build/e.1/mod.d.o -MMD -MF build/e.1/mod.d.o.mf mod.d}])
+      verify_lines(slines, [%r{gdc -o hello-d.exe build/e.1/main.d.o build/e.1/mod.d.o}])
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
       fcontents = File.read("mod.d", mode: "rb").sub("42", "33")
       File.open("mod.d", "wb") {|fh| fh.write(fcontents)}
       result = run_rscons
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
-      verify_lines(slines, [%r{gdc -c -o build/e.1/main.o -MMD -MF build/e.1/main.mf main.d}])
-      verify_lines(slines, [%r{gdc -c -o build/e.1/mod.o -MMD -MF build/e.1/mod.mf mod.d}])
-      verify_lines(slines, [%r{gdc -o hello-d.exe build/e.1/main.o build/e.1/mod.o}])
+      verify_lines(slines, [%r{gdc -c -o build/e.1/main.d.o -MMD -MF build/e.1/main.d.o.mf main.d}])
+      verify_lines(slines, [%r{gdc -c -o build/e.1/mod.d.o -MMD -MF build/e.1/mod.d.o.mf mod.d}])
+      verify_lines(slines, [%r{gdc -o hello-d.exe build/e.1/main.d.o build/e.1/mod.d.o}])
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 33!"
     end
 
@@ -755,8 +755,8 @@ EOF
     test_dir("simple")
     result = run_rscons(rsconscript: "register_target_in_build_hook.rb")
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/simple.o")).to be_truthy
-    expect(File.exists?("build/e.1/simple.o.txt")).to be_truthy
+    expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
+    expect(File.exists?("build/e.1/simple.c.o.txt")).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
   end
 
@@ -765,8 +765,8 @@ EOF
     File.open("other.cccc", "w") {|fh| fh.puts}
     result = run_rscons(rsconscript: "cxxsuffix.rb")
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/simple.o")).to be_truthy
-    expect(File.exists?("build/e.1/other.o")).to be_truthy
+    expect(File.exists?("build/e.1/simple.cc.o")).to be_truthy
+    expect(File.exists?("build/e.1/other.cccc.o")).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C++ program\n"
   end
 
@@ -775,8 +775,8 @@ EOF
     FileUtils.mv("src/one/one.c", "src/one/one.yargh")
     result = run_rscons(rsconscript: "csuffix.rb")
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
-    expect(File.exists?("build/e.1/src/two/two.o")).to be_truthy
+    expect(File.exists?("build/e.1/src/one/one.yargh.o")).to be_truthy
+    expect(File.exists?("build/e.1/src/two/two.c.o")).to be_truthy
     expect(`./program.exe`).to eq "Hello from two()\n"
   end
 
@@ -848,7 +848,7 @@ EOF
     test_dir("simple")
     result = run_rscons(rsconscript: "cvar_array.rb")
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/simple.o")).to be_truthy
+    expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
     expect(`./simple.exe`).to eq "This is a simple C program\n"
   end
 
@@ -930,7 +930,7 @@ EOF
     result = run_rscons(rsconscript: "absolute_source_path.rb")
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
-    verify_lines(slines, [%r{build/e.1/.*/abs\.o$}])
+    verify_lines(slines, [%r{build/e.1/.*/abs\.c.o$}])
     verify_lines(slines, [%r{\babs.exe\b}])
   end
 
@@ -1445,6 +1445,18 @@ EOF
       expect(result.stdout).to eq ""
     end
 
+    it "supports building multiple object files from sources with the same pathname and basename" do
+      test_dir "multiple_basename"
+      result = run_rscons
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("foo.exe")).to be_truthy
+      result = run_rscons
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to eq ""
+      expect(result.status).to eq 0
+    end
+
     context "debugging" do
       it "prints a message when the target does not exist" do
         test_dir("simple")
@@ -1538,7 +1550,7 @@ EOF
       result = run_rscons(rsconscript: "override_depfilesuffix.rb")
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
-        %r{gcc -c -o simple.o -MMD -MF simple.deppy simple.c},
+        %r{gcc -c -o simple.o -MMD -MF simple.o.deppy simple.c},
       ])
     end
 
@@ -1562,7 +1574,7 @@ EOF
       test_dir("library")
       result = run_rscons(rsconscript: "override_arcmd.rb")
       expect(result.stderr).to eq ""
-      verify_lines(lines(result.stdout), [%r{ar rcf lib.a build/e.1/one.o build/e.1/three.o build/e.1/two.o}])
+      verify_lines(lines(result.stdout), [%r{ar rcf lib.a build/e.1/one.c.o build/e.1/three.c.o build/e.1/two.c.o}])
     end
 
     it "allows passing object files as sources" do
@@ -1592,7 +1604,7 @@ EOF
       test_dir "shared_library"
       result = run_rscons(rsconscript: "shared_library_from_object.rb")
       expect(result.stderr).to eq ""
-      expect(File.exists?("one.o"))
+      expect(File.exists?("one.c.o"))
     end
   end
 
@@ -2462,13 +2474,13 @@ EOF
         result = run_rscons(rsconscript: "install.rb", op: %W[install])
         expect(result.stderr).to eq ""
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
+        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_truthy
 
         result = run_rscons(rsconscript: "install.rb", op: %W[uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to_not match /Removing/
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
-        expect(File.exists?("build/e.1/src/one/one.o")).to be_truthy
+        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_truthy
         expect(Dir.entries(prefix)).to match_array %w[. ..]
       end
     end

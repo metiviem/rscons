@@ -64,16 +64,6 @@ module Rscons
       target.is_a?(Symbol)
     end
 
-    # Return a new path by changing the suffix in path to suffix.
-    #
-    # @param path [String] The path to alter.
-    # @param suffix [String] The new filename suffix, e.g. ".exe".
-    #
-    # @return [String] New path.
-    def set_suffix(path, suffix)
-      path.sub(/\.[^.]*$/, "") + suffix
-    end
-
     # Return the system shell and arguments for executing a shell command.
     #
     # @return [Array<String>] The shell and flag.

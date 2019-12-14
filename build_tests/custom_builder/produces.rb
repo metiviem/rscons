@@ -4,8 +4,9 @@ build do
     env["inc_h"] = "inc.h"
 
     env.Copy("copy_inc.h", "${inc_h}")
-    env.depends("${build_root}/program.o", "${inc_h}")
-    env.Program("program.exe", ["program.c", "inc.c"])
+    env.depends("program.o", "${inc_h}")
+    env.Object("program.o", "program.c")
+    env.Program("program.exe", ["program.o", "inc.c"])
 
     inc_c = env.Command("inc.c",
                         [],

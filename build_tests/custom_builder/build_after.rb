@@ -6,7 +6,8 @@ build do
                 "CMD_DESC" => "Generating")
     env["build_root"] = env.build_root
     env["inc_c"] = "inc.c"
-    env.build_after("${build_root}/program.o", "${inc_c}")
-    env.Program("program.exe", ["program.c", "inc.c"])
+    env.Object("program.o", "program.c")
+    env.build_after("program.o", "${inc_c}")
+    env.Program("program.exe", ["program.o", "inc.c"])
   end
 end

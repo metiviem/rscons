@@ -1,0 +1,5 @@
+build do
+  Environment.new do |env|
+    env.Program("foo.exe", glob("*.cc", "*.c"))
+  end
+end
