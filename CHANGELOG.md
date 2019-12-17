@@ -1,3 +1,9 @@
+## v2.0.2
+
+### Fixes
+
+- #113 - distinguish object files built from multiple sources with the same base name but different extensions
+
 ## v2.0.1
 
 ### Fixes
