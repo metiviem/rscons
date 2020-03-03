@@ -282,6 +282,16 @@ module Rscons
       @cache["directories"].keys
     end
 
+    # Return a file's checksum, or the previously calculated checksum for
+    # the same file.
+    #
+    # @param file [String] The file name.
+    #
+    # @return [String] The file's checksum.
+    def lookup_checksum(file)
+      @lookup_checksums[file] || calculate_checksum(file)
+    end
+
     private
 
     # Return a String key based on the target name to use in the on-disk cache.
@@ -310,16 +320,6 @@ module Rscons
       @cache["targets"] ||= {}
       @cache["directories"] ||= {}
       @lookup_checksums = {}
-    end
-
-    # Return a file's checksum, or the previously calculated checksum for
-    # the same file.
-    #
-    # @param file [String] The file name.
-    #
-    # @return [String] The file's checksum.
-    def lookup_checksum(file)
-      @lookup_checksums[file] || calculate_checksum(file)
     end
 
     # Calculate and return a file's checksum.

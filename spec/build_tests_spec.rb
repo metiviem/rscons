@@ -417,14 +417,14 @@ EOF
     expect(result.stderr).to eq ""
     expect(lines(result.stdout)).to eq(["LD simple.exe"])
 
-    File.unlink("program.ld")
-    result = run_test(rsconsfile: "user_dependencies.rb")
-    expect(result.stderr).to eq ""
-    expect(lines(result.stdout)).to eq ["LD simple.exe"]
-
     result = run_test(rsconsfile: "user_dependencies.rb")
     expect(result.stderr).to eq ""
     expect(result.stdout).to eq ""
+
+    File.unlink("program.ld")
+    result = run_test(rsconsfile: "user_dependencies.rb")
+    expect(result.stderr).to match /User dependency program\.ld of target simple\.exe is invalid/
+    expect(result.status).to_not eq 0
   end
 
   unless ENV["omit_gdc_tests"]

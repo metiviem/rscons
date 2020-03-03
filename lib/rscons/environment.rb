@@ -341,6 +341,7 @@ module Rscons
           cache.clear_checksum_cache!
 
           if job
+            validate_user_deps(job[:target], @user_deps[job[:target]], cache)
             result = run_builder(job[:builder],
                                  job[:target],
                                  job[:sources],
@@ -1106,6 +1107,26 @@ module Rscons
         end
       end
       deps
+    end
+
+    # Ensures that user dependencies exist with valid checksums in the
+    # cache.  Raises an exception if any dependency is invalid.
+    #
+    # @param target [String]
+    #   Target to be built
+    # @param deps [Array<String>, nil]
+    #   User dependencies of the target
+    # @param cache [Cache]
+    #   Rscons cache instance
+    #
+    # @return [void]
+    def validate_user_deps(target, user_deps, cache)
+      return if user_deps.nil?
+      user_deps.each do |dep|
+        if cache.lookup_checksum(dep) == ""
+          raise "User dependency #{dep} of target #{target} is invalid"
+        end
+      end
     end
   end
 end
