@@ -143,7 +143,7 @@ EOF
       end
     end
     stdout, stderr, status = nil, nil, nil
-    Bundler.with_clean_env do
+    Bundler.with_unbundled_env do
       env = ENV.to_h
       path = ["#{@build_test_run_dir}/_bin", "#{env["PATH"]}"]
       if options[:path]
