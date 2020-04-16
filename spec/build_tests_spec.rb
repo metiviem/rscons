@@ -97,7 +97,7 @@ ENV["TERM"] = nil
 EOF
     end
     stdout, stderr, status = nil, nil, nil
-    Bundler.with_clean_env do
+    Bundler.with_unbundled_env do
       stdout, stderr, status = Open3.capture3(*command)
     end
     # Remove output lines generated as a result of the test environment
