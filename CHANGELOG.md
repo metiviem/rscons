@@ -1,3 +1,9 @@
+## v2.1.0
+
+### New Features
+
+- #117 - ruby 2.7 compatibility
+
 ## v2.0.2
 
 ### Fixes
