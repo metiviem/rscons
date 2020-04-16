@@ -1110,7 +1110,7 @@ module Rscons
     #
     # @param target [String]
     #   Target to be built
-    # @param deps [Array<String>, nil]
+    # @param user_deps [Array<String>, nil]
     #   User dependencies of the target
     # @param cache [Cache]
     #   Rscons cache instance
