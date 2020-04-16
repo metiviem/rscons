@@ -133,7 +133,6 @@ SimpleCov.start do
     !(src.filename[SimpleCov.root])
   end
   formatter(MyFormatter)
-  SimpleCov.print_error_status = false
 end
 # force color off
 ENV["TERM"] = nil
