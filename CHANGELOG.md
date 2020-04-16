@@ -1,5 +1,15 @@
 ## ChangeLog
 
+### v1.19.0
+
+#### New Features
+
+- #117 - ruby 2.7 compatibility
+
+#### Fixes
+
+- #115 - Check that user dependencies exist before running builders.
+
 ### v1.18.0
 
 #### Performance Improvements
