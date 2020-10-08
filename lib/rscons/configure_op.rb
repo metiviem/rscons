@@ -408,22 +408,17 @@ module Rscons
     def test_c_compiler(cc)
       File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
         fh.puts <<-EOF
-          #include <stdio.h>
-          int main(int argc, char * argv[]) {
-            printf("Success.\\n");
-            return 0;
+          int fun(int val) {
+            return val * 2;
           }
         EOF
       end
-      command = %W[#{cc} -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.c]
+      command = %W[#{cc} -c -o #{@work_dir}/cfgtest.o #{@work_dir}/cfgtest.c]
       merge = {"CC" => cc}
       _, _, status = log_and_test_command(command)
       if status == 0
-        stdout, _, status = log_and_test_command(["#{@work_dir}/cfgtest.exe"])
-        if status == 0 and stdout =~ /Success/
-          store_merge(merge)
-          true
-        end
+        store_merge(merge)
+        true
       end
     end
 
@@ -437,23 +432,18 @@ module Rscons
     def test_cxx_compiler(cc)
       File.open("#{@work_dir}/cfgtest.cxx", "wb") do |fh|
         fh.puts <<-EOF
-          #include <iostream>
-          using namespace std;
-          int main(int argc, char * argv[]) {
-            cout << "Success." << endl;
-            return 0;
+          template<typename T>
+          T fun(T val) {
+            return val * 2;
           }
         EOF
       end
-      command = %W[#{cc} -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.cxx]
+      command = %W[#{cc} -c -o #{@work_dir}/cfgtest.o #{@work_dir}/cfgtest.cxx]
       merge = {"CXX" => cc}
       _, _, status = log_and_test_command(command)
       if status == 0
-        stdout, _, status = log_and_test_command(["#{@work_dir}/cfgtest.exe"])
-        if status == 0 and stdout =~ /Success/
-          store_merge(merge)
-          true
-        end
+        store_merge(merge)
+        true
       end
     end
 
@@ -467,9 +457,8 @@ module Rscons
     def test_d_compiler(dc)
       File.open("#{@work_dir}/cfgtest.d", "wb") do |fh|
         fh.puts <<-EOF
-          import std.stdio;
-          int main() {
-            writeln("Success.");
+          import core.math;
+          int fun() {
             return 0;
           }
         EOF
@@ -477,29 +466,25 @@ module Rscons
       [:gdc, :ldc2].find do |dc_test|
         case dc_test
         when :gdc
-          command = %W[#{dc} -o #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+          command = %W[#{dc} -c -o #{@work_dir}/cfgtest.o #{@work_dir}/cfgtest.d]
           merge = {"DC" => dc}
         when :ldc2
-          command = %W[#{dc} -of #{@work_dir}/cfgtest.exe #{@work_dir}/cfgtest.d]
+          # ldc2 on Windows expect an object file suffix of .obj.
+          ldc_objsuffix = RUBY_PLATFORM =~ /mingw|msys/ ? ".obj" : ".o"
+          command = %W[#{dc} -c -of #{@work_dir}/cfgtest#{ldc_objsuffix} #{@work_dir}/cfgtest.d]
           env = BasicEnvironment.new
           merge = {
             "DC" => dc,
-            "DCCMD" => env["DCCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
-            "LDCMD" => env["LDCMD"].map {|e| if e == "-o"; "-of"; else; e; end},
+            "DCCMD" => env["DCCMD"].map {|e| e.sub(/^-o$/, "-of")},
+            "LDCMD" => env["LDCMD"].map {|e| e.sub(/^-o$/, "-of")},
             "DDEPGEN" => ["-deps=${_DEPFILE}"],
           }
-          if RUBY_PLATFORM =~ /mingw/
-            # ldc2 on Windows expect an object file suffix of .obj.
-            merge["OBJSUFFIX"] = %w[.obj]
-          end
+          merge["OBJSUFFIX"] = [ldc_objsuffix]
         end
         _, _, status = log_and_test_command(command)
         if status == 0
-          stdout, _, status = log_and_test_command(["#{@work_dir}/cfgtest.exe"])
-          if status == 0 and stdout =~ /Success/
-            store_merge(merge)
-            true
-          end
+          store_merge(merge)
+          true
         end
       end
     end
