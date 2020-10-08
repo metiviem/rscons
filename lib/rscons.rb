@@ -81,7 +81,7 @@ module Rscons
           end
           if ENV["SHELL"] and ENV["SHELL"] != "" and test_shell[ENV["SHELL"], "-c"]
             [ENV["SHELL"], "-c"]
-          elsif Object.const_get("RUBY_PLATFORM") =~ /mingw/
+          elsif Object.const_get("RUBY_PLATFORM") =~ /mingw|msys/
             if test_shell["sh", "-c"]
               # Using Rscons from MSYS should use MSYS's shell.
               ["sh", "-c"]
@@ -102,7 +102,7 @@ module Rscons
     # @return [Array<String>] Command used to execute commands.
     def command_executer
       @command_executer ||=
-        if Object.const_get("RUBY_PLATFORM") =~ /mingw/
+        if Object.const_get("RUBY_PLATFORM") =~ /mingw|msys/
           if ENV.keys.find {|key| key =~ /MSYS/}
             begin
               if IO.popen(["env", "echo", "success"]) {|io| io.read.strip} == "success"

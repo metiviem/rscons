@@ -84,7 +84,7 @@ module Rscons
       # @return [Boolean]
       #   Whether to output ANSI color escape codes.
       def do_ansi?(io)
-        if RUBY_PLATFORM =~ /mingw/
+        if RUBY_PLATFORM =~ /mingw|msys/
           (ENV["TERM"] == "xterm") && %w[fifo characterSpecial].include?(io.stat.ftype)
         else
           io.tty?

@@ -1,6 +1,0 @@
-build do
-  Environment.new do |env|
-    env.Program("program.exe", "program.c")
-    env.Install("install/program.exe", "program.exe")
-  end
-end

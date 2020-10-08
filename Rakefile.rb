@@ -6,7 +6,6 @@ rescue Bundler::BundlerError => e
 end
 
 require "rspec/core/rake_task"
-require "yard"
 require "rake/clean"
 require "fileutils"
 
@@ -35,11 +34,6 @@ task :dspec, [:example_string] => :build_dist do |task, args|
   Rake::Task["spec"].invoke(args.example_string)
   ENV.delete("dist_specs")
   FileUtils.rm_f(Dir.glob(".rscons-*"))
-end
-
-YARD::Rake::YardocTask.new do |yard|
-  yard.files = ['lib/**/*.rb']
-  yard.options = ["-ogen/yard"]
 end
 
 task :gen_large_project, [:size] => :build_dist do |task, args|
@@ -88,8 +82,16 @@ EOF
   FileUtils.cp("dist/rscons", "large_project")
 end
 
-task :user_guide do
-  system("ruby", "-Ilib", "rb/gen_user_guide.rb")
+unless RbConfig::CONFIG["host"]["msys"]
+  require "yard"
+  YARD::Rake::YardocTask.new do |yard|
+    yard.files = ['lib/**/*.rb']
+    yard.options = ["-ogen/yard"]
+  end
+
+  task :user_guide do
+    system("ruby", "-Ilib", "rb/gen_user_guide.rb")
+  end
 end
 
 task :default => :spec

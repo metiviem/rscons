@@ -1,6 +1,6 @@
 module Rscons
 
-  on_windows = RUBY_PLATFORM =~ /mingw|cygwin/
+  on_windows = RUBY_PLATFORM =~ /mingw|msys|cygwin/
   pic_flags = on_windows ? [] : %w[-fPIC]
 
   # Default Rscons construction variables.

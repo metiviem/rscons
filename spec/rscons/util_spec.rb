@@ -68,7 +68,7 @@ EOF
             expect(RbConfig::CONFIG).to receive(:[]).with("host_os").and_return("mingw")
           end
           it "returns the number of logical processors that wmic reports" do
-            expect(Util).to receive(:`).with("wmic cpu get NumberOfLogicalProcessors /value").and_return("NumberOfLogicalProcessors=7")
+            expect(Util).to receive(:`).with("wmic cpu get NumberOfLogicalProcessors -value").and_return("NumberOfLogicalProcessors=7")
             expect(Util.determine_n_threads).to eq(7)
           end
         end

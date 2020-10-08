@@ -1,10 +1,14 @@
 source 'https://rubygems.org'
 
-gem "json"
 gem "rspec"
 gem "rake"
 gem "simplecov", "~> 0.15.0"
-gem "yard"
-gem "rdoc"
-gem "redcarpet"
-gem "syntax"
+if RbConfig::CONFIG["host"]["msys"]
+  gem "json", "2.1.0"
+else
+  gem "json"
+  gem "yard"
+  gem "rdoc"
+  gem "redcarpet"
+  gem "syntax"
+end

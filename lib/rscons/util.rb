@@ -9,7 +9,7 @@ module Rscons
       #
       # @return [Boolean] Whether the given path is an absolute filesystem path.
       def absolute_path?(path)
-        if RUBY_PLATFORM =~ /mingw/
+        if RUBY_PLATFORM =~ /mingw|msys/
           path =~ %r{^(?:\w:)?[\\/]}
         else
           path.start_with?("/")
@@ -68,8 +68,8 @@ module Rscons
           case RbConfig::CONFIG["host_os"]
           when /linux/
             return File.read("/proc/cpuinfo").scan(/^processor\s*:/).size
-          when /mswin|mingw/
-            if `wmic cpu get NumberOfLogicalProcessors /value` =~ /NumberOfLogicalProcessors=(\d+)/
+          when /mswin|mingw|msys/
+            if `wmic cpu get NumberOfLogicalProcessors -value` =~ /NumberOfLogicalProcessors=(\d+)/
               return $1.to_i
             end
           when /darwin/
@@ -225,11 +225,14 @@ module Rscons
       #   Directory to look in.
       # @param executable [String]
       #   Executable to look for.
+      #
+      # @return [String, nil]
+      #   Executable found.
       def test_path_for_executable(path_entry, executable)
         is_executable = lambda do |path|
           File.file?(path) and File.executable?(path)
         end
-        if RbConfig::CONFIG["host_os"] =~ /mswin|windows|mingw/i
+        if RbConfig::CONFIG["host_os"] =~ /mswin|windows|mingw|msys/i
           if File.directory?(path_entry)
             executable = executable.downcase
             dir_entries = Dir.entries(path_entry)
