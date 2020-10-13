@@ -1,3 +1,11 @@
+## v2.2.0
+
+### New Features
+
+- #120 - improve support for MSYS2
+- #119 - add failure messages for failed configuration checks
+- #118 - compiler checks should support cross-compilers and freestanding compilers
+
 ## v2.1.0
 
 ### New Features
