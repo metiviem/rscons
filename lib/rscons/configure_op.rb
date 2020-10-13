@@ -62,6 +62,10 @@ module Rscons
     # @return [void]
     def check_c_compiler(*ccc)
       $stdout.write("Checking for C compiler... ")
+      options = {}
+      if ccc.last.is_a?(Hash)
+        options = ccc.slice!(-1)
+      end
       if ccc.empty?
         # Default C compiler search array.
         ccc = %w[gcc clang]
@@ -69,7 +73,7 @@ module Rscons
       cc = ccc.find do |cc|
         test_c_compiler(cc)
       end
-      complete(cc ? 0 : 1, success_message: cc)
+      complete(cc ? 0 : 1, options.merge(success_message: cc))
     end
 
     # Check for a working C++ compiler.
@@ -80,6 +84,10 @@ module Rscons
     # @return [void]
     def check_cxx_compiler(*ccc)
       $stdout.write("Checking for C++ compiler... ")
+      options = {}
+      if ccc.last.is_a?(Hash)
+        options = ccc.slice!(-1)
+      end
       if ccc.empty?
         # Default C++ compiler search array.
         ccc = %w[g++ clang++]
@@ -87,7 +95,7 @@ module Rscons
       cc = ccc.find do |cc|
         test_cxx_compiler(cc)
       end
-      complete(cc ? 0 : 1, success_message: cc)
+      complete(cc ? 0 : 1, options.merge(success_message: cc))
     end
 
     # Check for a working D compiler.
@@ -98,6 +106,10 @@ module Rscons
     # @return [void]
     def check_d_compiler(*cdc)
       $stdout.write("Checking for D compiler... ")
+      options = {}
+      if cdc.last.is_a?(Hash)
+        options = cdc.slice!(-1)
+      end
       if cdc.empty?
         # Default D compiler search array.
         cdc = %w[gdc ldc2]
@@ -105,7 +117,7 @@ module Rscons
       dc = cdc.find do |dc|
         test_d_compiler(dc)
       end
-      complete(dc ? 0 : 1, success_message: dc)
+      complete(dc ? 0 : 1, options.merge(success_message: dc))
     end
 
     # Check for a package or configure program output.
@@ -387,11 +399,15 @@ module Rscons
           else
             !options[:set_define]
           end
+        color = should_fail ? :red : :yellow
+        Ansi.write($stdout, color, "#{fail_message}\n")
+        if options[:on_fail].is_a?(String)
+          $stdout.puts(options[:on_fail])
+        elsif options[:on_fail].is_a?(Proc)
+          options[:on_fail].call
+        end
         if should_fail
-          Ansi.write($stdout, :red, "#{fail_message}\n")
           raise ConfigureFailure.new
-        else
-          Ansi.write($stdout, :yellow, "#{fail_message}\n")
         end
       end
     end

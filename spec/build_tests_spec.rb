@@ -2222,6 +2222,16 @@ EOF
       end
     end
 
+    context "on_fail option" do
+      it "prints on_fail messages and calls on_fail procs on failure" do
+        test_dir "configure"
+        result = run_rscons(rsconscript: "on_fail.rb", op: %w[configure])
+        expect(result.status).to_not eq 0
+        expect(result.stdout).to match /Install the foo123 package/
+        expect(result.stdout).to match /Install the foo123cxx package/
+      end
+    end
+
     it "does everything" do
       test_dir "configure"
       create_exe "pkg-config", "echo '-DMYPACKAGE'"

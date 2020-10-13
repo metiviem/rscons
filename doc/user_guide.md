@@ -246,6 +246,15 @@ configure do
 end
 ```
 
+Global configuration options may be supplied to the compiler checks as well.
+Example:
+
+```ruby
+configure do
+  check_c_compiler "x86_64-elf-gcc", on_fail: "Install x86_64-elf cross toolchain first!"
+end
+```
+
 ###> Checking for a Header File
 
 The following methods can be used to check for the presence of a header file:
@@ -271,18 +280,6 @@ end
 ##### `:check_cpppath`
 
 Optionally specifies an array of paths to look for the header file in.
-
-##### `:fail`
-
-If the `:fail` option is set to `false`, then the absence of the header file
-will not result in the configure option failing.
-The `:fail` option defaults to `true` if the `:set_define` option is not
-defined, and defaults to `false` if the `:set_define` option is defined.
-
-##### `:set_define`
-
-If set, a build define of the specified String will be added to the
-`CPPDEFINES` construction variable array if the requested header is found.
 
 ###> Checking for a D Import
 
@@ -326,18 +323,6 @@ end
 ##### `:check_libpath`
 
 Optionally specifies an array of paths to look for the library in.
-
-##### `:fail`
-
-If the `:fail` option is set to `false`, then the absence of the library
-will not result in the configure option failing.
-The `:fail` option defaults to `true` if the `:set_define` option is not
-defined, and defaults to `false` if the `:set_define` option is defined.
-
-##### `:set_define`
-
-If set, a build define of the specified String will be added to the
-`CPPDEFINES` construction variable array if the requested library is found.
 
 ##### `:use`
 
@@ -386,18 +371,6 @@ used to look for package configuration flags for the specified package.
 
 If the `:program` option is given, the program specified will be used to look
 for configuration flags.
-
-##### `:fail`
-
-If the `:fail` option is set to `false`, then the absence of the package or
-program requested will not result in the configure option failing.
-The `:fail` option defaults to `true` if the `:set_define` option is not
-defined, and defaults to `false` if the `:set_define` option is defined.
-
-##### `:set_define`
-
-If set, a build define of the specified String will be added to the
-`CPPDEFINES` construction variable array if the requested package is found.
 
 ##### `:use`
 
@@ -456,6 +429,46 @@ configure do
   end
 end
 ```
+
+###> Global Configuration Check Options
+
+#### `:fail`
+
+If the `:fail` option is set to `false`, then the absence of the package or
+program requested will not result in the configure option failing.
+The `:fail` option defaults to `true` if the `:set_define` option is not
+defined, and defaults to `false` if the `:set_define` option is defined.
+
+#### `:on_fail`
+
+The `:on_fail` option can be set to a String or a Proc object. If the
+configuration operation fails (or would fail), the given message is printed
+or the Proc is called.
+
+Examples:
+
+```ruby
+configure do
+  check_c_compiler "special-gcc", on_fail: "First install special gcc!"
+end
+
+configure do
+  package_hint = lambda do
+    puts "The following packages must be installed to build this project:"
+    puts "- libsdl2-dev"
+    puts "- libsdl2-image-dev"
+    puts "- libsdl2-net-dev"
+  end
+  check_lib "SDL2", on_fail: package_hint
+  check_lib "SDL2_image", on_fail: package_hint
+  check_lib "SDL2_net", on_fail: package_hint
+end
+```
+
+#### `:set_define`
+
+If set, a build define of the specified String will be added to the
+`CPPDEFINES` construction variable array if the requested package is found.
 
 ##> Build Operations
 
