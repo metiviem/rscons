@@ -1,5 +1,11 @@
 ## ChangeLog
 
+### v1.19.1
+
+#### Fixes
+
+- #123 - Install builder: remove target file before copying to avoid errors due to overwriting read-only files
+
 ### v1.19.0
 
 #### New Features
