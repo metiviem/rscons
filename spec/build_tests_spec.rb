@@ -1002,6 +1002,22 @@ EOF
       expect(lines(result.stdout)).to eq ["Install inst.exe"]
     end
 
+    it "overwrites a read-only file" do
+      test_dir("build_dir")
+
+      FileUtils.chmod("a=r", "install.rb")
+      result = run_test(rsconsfile: "install_read_only.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq ["Install dest"]
+
+      FileUtils.rm_f("install.rb")
+      File.binwrite("install.rb", "hi")
+      FileUtils.chmod("a=r", "install.rb")
+      result = run_test(rsconsfile: "install_read_only.rb")
+      expect(result.stderr).to eq ""
+      expect(lines(result.stdout)).to eq ["Install dest"]
+    end
+
     it "operates the same as a Copy builder" do
       test_dir("build_dir")
 
