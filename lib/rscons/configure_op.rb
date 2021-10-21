@@ -5,9 +5,6 @@ module Rscons
   # Class to manage a configure operation.
   class ConfigureOp
 
-    # Exception raised when a configuration error occurs.
-    class ConfigureFailure < Exception; end
-
     # Create a ConfigureOp.
     #
     # @param options [Hash]
@@ -407,7 +404,7 @@ module Rscons
           options[:on_fail].call
         end
         if should_fail
-          raise ConfigureFailure.new
+          raise RsconsError.new
         end
       end
     end

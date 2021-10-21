@@ -35,8 +35,8 @@ module Rscons
     :SharedObject,
   ]
 
-  # Class to represent a fatal error while building a target.
-  class BuildError < RuntimeError; end
+  # Class to represent a fatal error during an Rscons operation.
+  class RsconsError < RuntimeError; end
 
   class << self
 

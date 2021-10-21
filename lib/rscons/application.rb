@@ -136,8 +136,8 @@ module Rscons
           env.process
         end
         0
-      rescue BuildError => be
-        Ansi.write($stderr, :red, be.message, :reset, "\n")
+      rescue RsconsError => e
+        Ansi.write($stderr, :red, e.message, :reset, "\n")
         1
       end
     end
@@ -193,7 +193,7 @@ module Rscons
       co = ConfigureOp.new(options)
       begin
         @script.configure(co)
-      rescue ConfigureOp::ConfigureFailure
+      rescue RsconsError
         Ansi.write($stderr, :red, "Configuration failed", :reset, "\n")
         rv = 1
       end
