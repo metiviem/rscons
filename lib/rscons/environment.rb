@@ -346,12 +346,12 @@ module Rscons
       if target.is_a?(Builder)
         target = target.target
       end
-      target = expand_varref(target.to_s)
+      target = expand_path(expand_varref(target.to_s))
       user_deps = user_deps.map do |ud|
         if ud.is_a?(Builder)
           ud = ud.target
         end
-        expand_varref(ud)
+        expand_path(expand_varref(ud))
       end
       @user_deps[target] ||= []
       @user_deps[target] = (@user_deps[target] + user_deps).uniq

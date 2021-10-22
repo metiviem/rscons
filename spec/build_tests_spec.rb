@@ -55,6 +55,8 @@ describe Rscons do
     end
   end
 
+  let(:passenv) {{}}
+
   def test_dir(build_test_directory)
     Dir.chdir(@owd)
     rm_rf(@build_test_run_dir)
@@ -147,6 +149,7 @@ EOF
     stdout, stderr, status = nil, nil, nil
     Bundler.with_unbundled_env do
       env = ENV.to_h
+      env.merge!(passenv)
       path = ["#{@build_test_run_dir}/_bin", "#{env["PATH"]}"]
       if options[:path]
         path = Array(options[:path]) + path
@@ -597,6 +600,27 @@ EOF
     verify_lines(lines(result.stdout), [%r{Linking simple.exe}])
 
     result = run_rscons(rsconscript: "user_dependencies.rb")
+    expect(result.stderr).to eq ""
+    expect(result.stdout).to eq ""
+  end
+
+  it "rebuilds when user-specified dependencies using ^ change" do
+    test_dir("simple")
+
+    passenv["file_contents"] = "1"
+    result = run_rscons(rsconscript: "user_dependencies_carat.rb")
+    expect(result.stderr).to eq ""
+    verify_lines(lines(result.stdout), [
+      %r{Compiling simple.c},
+      %r{Linking .*simple.exe},
+    ])
+
+    passenv["file_contents"] = "2"
+    result = run_rscons(rsconscript: "user_dependencies_carat.rb")
+    expect(result.stderr).to eq ""
+    verify_lines(lines(result.stdout), [%r{Linking .*simple.exe}])
+
+    result = run_rscons(rsconscript: "user_dependencies_carat.rb")
     expect(result.stderr).to eq ""
     expect(result.stdout).to eq ""
   end
