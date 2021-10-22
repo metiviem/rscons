@@ -193,7 +193,10 @@ module Rscons
       co = ConfigureOp.new(options)
       begin
         @script.configure(co)
-      rescue RsconsError
+      rescue RsconsError => e
+        if e.message and e.message != ""
+          $stderr.puts e.message
+        end
         Ansi.write($stderr, :red, "Configuration failed", :reset, "\n")
         rv = 1
       end

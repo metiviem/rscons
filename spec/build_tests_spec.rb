@@ -2582,4 +2582,41 @@ EOF
     end
   end
 
+  context "with subsidiary scripts" do
+    it "executes the subsidiary script from configure block" do
+      test_dir "subsidiary"
+
+      result = run_rscons(op: %W[configure])
+      expect(result.stderr).to eq ""
+      verify_lines(lines(result.stdout), [
+        %r{sub Rsconscript configure},
+        %r{sub Rsconscript build},
+        %r{sub Rsconscript2 configure},
+        %r{top configure},
+      ])
+    end
+
+    it "executes the subsidiary script from build block" do
+      test_dir "subsidiary"
+
+      result = run_rscons(op: %W[configure])
+      expect(result.stderr).to eq ""
+      result = run_rscons(op: %W[build])
+      expect(result.stderr).to eq ""
+      verify_lines(lines(result.stdout), [
+        %r{sub Rsconscript2 build},
+        %r{top build},
+      ])
+    end
+
+    it "terminates execution when a subsidiary script fails" do
+      test_dir "subsidiary"
+
+      result = run_rscons(rsconscript: "Rsconscript_fail", op: %W[configure])
+      expect(result.stderr).to_not eq ""
+      expect(result.status).to_not eq 0
+      expect(result.stdout).to_not match /top configure/
+    end
+  end
+
 end

@@ -1,0 +1,8 @@
+configure do
+  puts "sub Rsconscript configure"
+  check_program "foobarfailure"
+end
+
+build do
+  puts "sub Rsconscript build"
+end

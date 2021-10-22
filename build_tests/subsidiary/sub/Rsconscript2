@@ -1,0 +1,7 @@
+configure do
+  puts "sub Rsconscript2 configure"
+end
+
+build do
+  puts "sub Rsconscript2 build"
+end

@@ -3,8 +3,33 @@ module Rscons
   # The Script class encapsulates the state of a build script.
   class Script
 
-    # DSL available to the Rsconscript.
-    class Dsl
+    # Global DSL methods.
+    class GlobalDsl
+
+      # Invoke rscons in a subprocess for a subsidiary Rsconscript file.
+      #
+      # @param script_path [String]
+      #   Path to subsidiary Rsconscript to execute.
+      # @param args[Array<String>]
+      #   Arguments to pass to rscons subprocess.
+      def rscons(script_path, *args)
+        script_path = File.expand_path(script_path)
+        me = File.expand_path($0)
+        command = [me, "-f", script_path, *args]
+        if ENV["specs"] and not ENV["dist_specs"] # specs
+          command = ["ruby", $LOAD_PATH.map {|p| ["-I", p]}, command].flatten # specs
+        end # specs
+        dir = File.dirname(script_path)
+        result = system(*command, chdir: dir)
+        unless result
+          raise RsconsError.new("Failed command: " + command.join(" "))
+        end
+      end
+
+    end
+
+    # Top-level DSL available to the Rsconscript.
+    class Dsl < GlobalDsl
       # Create a Dsl.
       def initialize(script)
         @script = script
@@ -59,7 +84,7 @@ module Rscons
     end
 
     # DSL available to the 'configure' block.
-    class ConfigureDsl
+    class ConfigureDsl < GlobalDsl
       # Create a ConfigureDsl.
       #
       # @param configure_op [ConfigureOp]
