@@ -118,21 +118,23 @@ describe Rscons do
     command_name = "#{command_prefix}#{@statics[:build_test_id]}"
     File.open("_simplecov_setup.rb", "w") do |fh|
       fh.puts <<EOF
-require "bundler"
-Bundler.setup
-require "simplecov"
-class MyFormatter
-  def format(*args)
+unless ENV["dist_specs"]
+  require "bundler"
+  Bundler.setup
+  require "simplecov"
+  class MyFormatter
+    def format(*args)
+    end
   end
-end
-SimpleCov.start do
-  root(#{@owd.inspect})
-  command_name(#{command_name.inspect})
-  filters.clear
-  add_filter do |src|
-    !(src.filename[SimpleCov.root])
+  SimpleCov.start do
+    root(#{@owd.inspect})
+    command_name(#{command_name.inspect})
+    filters.clear
+    add_filter do |src|
+      !(src.filename[SimpleCov.root])
+    end
+    formatter(MyFormatter)
   end
-  formatter(MyFormatter)
 end
 # force color off
 ENV["TERM"] = nil

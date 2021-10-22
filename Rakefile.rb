@@ -17,12 +17,16 @@ task :build_dist do
 end
 
 RSpec::Core::RakeTask.new(:spec, :example_string) do |task, args|
+  ENV["specs"] = "1"
   if args.example_string
     ENV["partial_specs"] = "1"
     task.rspec_opts = %W[-e "#{args.example_string}" -f documentation]
   end
 end
 task :spec => :build_dist
+task :spec do
+  ENV.delete("specs")
+end
 
 # dspec task is useful to test the distributable release script, but is not
 # useful for coverage information.
@@ -31,7 +35,7 @@ task :dspec, [:example_string] => :build_dist do |task, args|
   FileUtils.mkdir_p("test")
   FileUtils.cp("dist/rscons", "test/rscons.rb")
   ENV["dist_specs"] = "1"
-  Rake::Task["spec"].invoke(args.example_string)
+  Rake::Task["spec"].execute(args.example_string)
   ENV.delete("dist_specs")
   FileUtils.rm_f(Dir.glob(".rscons-*"))
 end
@@ -99,6 +103,7 @@ task :default => :spec
 task :all => [
   :build_dist,
   :spec,
+  :dspec,
   :yard,
   :user_guide,
 ]
