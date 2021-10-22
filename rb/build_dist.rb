@@ -44,7 +44,7 @@ combine_files[START_FILE]
 # Strip Ruby comment lines and empty lines to save some space, but do not
 # remove lines that are in heredoc sections. This isn't terribly robust to be
 # used in the wild, but works for the heredoc instances for this project.
-stripped_comments = []
+stripped = []
 heredoc_end = nil
 combined_file.each do |line|
   if line =~ /<<-?([A-Z]+)/
@@ -53,14 +53,16 @@ combined_file.each do |line|
   if heredoc_end and line =~ /^\s*#{heredoc_end}/
     heredoc_end = nil
   end
-  if heredoc_end or not (line =~ /^\s*(#[^!].*)?$/)
-    stripped_comments << line
+  if line !~ /#\sspecs/
+    if heredoc_end or line !~ /^\s*(#[^!].*)?$/
+      stripped << line
+    end
   end
 end
 
 require "zlib"
 require "base64"
-compressed_script = Zlib::Deflate.deflate(stripped_comments.join)
+compressed_script = Zlib::Deflate.deflate(stripped.join)
 encoded_compressed_script = Base64.encode64(compressed_script).gsub("\n", "")
 hash = Digest::MD5.hexdigest(encoded_compressed_script)
 
