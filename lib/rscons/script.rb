@@ -20,7 +20,9 @@ module Rscons
           command = ["ruby", $LOAD_PATH.map {|p| ["-I", p]}, command].flatten # specs
         end # specs
         dir = File.dirname(script_path)
+        puts "Entering directory '#{dir}'..."
         result = system(*command, chdir: dir)
+        puts "Leaving directory '#{dir}'..."
         unless result
           raise RsconsError.new("Failed command: " + command.join(" "))
         end
