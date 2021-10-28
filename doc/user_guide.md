@@ -872,6 +872,47 @@ In other words, build targets are not parallelized across a barrier.
 env.barrier
 ```
 
+##> Global Build Script Functionality
+
+###> Using Subsidiary Build Scripts
+
+The `rscons` build script method can be used to invoke an rscons subprocess to
+perform an operation using a subsidiary rscons build script.
+This can be used, for example, when a subproject is imported and a top-level
+`configure` or `build` operation should also perform the same operation in the
+subproject directory.
+
+For example:
+
+```ruby
+configure do
+  rscons "subproject/Rsconscript", "configure"
+end
+
+build do
+  rscons "subproject/Rsconscript", "build"
+end
+```
+
+It is also perfectly valid to perform a different operation in the subsidiary
+script from the one being performed in the top-level script.
+For example, in a project that requires a particular cross compiler, the
+top-level `configure` script could build the necessary cross compiler using a
+subsidiary build script.
+This could look something like:
+
+```ruby
+configure do
+  rscons "cross/Rsconscript"
+  check_c_compiler "i686-elf-gcc"
+end
+```
+
+This would build, and if necessary first configure, using the cross/Rsconscript
+subsidiary build script.
+Subsidiary build scripts are executed from within the directory containing the
+build script.
+
 ##> Extending Rscons
 
 ### Adding New Languages
