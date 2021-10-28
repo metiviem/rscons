@@ -93,6 +93,7 @@ unless RbConfig::CONFIG["host"]["msys"]
     yard.options = ["-ogen/yard"]
   end
 
+  desc "Build user guide"
   task :user_guide do
     system("ruby", "-Ilib", "rb/gen_user_guide.rb")
   end
