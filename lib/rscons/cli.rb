@@ -6,11 +6,13 @@ USAGE = <<EOF
 Usage: #{$0} [global options] [operation] [operation options]
 
 Global options:
+  -f FILE                     Use FILE as Rsconscript
   -F, --show-failure          Show failed command log from previous build and exit
-  --version                   Show rscons version and exit
   -h, --help                  Show rscons help and exit
+  -j N, --nthreads=N          Set number of threads (local default: #{Rscons.application.n_threads})
   -r COLOR, --color=COLOR     Set color mode (off, auto, force)
   -v, --verbose               Run verbosely
+  --version                   Show rscons version and exit
 
 Operations:
   configure                   Configure the project
@@ -23,10 +25,6 @@ Operations:
 Configure options:
   -b BUILD, --build=BUILD     Set build directory (default: build)
   --prefix=PREFIX             Set installation prefix (default: /usr/local)
-
-Build options:
-  -j N, --nthreads=N          Set number of threads (local default: #{Rscons.application.n_threads})
-
 EOF
 
 module Rscons
