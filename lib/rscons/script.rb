@@ -8,21 +8,28 @@ module Rscons
 
       # Invoke rscons in a subprocess for a subsidiary Rsconscript file.
       #
-      # @param script_path [String]
-      #   Path to subsidiary Rsconscript to execute.
+      # @param path [String]
+      #   Path to subsidiary Rsconscript to execute, or path to subsidiary
+      #   directory to run rscons in.
       # @param args[Array<String>]
       #   Arguments to pass to rscons subprocess.
-      def rscons(script_path, *args)
-        script_path = File.expand_path(script_path)
+      def rscons(path, *args)
         me = File.expand_path($0)
-        command = [me, "-f", script_path, *args]
+        path = File.expand_path(path)
+        if File.directory?(path)
+          command = [me, *args]
+          dir = path
+        else
+          command = [me, "-f", path, *args]
+          dir = File.dirname(path)
+        end
+        print_dir = dir != "." && dir != File.expand_path(Dir.pwd)
         if ENV["specs"] and not ENV["dist_specs"] # specs
           command = ["ruby", $LOAD_PATH.map {|p| ["-I", p]}, command].flatten # specs
         end # specs
-        dir = File.dirname(script_path)
-        puts "Entering directory '#{dir}'..."
+        puts "rscons: Entering directory '#{dir}'" if print_dir
         result = system(*command, chdir: dir)
-        puts "Leaving directory '#{dir}'..."
+        puts "rscons: Leaving directory '#{dir}'" if print_dir
         unless result
           raise RsconsError.new("Failed command: " + command.join(" "))
         end

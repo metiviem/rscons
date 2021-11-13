@@ -1,0 +1,10 @@
+configure do
+  rscons "sub"
+  rscons "sub", "-f", "Rsconscript2", "configure"
+  puts "top configure"
+end
+
+build do
+  rscons "sub", "-f", "Rsconscript2", "build"
+  puts "top build"
+end

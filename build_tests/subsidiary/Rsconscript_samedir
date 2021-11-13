@@ -1,0 +1,4 @@
+build do
+  rscons "second", "build"
+  puts "top build"
+end

@@ -882,11 +882,18 @@ This can be used, for example, when a subproject is imported and a top-level
 `configure` or `build` operation should also perform the same operation in the
 subproject directory.
 
+The first argument to the `rscons` method specifies either a directory name, or
+the path to the subsidiary Rsconscript file to execute.
+Any additional arguments are passed to `rscons` when it executes the subsidiary
+script.
+`rscons` will change working directories to the directory containing the
+subsidiary script when executing it.
+
 For example:
 
 ```ruby
 configure do
-  rscons "subproject/Rsconscript", "configure"
+  rscons "subproject", "configure"
 end
 
 build do

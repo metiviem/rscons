@@ -2607,28 +2607,84 @@ EOF
   end
 
   context "with subsidiary scripts" do
-    it "executes the subsidiary script from configure block" do
-      test_dir "subsidiary"
+    context "with a script specified" do
+      it "executes the subsidiary script from configure block" do
+        test_dir "subsidiary"
 
-      result = run_rscons(op: %W[configure])
-      expect(result.stderr).to eq ""
-      verify_lines(lines(result.stdout), [
-        %r{sub Rsconscript configure},
-        %r{sub Rsconscript build},
-        %r{sub Rsconscript2 configure},
-        %r{top configure},
-      ])
+        result = run_rscons(op: %W[configure])
+        expect(result.stderr).to eq ""
+        verify_lines(lines(result.stdout), [
+          %r{Entering directory '.*/sub'},
+          %r{sub Rsconscript configure},
+          %r{Leaving directory '.*/sub'},
+          %r{Entering directory '.*/sub'},
+          %r{sub Rsconscript build},
+          %r{Leaving directory '.*/sub'},
+          %r{Entering directory '.*/sub'},
+          %r{sub Rsconscript2 configure},
+          %r{Leaving directory '.*/sub'},
+          %r{top configure},
+        ])
+      end
+
+      it "executes the subsidiary script from build block" do
+        test_dir "subsidiary"
+
+        result = run_rscons(op: %W[configure])
+        expect(result.stderr).to eq ""
+        result = run_rscons(op: %W[build])
+        expect(result.stderr).to eq ""
+        verify_lines(lines(result.stdout), [
+          %r{sub Rsconscript2 build},
+          %r{top build},
+        ])
+      end
     end
 
-    it "executes the subsidiary script from build block" do
+    context "with a directory specified" do
+      it "executes the subsidiary script from configure block" do
+        test_dir "subsidiary"
+
+        result = run_rscons(rsconscript: "Rsconscript_dir", op: %W[configure])
+        expect(result.stderr).to eq ""
+        verify_lines(lines(result.stdout), [
+          %r{Entering directory '.*/sub'},
+          %r{sub Rsconscript configure},
+          %r{Leaving directory '.*/sub'},
+          %r{Entering directory '.*/sub'},
+          %r{sub Rsconscript build},
+          %r{Leaving directory '.*/sub'},
+          %r{Entering directory '.*/sub'},
+          %r{sub Rsconscript2 configure},
+          %r{Leaving directory '.*/sub'},
+          %r{top configure},
+        ])
+      end
+
+      it "executes the subsidiary script from build block" do
+        test_dir "subsidiary"
+
+        result = run_rscons(rsconscript: "Rsconscript_dir", op: %W[configure])
+        expect(result.stderr).to eq ""
+        result = run_rscons(rsconscript: "Rsconscript_dir", op: %W[build])
+        expect(result.stderr).to eq ""
+        verify_lines(lines(result.stdout), [
+          %r{sub Rsconscript2 build},
+          %r{top build},
+        ])
+      end
+    end
+
+    it "does not print entering/leaving directory messages when the subsidiary script is in the same directory" do
       test_dir "subsidiary"
 
-      result = run_rscons(op: %W[configure])
+      result = run_rscons(rsconscript: "Rsconscript_samedir", op: %W[configure])
       expect(result.stderr).to eq ""
-      result = run_rscons(op: %W[build])
+      result = run_rscons(rsconscript: "Rsconscript_samedir", op: %W[build])
       expect(result.stderr).to eq ""
+      expect(result.stdout).to_not match(%{(Entering|Leaving) directory})
       verify_lines(lines(result.stdout), [
-        %r{sub Rsconscript2 build},
+        %r{second build},
         %r{top build},
       ])
     end
