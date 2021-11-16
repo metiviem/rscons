@@ -217,6 +217,14 @@ module Rscons
         queue.pop
       end
 
+      # Command that can be run to execute this instance of rscons from the
+      # current working directory.
+      def command_to_execute_me
+        command = Pathname.new(File.expand_path($0)).relative_path_from(Dir.pwd).to_s
+        command = "./#{command}" unless command["/"]
+        command
+      end
+
       private
 
       # Check if a directory contains a certain executable.

@@ -286,7 +286,7 @@ module Rscons
       unless @process_failures.empty?
         msg = @process_failures.join("\n")
         if Cache.instance["failed_commands"].size > 0
-          msg += "\nUse -F to view the failed command log from the previous build operation"
+          msg += "\nUse `#{Util.command_to_execute_me} -F` to view the failed command log from the previous build operation"
         end
         raise RsconsError.new(msg)
       end

@@ -1066,7 +1066,7 @@ EOF
 
     result = run_rscons
     expect(result.stderr).to match /Failed to build/
-    expect(result.stderr).to match /^Use.*-F.*to view the failed command log/
+    expect(result.stderr).to match %r{^Use .*/rscons(\.rb)? -F.*to view the failed command log}
     expect(result.status).to_not eq 0
 
     result = run_rscons(rscons_args: %w[-F])
