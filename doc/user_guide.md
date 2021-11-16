@@ -612,13 +612,25 @@ There are several default builders that are built-in to Rscons:
 ```ruby
 env.Command(target, sources, "CMD" => command)
 # Example
-env.Command("docs.html", "docs.md",
+env.Command("user_guide.html", "user_guide.md",
   "CMD" => ["pandoc", "-fmarkdown", "-thtml", "-o${_TARGET}", "${_SOURCES}"],
-  "CMD_DESC" => "PANDOC")
+  "CMD_DESC" => "Generating user guide:")
 ```
 
 The `Command` builder executes a user-defined command in order to produce the
 desired target file based on the provided source files.
+
+The `Command` builder supports the following construction variables:
+
+  * `CMD` (required) specifies the command to execute (an array of strings).
+    `CMD` is expanded for variable references, so the tokens `${_TARGET}` and
+    `${_SOURCES}` can be used, for example.
+  * `CMD_DESC` (optional) specifies the short text description to print when
+    the builder executes. The given description is followed by the target file
+    name.
+  * `CMD_STDOUT` (optional) specifies a file to redirect standard output to.
+    `CMD_STDOUT` is expanded for variable references, so the token `${_TARGET}`
+    can be used, for example.
 
 ####> The CFile Builder
 
