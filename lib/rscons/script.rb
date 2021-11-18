@@ -6,6 +6,47 @@ module Rscons
     # Global DSL methods.
     class GlobalDsl
 
+      # Return path components from the PATH variable.
+      #
+      # @return [Array<String>]
+      #   Path components from the PATH variable.
+      def path_components
+        ENV["PATH"].split(File::PATH_SEPARATOR)
+      end
+
+      # Prepend a path component to the PATH variable.
+      #
+      # @param path [String]
+      #   Path to prepend.
+      #
+      # @return [void]
+      def path_prepend(path)
+        path_set([File.expand_path(path)] + path_components)
+      end
+
+      # Append a path component to the PATH variable.
+      #
+      # @param path [String]
+      #   Path to append.
+      #
+      # @return [void]
+      def path_append(path)
+        path_set(path_components + [File.expand_path(path)])
+      end
+
+      # Set the PATH variable.
+      #
+      # @param new_path [String, Array<String>]
+      #   New PATH variable value as an array or string.
+      #
+      # @return [void]
+      def path_set(new_path)
+        if new_path.is_a?(Array)
+          new_path = new_path.join(File::PATH_SEPARATOR)
+        end
+        ENV["PATH"] = new_path
+      end
+
       # Invoke rscons in a subprocess for a subsidiary Rsconscript file.
       #
       # @param path [String]

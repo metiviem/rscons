@@ -932,6 +932,22 @@ subsidiary build script.
 Subsidiary build scripts are executed from within the directory containing the
 build script.
 
+###> PATH Management
+
+`rscons` provides methods for management of the `PATH` environment variable.
+
+The `path_append` and `path_prepend` methods can be used to append or prepend
+a path to the `PATH` environment variable.
+
+```ruby
+path_prepend "i686-elf-gcc/bin"
+```
+
+The `path_set` method sets the `PATH` environment variable to the given
+Array or String.
+The `path_components` method returns an Array of the components in the `PATH`
+environment variable.
+
 ##> Extending Rscons
 
 ### Adding New Languages

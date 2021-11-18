@@ -1475,6 +1475,15 @@ EOF
       expect(result.status).to eq 0
     end
 
+    it "allows prepending and appending to PATH" do
+      test_dir "simple"
+      result = run_rscons(rsconscript: "pathing.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match /flex!/
+      expect(result.stdout).to match /foobar!/
+      expect(File.exist?("simple.o")).to be_truthy
+    end
+
     context "debugging" do
       it "prints a message when the target does not exist" do
         test_dir("simple")
