@@ -1484,6 +1484,16 @@ EOF
       expect(File.exist?("simple.o")).to be_truthy
     end
 
+    it "writes the dependency file to the build root" do
+      test_dir "simple"
+      result = run_rscons(rsconscript: "distclean.rb")
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match /Compiling simple\.c/
+      expect(File.exist?("simple.o")).to be_truthy
+      expect(File.exist?("simple.o.mf")).to be_falsey
+      expect(File.exist?("build/e.1/simple.o.mf")).to be_truthy
+    end
+
     context "debugging" do
       it "prints a message when the target does not exist" do
         test_dir("simple")

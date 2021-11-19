@@ -75,10 +75,10 @@ module Rscons
             @vars["_SOURCES"] = @sources
             depfilesuffix = @env.expand_varref("${DEPFILESUFFIX}", vars)
             @vars["_DEPFILE"] =
-              if @vars[:direct]
-                @env.get_build_fname(target, depfilesuffix, self.class)
+              if @vars[:direct] || !@target.start_with?("#{@env.build_root}/")
+                @env.get_build_fname(@target, depfilesuffix, self.class)
               else
-                "#{target}#{depfilesuffix}"
+                "#{@target}#{depfilesuffix}"
               end
             @cache.mkdir_p(File.dirname(@vars["_DEPFILE"]))
             command = @env.build_command(@command_template, @vars)
