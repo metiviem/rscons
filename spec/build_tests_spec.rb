@@ -529,7 +529,7 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o one.o -MMD -MF one.o.mf -DONE one.c},
+      %r{gcc -c -o one.o -MMD -MF build/e.1/one.o.mf -DONE one.c},
       %r{gcc -c -o build/e.1/two.c.o -MMD -MF build/e.1/two.c.o.mf two.c},
       %r{gcc -o two_sources.exe one.o build/e.1/two.c.o},
     ])
@@ -569,8 +569,8 @@ EOF
     result = run_rscons(rsconscript: "build_hooks_override_vars.rb")
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o one.o -MMD -MF one.o.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c},
-      %r{gcc -c -o two.o -MMD -MF two.o.mf -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c},
+      %r{gcc -c -o one.o -MMD -MF build/e.1/one.o.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c},
+      %r{gcc -c -o two.o -MMD -MF build/e.1/two.o.mf -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c},
     ])
     expect(File.exists?('one.o')).to be_truthy
     expect(File.exists?('two.o')).to be_truthy
@@ -1587,7 +1587,7 @@ EOF
       result = run_rscons(rsconscript: "override_depfilesuffix.rb")
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
-        %r{gcc -c -o simple.o -MMD -MF simple.o.deppy simple.c},
+        %r{gcc -c -o simple.o -MMD -MF build/e.1/simple.o.deppy simple.c},
       ])
     end
 
