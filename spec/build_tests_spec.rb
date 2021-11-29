@@ -2694,6 +2694,32 @@ EOF
       end
     end
 
+    context "with a rscons binary in the subsidiary script directory" do
+      it "executes rscons from the subsidiary script directory" do
+        test_dir "subsidiary"
+
+        File.binwrite("sub/rscons", <<EOF)
+#!/usr/bin/env ruby
+puts "sub rscons"
+EOF
+        FileUtils.chmod(0755, "sub/rscons")
+        result = run_rscons(op: %W[configure])
+        expect(result.stderr).to eq ""
+        verify_lines(lines(result.stdout), [
+          %r{Entering directory '.*/sub'},
+          %r{sub rscons},
+          %r{Leaving directory '.*/sub'},
+          %r{Entering directory '.*/sub'},
+          %r{sub rscons},
+          %r{Leaving directory '.*/sub'},
+          %r{Entering directory '.*/sub'},
+          %r{sub rscons},
+          %r{Leaving directory '.*/sub'},
+          %r{top configure},
+        ])
+      end
+    end
+
     it "does not print entering/leaving directory messages when the subsidiary script is in the same directory" do
       test_dir "subsidiary"
 

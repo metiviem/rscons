@@ -55,15 +55,19 @@ module Rscons
       # @param args[Array<String>]
       #   Arguments to pass to rscons subprocess.
       def rscons(path, *args)
-        me = File.expand_path($0)
+        rscons_path = File.expand_path($0)
         path = File.expand_path(path)
         if File.directory?(path)
-          command = [me, *args]
+          command = [*args]
           dir = path
         else
-          command = [me, "-f", path, *args]
+          command = ["-f", path, *args]
           dir = File.dirname(path)
         end
+        if File.exist?("#{dir}/rscons")
+          rscons_path = "#{dir}/rscons"
+        end
+        command = [rscons_path] + command
         print_dir = dir != "." && dir != File.expand_path(Dir.pwd)
         if ENV["specs"] and not ENV["dist_specs"] # specs
           command = ["ruby", $LOAD_PATH.map {|p| ["-I", p]}, command].flatten # specs
