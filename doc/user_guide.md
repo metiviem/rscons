@@ -821,6 +821,22 @@ allows it to be used to create a shared library are added.
 Although it can be called explicitly, it is more commonly implicitly called by
 the `SharedLibrary` builder.
 
+###> Phony Targets
+
+rscons supports phony build targets.
+Normally, a builder produces an output file, and executes whenever the input
+files or command have changed.
+A phony build target can be used to register a builder that does not produce
+an output file.
+A custom builder can take some action when the input files change even if it
+does not produce an output file.
+Such a builder could perform verification or run a test on its source files,
+possibly failing if some conditions are not met.
+It could also simply output something to the console, such as an analysis of
+the source file, whenever it changes.
+A phony target is signified by passing a Symbol instead of a String as the
+first parameter (target) to a builder method.
+
 ###> Explicit Dependencies
 
 A target can be marked as depending on another file that Rscons would not
