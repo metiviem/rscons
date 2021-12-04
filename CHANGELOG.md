@@ -1,3 +1,19 @@
+## v2.3.0
+
+### New Features
+
+- #125 - Support subsidiary Rsconscript files
+- #126 - Add PATH manipulation methods
+
+### Fixes
+
+- #121 - env.depends() does not work with built-root-relative "^/" paths
+- #130 - Document -f command line option
+- #133 - Clarify failed command error message indicating to run -F
+- #134 - Document CMD_STDOUT variable for Command builder
+- #135 - Write dependency file to build directory when user invokes Object builder directly
+- #141 - Document phony targets
+
 ## v2.2.0
 
 ### New Features
