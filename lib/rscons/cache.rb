@@ -51,9 +51,6 @@ module Rscons
   #   }
   class Cache
 
-    # Name of the file to store cache information in
-    CACHE_FILE = ".rsconscache"
-
     # Prefix for phony cache entries.
     PHONY_PREFIX = ":PHONY:"
 
@@ -70,6 +67,11 @@ module Rscons
       initialize!
     end
 
+    # Get the path to the cache file.
+    def cache_file
+      File.join(Rscons.application.build_dir, ".rsconscache")
+    end
+
     # Access cache value.
     def [](key)
       @cache[key]
@@ -84,7 +86,7 @@ module Rscons
     #
     # @return [void]
     def clear
-      FileUtils.rm_f(CACHE_FILE)
+      FileUtils.rm_f(cache_file)
       initialize!
     end
 
@@ -100,7 +102,7 @@ module Rscons
     # @return [void]
     def write
       @cache["version"] = VERSION
-      File.open(CACHE_FILE, "w") do |fh|
+      File.open(cache_file, "w") do |fh|
         fh.puts(JSON.dump(@cache))
       end
     end
@@ -360,9 +362,9 @@ module Rscons
     # Create a Cache object and load in the previous contents from the cache
     # file.
     def initialize!
-      @cache = JSON.load(File.read(CACHE_FILE)) rescue {}
+      @cache = JSON.load(File.read(cache_file)) rescue {}
       unless @cache.is_a?(Hash)
-        $stderr.puts "Warning: #{CACHE_FILE} was corrupt. Contents:\n#{@cache.inspect}"
+        $stderr.puts "Warning: #{cache_file} was corrupt. Contents:\n#{@cache.inspect}"
         @cache = {}
       end
       @cache["targets"] ||= {}

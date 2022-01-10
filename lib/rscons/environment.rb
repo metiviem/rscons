@@ -97,7 +97,7 @@ module Rscons
         else
           :short
         end
-      @build_root = "#{Cache.instance["configuration_data"]["build_dir"]}/e.#{@id}"
+      @build_root = "#{Rscons.application.build_dir}/e.#{@id}"
       @n_threads = Rscons.application.n_threads
 
       if block_given?

@@ -208,6 +208,15 @@ EOF
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
   end
 
+  it "builds a C program with one source file in an alternate build directory" do
+    test_dir("simple")
+    result = run_rscons(rscons_args: %w[-b b])
+    expect(result.stderr).to eq ""
+    expect(Dir.exist?("build")).to be_falsey
+    expect(File.exists?("b/e.1/simple.c.o")).to be_truthy
+    expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
+  end
+
   it "allows specifying a Builder object as the source to another build target" do
     test_dir("simple")
     result = run_rscons(rsconscript: "builder_as_source.rb")
@@ -1296,7 +1305,8 @@ EOF
   context "Cache management" do
     it "prints a warning when the cache is corrupt" do
       test_dir("simple")
-      File.open(Rscons::Cache::CACHE_FILE, "w") do |fh|
+      FileUtils.mkdir("build")
+      File.open("build/.rsconscache", "w") do |fh|
         fh.puts("[1]")
       end
       result = run_rscons
@@ -1746,6 +1756,22 @@ EOF
       result = run_rscons(rsconscript: "scope.rb")
       expect(result.stderr).to match /NoMethodError/
       expect(result.status).to_not eq 0
+    end
+
+    it "automatically runs the configure operation if the project is not yet configured in the given build directory" do
+      test_dir "configure"
+
+      result = run_rscons(rsconscript: "check_c_compiler.rb")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /Checking for C compiler\.\.\./
+      expect(Dir.exist?("build/configure")).to be_truthy
+
+      result = run_rscons(rsconscript: "check_c_compiler.rb", rscons_args: %w[--build=bb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /Checking for C compiler\.\.\./
+      expect(Dir.exist?("bb/configure")).to be_truthy
     end
 
     context "check_c_compiler" do
@@ -2284,7 +2310,6 @@ EOF
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /Configuring configure test\.\.\./
-      expect(result.stdout).to match /Setting build directory\.\.\. bb/
       expect(result.stdout).to match %r{Setting prefix\.\.\. /my/prefix}
       expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
       expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. g\+\+/
@@ -2295,6 +2320,8 @@ EOF
       expect(result.stdout).to match /Checking for D import 'std.stdio'\.\.\. found/
       expect(result.stdout).to match /Checking for library 'm'\.\.\. found/
       expect(result.stdout).to match /Checking for program 'ls'\.\.\. .*ls/
+      expect(Dir.exist?("build")).to be_falsey
+      expect(Dir.exist?("bb/configure")).to be_truthy
     end
 
     it "aggregates multiple set_define's" do
@@ -2357,7 +2384,6 @@ EOF
       expect(result.status).to eq 0
       expect(File.exists?("simple.o")).to be_falsey
       expect(File.exists?("build")).to be_falsey
-      expect(File.exists?(Rscons::Cache::CACHE_FILE)).to be_falsey
     end
   end
 

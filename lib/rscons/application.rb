@@ -5,6 +5,10 @@ module Rscons
   # Functionality for an instance of the rscons application invocation.
   class Application
 
+    # @return [String]
+    #   Top-level build directory.
+    attr_accessor :build_dir
+
     # @return [Boolean]
     #   Whether to output ANSI color escape sequences.
     attr_accessor :do_ansi_color
@@ -23,6 +27,7 @@ module Rscons
 
     # Create Application instance.
     def initialize
+      @build_dir = "build"
       @n_threads = Util.determine_n_threads
       @vars = VarSet.new
       @operations = Set.new
@@ -171,11 +176,8 @@ module Rscons
     #   Exit code.
     def distclean
       cache = Cache.instance
-      build_dir = cache["configuration_data"]["build_dir"]
       clean
-      if build_dir
-        FileUtils.rm_rf(build_dir)
-      end
+      FileUtils.rm_rf(@build_dir)
       cache.clear
       0
     end

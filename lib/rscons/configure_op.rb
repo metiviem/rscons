@@ -9,30 +9,25 @@ module Rscons
     #
     # @param options [Hash]
     #   Optional parameters.
-    # @option options [String] :build_dir
-    #   Build directory.
     # @option options [String] :prefix
     #   Install prefix.
     # @option options [String] :project_name
     #   Project name.
     def initialize(options)
       # Default options.
-      options[:build_dir] ||= "build"
       options[:prefix] ||= "/usr/local"
-      @work_dir = "#{options[:build_dir]}/configure"
+      @work_dir = "#{Rscons.application.build_dir}/configure"
       FileUtils.mkdir_p(@work_dir)
       @log_fh = File.open("#{@work_dir}/config.log", "wb")
       cache = Cache.instance
       cache["failed_commands"] = []
       cache["configuration_data"] = {}
-      cache["configuration_data"]["build_dir"] = options[:build_dir]
       cache["configuration_data"]["prefix"] = options[:prefix]
       if project_name = options[:project_name]
         Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
       else
         $stdout.puts "Configuring project..."
       end
-      Ansi.write($stdout, "Setting build directory... ", :green, options[:build_dir], :reset, "\n")
       Ansi.write($stdout, "Setting prefix... ", :green, options[:prefix], :reset, "\n")
       store_merge("prefix" => options[:prefix])
     end

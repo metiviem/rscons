@@ -6,6 +6,7 @@ USAGE = <<EOF
 Usage: #{$0} [global options] [operation] [operation options]
 
 Global options:
+  -b BUILD, --build=BUILD     Set build directory (default: build)
   -f FILE                     Use FILE as Rsconscript
   -F, --show-failure          Show failed command log from previous build and exit
   -h, --help                  Show rscons help and exit
@@ -23,7 +24,6 @@ Operations:
   uninstall                   Uninstall project from installation destination
 
 Configure options:
-  -b BUILD, --build=BUILD     Set build directory (default: build)
   --prefix=PREFIX             Set installation prefix (default: /usr/local)
 EOF
 
@@ -56,6 +56,10 @@ module Rscons
       private
 
       def add_global_options(opts)
+        opts.on("-b", "--build DIR") do |build_dir|
+          Rscons.application.build_dir = build_dir
+        end
+
         opts.on("-j NTHREADS") do |n_threads|
           Rscons.application.n_threads = n_threads.to_i
         end
@@ -156,10 +160,6 @@ module Rscons
       end
 
       def parse_configure_args(opts, argv, options)
-        opts.on("-b", "--build DIR") do |build_dir|
-          options[:build_dir] = build_dir
-        end
-
         opts.on("--prefix PREFIX") do |prefix|
           options[:prefix] = prefix
         end
