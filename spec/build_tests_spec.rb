@@ -1085,6 +1085,23 @@ EOF
     expect(result.status).to eq 0
   end
 
+  it "stores build artifacts in a directory according to Environment name" do
+    test_dir "typical"
+
+    result = run_rscons
+    expect(File.exist?("build/typical/typical.exe")).to be_truthy
+    expect(File.exist?("build/typical/src/one/one.c.o")).to be_truthy
+  end
+
+  it "names Environment during clone" do
+    test_dir "typical"
+
+    result = run_rscons(rsconscript: "clone_and_name.rb")
+    expect(File.exist?("build/typical/typical.exe")).to be_truthy
+    expect(File.exist?("build/typical/src/one/one.c.o")).to be_truthy
+    expect(Dir.exist?("build/e.1")).to be_falsey
+  end
+
   context "colored output" do
     it "does not output in color with --color=off" do
       test_dir("simple")
@@ -1765,13 +1782,13 @@ EOF
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /Checking for C compiler\.\.\./
-      expect(Dir.exist?("build/configure")).to be_truthy
+      expect(Dir.exist?("build/_configure")).to be_truthy
 
       result = run_rscons(rsconscript: "check_c_compiler.rb", rscons_args: %w[--build=bb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /Checking for C compiler\.\.\./
-      expect(Dir.exist?("bb/configure")).to be_truthy
+      expect(Dir.exist?("bb/_configure")).to be_truthy
     end
 
     context "check_c_compiler" do
@@ -2321,7 +2338,7 @@ EOF
       expect(result.stdout).to match /Checking for library 'm'\.\.\. found/
       expect(result.stdout).to match /Checking for program 'ls'\.\.\. .*ls/
       expect(Dir.exist?("build")).to be_falsey
-      expect(Dir.exist?("bb/configure")).to be_truthy
+      expect(Dir.exist?("bb/_configure")).to be_truthy
     end
 
     it "aggregates multiple set_define's" do

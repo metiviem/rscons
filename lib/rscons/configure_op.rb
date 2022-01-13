@@ -16,7 +16,7 @@ module Rscons
     def initialize(options)
       # Default options.
       options[:prefix] ||= "/usr/local"
-      @work_dir = "#{Rscons.application.build_dir}/configure"
+      @work_dir = "#{Rscons.application.build_dir}/_configure"
       FileUtils.mkdir_p(@work_dir)
       @log_fh = File.open("#{@work_dir}/config.log", "wb")
       cache = Cache.instance

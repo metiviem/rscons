@@ -51,6 +51,10 @@ module Rscons
     #   global Rscons.application.n_threads value.
     attr_accessor :n_threads
 
+    # @return [String]
+    #   Environment name.
+    attr_reader :name
+
     # Create an Environment object.
     #
     # @param options [Hash]
@@ -58,6 +62,9 @@ module Rscons
     #   :command, :short, or :off (default :short)
     # @option options [Boolean] :exclude_builders
     #   Whether to omit adding default builders (default false)
+    # @option options [String, nil] :name
+    #   Environment name. This determines the folder name used to store all
+    #   environment build files under the top-level build directory.
     # @option options [String, Array<String>] :use
     #   Use flag(s). If specified, any configuration flags which were saved
     #   with a corresponding `:use` value will be applied to this Environment.
@@ -97,7 +104,8 @@ module Rscons
         else
           :short
         end
-      @build_root = "#{Rscons.application.build_dir}/e.#{@id}"
+      @name = options[:name] || "e.#{@id}"
+      @build_root = "#{Rscons.application.build_dir}/#{@name}"
       @n_threads = Rscons.application.n_threads
 
       if block_given?
@@ -125,14 +133,14 @@ module Rscons
     #
     # @return [Environment] The newly created {Environment} object.
     def clone(options = {})
+      options = options.dup
       clone = options[:clone] || :all
       clone = Set[:variables, :builders, :build_hooks] if clone == :all
       clone = Set[] if clone == :none
       clone = Set.new(clone) if clone.is_a?(Array)
       clone.delete(:builders) if options[:exclude_builders]
-      env = self.class.new(
-        echo: options[:echo] || @echo,
-        exclude_builders: true)
+      options[:echo] ||= @echo
+      env = self.class.new(options.merge(exclude_builders: true))
       if clone.include?(:builders)
         @builders.each do |builder_name, builder|
           env.add_builder(builder)
