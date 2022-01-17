@@ -27,7 +27,8 @@ module Rscons
 
     # Create Application instance.
     def initialize
-      @build_dir = "build"
+      @build_dir = ENV["RSCONS_BUILD_DIR"] || "build"
+      ENV.delete("RSCONS_BUILD_DIR")
       @n_threads = Util.determine_n_threads
       @vars = VarSet.new
       @operations = Set.new

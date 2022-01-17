@@ -208,13 +208,21 @@ EOF
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
   end
 
-  it "builds a C program with one source file in an alternate build directory" do
+  it "uses the build directory specified with -b" do
     test_dir("simple")
     result = run_rscons(rscons_args: %w[-b b])
     expect(result.stderr).to eq ""
     expect(Dir.exist?("build")).to be_falsey
     expect(File.exists?("b/e.1/simple.c.o")).to be_truthy
-    expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
+  end
+
+  it "uses the build directory specified by an environment variable" do
+    test_dir("simple")
+    passenv["RSCONS_BUILD_DIR"] = "b2"
+    result = run_rscons
+    expect(result.stderr).to eq ""
+    expect(Dir.exist?("build")).to be_falsey
+    expect(File.exists?("b2/e.1/simple.c.o")).to be_truthy
   end
 
   it "allows specifying a Builder object as the source to another build target" do
@@ -2799,6 +2807,17 @@ EOF
       expect(result.stderr).to_not eq ""
       expect(result.status).to_not eq 0
       expect(result.stdout).to_not match /top configure/
+    end
+
+    it "does not pass RSCONS_BUILD_DIR to subsidiary scripts" do
+      test_dir "subsidiary"
+      passenv["RSCONS_BUILD_DIR"] = "buildit"
+      result = run_rscons(op: %W[configure])
+      expect(result.stderr).to eq ""
+      expect(Dir.exist?("build")).to be_falsey
+      expect(Dir.exist?("buildit")).to be_truthy
+      expect(Dir.exist?("sub/build")).to be_truthy
+      expect(Dir.exist?("sub/buildit")).to be_falsey
     end
   end
 
