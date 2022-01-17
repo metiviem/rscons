@@ -221,6 +221,144 @@ called `myprog.exe` which is to be built from all C source files found
 
 The `Rsconscript` file is a Ruby script.
 
+##> Build Script Methods
+
+`rscons` provides several methods that a build script can use.
+
+  * `glob` (see ${#Finding Files: The glob Method})
+  * `path_append` (see ${#PATH Management})
+  * `path_components` (see ${#PATH Management})
+  * `path_prepend` (see ${#PATH Management})
+  * `path_set` (see ${#PATH Management})
+  * `rscons` (see ${#Using Subsidiary Build Scripts: The rscons Method})
+  * `sh` (see (${#Executing Commands: The sh Method})
+
+###> Finding Files: The glob Method
+
+The [`glob`](../yard/Rscons/Script/GlobalDsl.html#glob-instance_method) method can be
+used to find files matching the patterns specified.
+It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/core-2.5.1/Dir.html#method-c-glob) but operates more deterministically.
+
+Example use:
+
+```ruby
+build do
+  Environment.new do |env|
+    env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
+  end
+end
+```
+
+This example would build the `mytests` executable from all `.cc` source files
+found recursively under the `src` or `test` directory.
+
+###> PATH Management
+
+`rscons` provides methods for management of the `PATH` environment variable.
+
+The
+[`path_append`](../yard/Rscons/Script/GlobalDsl.html#path_append-instance_method)
+and
+[`path_prepend`](../yard/Rscons/Script/GlobalDsl.html#path_prepend-instance_method)
+methods can be used to append or prepend a path to the `PATH` environment
+variable.
+
+```ruby
+path_prepend "i686-elf-gcc/bin"
+```
+
+The
+[`path_set`](../yard/Rscons/Script/GlobalDsl.html#path_set-instance_method)
+method sets the `PATH` environment variable to the given Array or String.
+
+The
+[`path_components`](../yard/Rscons/Script/GlobalDsl.html#path_components-instance_method)
+method returns an Array of the components in the `PATH`
+environment variable.
+
+###> Using Subsidiary Build Scripts: The rscons Method
+
+The
+[`rscons`](../yard/Rscons/Script/GlobalDsl.html#rscons-instance_method)
+build script method can be used to invoke an rscons subprocess to
+perform an operation using a subsidiary rscons build script.
+This can be used, for example, when a subproject is imported and a top-level
+`configure` or `build` operation should also perform the same operation in the
+subproject directory.
+
+The first argument to the `rscons` method specifies either a directory name, or
+the path to the subsidiary Rsconscript file to execute.
+Any additional arguments are passed to `rscons` when it executes the subsidiary
+script.
+`rscons` will change working directories to the directory containing the
+subsidiary script when executing it.
+
+For example:
+
+```ruby
+configure do
+  rscons "subproject", "configure"
+end
+
+build do
+  rscons "subproject/Rsconscript", "build"
+end
+```
+
+It is also perfectly valid to perform a different operation in the subsidiary
+script from the one being performed in the top-level script.
+For example, in a project that requires a particular cross compiler, the
+top-level `configure` script could build the necessary cross compiler using a
+subsidiary build script.
+This could look something like:
+
+```ruby
+configure do
+  rscons "cross/Rsconscript"
+  check_c_compiler "i686-elf-gcc"
+end
+```
+
+This would build, and if necessary first configure, using the cross/Rsconscript
+subsidiary build script.
+Subsidiary build scripts are executed from within the directory containing the
+build script.
+
+###> Executing Commands: The sh Method
+
+The
+[`sh`](../yard/Rscons/Script/GlobalDsl.html#sh-instance_method)
+build script method can be used to directly execute commands.
+The `sh` method accepts either a single String argument or an Array of Strings.
+When an Array is given, if the array length is greater than 1, then the command
+will not be executed and interpreted by the system shell.
+Otherwise, it will be executed and interpreted by the system shell.
+
+For example:
+
+```ruby
+build do
+  # Run "make" in imported "subcomponent" directory.
+  sh "cd subcomponent; make"
+  # Move a file around.
+  sh "mv", "subcomponent/file with spaces.txt", "new_name.txt"
+end
+```
+
+If the command fails, rscons will normally print the error and terminate
+execution.
+If the `:continue` option is set, then rscons will not terminate execution.
+For example:
+
+```ruby
+build do
+  # This command will fail and a message will be printed.
+  sh "false", continue: true
+  # However, due to the :continue option being set, execution will continue.
+  sh "echo hi"
+end
+```
+
 ##> Configuration Operations
 
 A `configure` block is optional.
@@ -535,25 +673,6 @@ Assuming a top-level build directory of "build", the Environment's build root
 would be "build/myproj".
 This keeps the intermediate generated build artifacts separate from the source
 files.
-
-###> Specifying Source Files: The glob Method
-
-The [`glob`](../yard/Rscons/Script/Dsl.html#glob-instance_method) method can be
-used to find files matching the patterns specified.
-It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/core-2.5.1/Dir.html#method-c-glob) but operates more deterministically.
-
-Example use:
-
-```ruby
-build do
-  Environment.new do |env|
-    env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
-  end
-end
-```
-
-This example would build the `mytests` executable from all `.cc` source files
-found recursively under the `src` or `test` directory.
 
 ###> Construction Variables
 
@@ -933,70 +1052,6 @@ In other words, build targets are not parallelized across a barrier.
 ```ruby
 env.barrier
 ```
-
-##> Global Build Script Functionality
-
-###> Using Subsidiary Build Scripts
-
-The `rscons` build script method can be used to invoke an rscons subprocess to
-perform an operation using a subsidiary rscons build script.
-This can be used, for example, when a subproject is imported and a top-level
-`configure` or `build` operation should also perform the same operation in the
-subproject directory.
-
-The first argument to the `rscons` method specifies either a directory name, or
-the path to the subsidiary Rsconscript file to execute.
-Any additional arguments are passed to `rscons` when it executes the subsidiary
-script.
-`rscons` will change working directories to the directory containing the
-subsidiary script when executing it.
-
-For example:
-
-```ruby
-configure do
-  rscons "subproject", "configure"
-end
-
-build do
-  rscons "subproject/Rsconscript", "build"
-end
-```
-
-It is also perfectly valid to perform a different operation in the subsidiary
-script from the one being performed in the top-level script.
-For example, in a project that requires a particular cross compiler, the
-top-level `configure` script could build the necessary cross compiler using a
-subsidiary build script.
-This could look something like:
-
-```ruby
-configure do
-  rscons "cross/Rsconscript"
-  check_c_compiler "i686-elf-gcc"
-end
-```
-
-This would build, and if necessary first configure, using the cross/Rsconscript
-subsidiary build script.
-Subsidiary build scripts are executed from within the directory containing the
-build script.
-
-###> PATH Management
-
-`rscons` provides methods for management of the `PATH` environment variable.
-
-The `path_append` and `path_prepend` methods can be used to append or prepend
-a path to the `PATH` environment variable.
-
-```ruby
-path_prepend "i686-elf-gcc/bin"
-```
-
-The `path_set` method sets the `PATH` environment variable to the given
-Array or String.
-The `path_components` method returns an Array of the components in the `PATH`
-environment variable.
 
 ##> Extending Rscons
 

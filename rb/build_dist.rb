@@ -66,6 +66,7 @@ compressed_script = Zlib::Deflate.deflate(stripped.join)
 encoded_compressed_script = Base64.encode64(compressed_script).gsub("\n", "")
 hash = Digest::MD5.hexdigest(encoded_compressed_script)
 
+FileUtils.rm_rf(DIST)
 FileUtils.mkdir_p(DIST)
 File.open("#{DIST}/#{PROG_NAME}", "wb", 0755) do |fh|
   fh.write(<<EOF)

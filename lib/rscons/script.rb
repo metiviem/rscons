@@ -6,6 +6,33 @@ module Rscons
     # Global DSL methods.
     class GlobalDsl
 
+      # Return a list of paths matching the specified pattern(s).
+      #
+      # A pattern can contain a "/**" component to recurse through directories.
+      # If the pattern ends with "/**" then only the recursive list of
+      # directories will be returned.
+      #
+      # Examples:
+      # - "src/**": return all directories under "src", recursively (including
+      #   "src" itself).
+      # - "src/**/*": return all files and directories recursively under the src
+      #   directory.
+      # - "src/**/*.c": return all .c files recursively under the src directory.
+      # - "dir/*/": return all directories in dir, but no files.
+      #
+      # @return [Array<String>] Paths matching the specified pattern(s).
+      def glob(*patterns)
+        require "pathname"
+        patterns.reduce([]) do |result, pattern|
+          if pattern.end_with?("/**")
+            pattern += "/"
+          end
+          result += Dir.glob(pattern).map do |path|
+            Pathname.new(path.gsub("\\", "/")).cleanpath.to_s
+          end
+        end.sort
+      end
+
       # Return path components from the PATH variable.
       #
       # @return [Array<String>]
@@ -80,6 +107,58 @@ module Rscons
         end
       end
 
+      # Execute a shell command, exiting on failure.
+      # The behavior to exit on failure is suppressed if the +:continue+
+      # option is given.
+      #
+      # @overload sh(command, options = {})
+      #   @param command [String, Array<String>]
+      #     Command to execute. The command is executed and interpreted by the
+      #     system shell when given as a single string. It is not passed to the
+      #     system shell if the array size is greater than 1.
+      #   @param options [Hash]
+      #     Options.
+      #   @option options [Boolean] :continue
+      #     If set to +true+, rscons will continue executing afterward, even if
+      #     the command fails.
+      #
+      # @overload sh(*command, options = {})
+      #   @param command [String, Array<String>]
+      #     Command to execute. The command is executed and interpreted by the
+      #     system shell when given as a single string. It is not passed to the
+      #     system shell if the array size is greater than 1.
+      #   @param options [Hash]
+      #     Options.
+      #   @option options [Boolean] :continue
+      #     If set to +true+, rscons will continue executing afterward, even if
+      #     the command fails.
+      def sh(*command)
+        options = {}
+        if command.last.is_a?(Hash)
+          options = command.slice!(-1)
+        end
+        if command.size == 1 && command[0].is_a?(Array)
+          command = command[0]
+        end
+        if Rscons.application.verbose
+          if command.size > 1
+            puts Util.command_to_s(command)
+          else
+            puts command[0]
+          end
+        end
+        begin
+          system(*command, exception: true)
+        rescue StandardError => e
+          message = "#{e.backtrace[2]}: #{e.message}"
+          if options[:continue]
+            Ansi.write($stderr, :red, message, :reset, "\n")
+          else
+            raise RsconsError.new(message)
+          end
+        end
+      end
+
     end
 
     # Top-level DSL available to the Rsconscript.
@@ -107,33 +186,6 @@ module Rscons
       # Enter configuration block.
       def configure(&block)
         @script.operations["configure"] = block
-      end
-
-      # Return a list of paths matching the specified pattern(s).
-      #
-      # A pattern can contain a "/**" component to recurse through directories.
-      # If the pattern ends with "/**" then only the recursive list of
-      # directories will be returned.
-      #
-      # Examples:
-      # - "src/**": return all directories under "src", recursively (including
-      #   "src" itself).
-      # - "src/**/*": return all files and directories recursively under the src
-      #   directory.
-      # - "src/**/*.c": return all .c files recursively under the src directory.
-      # - "dir/*/": return all directories in dir, but no files.
-      #
-      # @return [Array<String>] Paths matching the specified pattern(s).
-      def glob(*patterns)
-        require "pathname"
-        patterns.reduce([]) do |result, pattern|
-          if pattern.end_with?("/**")
-            pattern += "/"
-          end
-          result += Dir.glob(pattern).map do |path|
-            Pathname.new(path.gsub("\\", "/")).cleanpath.to_s
-          end
-        end.sort
       end
     end
 

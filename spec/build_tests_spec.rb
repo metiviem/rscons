@@ -2802,4 +2802,46 @@ EOF
     end
   end
 
+  context "sh method" do
+    it "executes the command given" do
+      test_dir "sh"
+      result = run_rscons(rsconscript: "sh.rb")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      verify_lines(lines(result.stdout), [
+        "hi  there",
+        "1 2",
+      ])
+    end
+
+    it "prints the command when executing verbosely" do
+      test_dir "sh"
+      result = run_rscons(rsconscript: "sh.rb", rscons_args: %w[-v])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      verify_lines(lines(result.stdout), [
+        %r{echo 'hi  there'},
+        "hi  there",
+        %r{echo  1  2},
+        "1 2",
+      ])
+    end
+
+    it "terminates execution on failure" do
+      test_dir "sh"
+      result = run_rscons(rsconscript: "sh_fail.rb")
+      expect(result.stderr).to match /sh_fail\.rb:2:.*foobar42/
+      expect(result.status).to_not eq 0
+      expect(result.stdout).to_not match /continued/
+    end
+
+    it "continues execution on failure when :continue option is set" do
+      test_dir "sh"
+      result = run_rscons(rsconscript: "sh_fail_continue.rb")
+      expect(result.stderr).to match /sh_fail_continue\.rb:2:.*foobar42/
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /continued/
+    end
+  end
+
 end

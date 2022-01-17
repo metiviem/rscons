@@ -48,7 +48,7 @@ module Rscons
       # @return [String]
       #   The string representation of the command.
       def command_to_s(command)
-        command.map { |c| c =~ /\s/ ? "'#{c}'" : c }.join(' ')
+        command.map { |c| c[" "] ? "'#{c.gsub("'", "'\\\\''")}'" : c }.join(" ")
       end
 
       # Determine the number of threads to use by default.
