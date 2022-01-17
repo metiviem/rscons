@@ -625,6 +625,7 @@ There are several default builders that are built-in to Rscons:
     library.
   * `SharedObject`, which compiles source files to produce an object file, in a
     way that is able to be used to create a shared library.
+  * `Size`, which runs the 'size' utility on an executable file.
 
 ####> The Command Builder
 
@@ -839,6 +840,20 @@ Any compilation flags necessary to build the object file in a manner that
 allows it to be used to create a shared library are added.
 Although it can be called explicitly, it is more commonly implicitly called by
 the `SharedLibrary` builder.
+
+####> The Size Builder
+
+```ruby
+env.Size(target, sources)
+# Example
+env.Program("program.exe", glob("*.c"))
+env.Size("program.size", "program.exe")
+```
+
+The `Size` builder runs the "size" executable on the given source file and
+stores its output in the target file.
+The size executable can be specified with the `SIZE` construction variable,
+and flags can be specified with `SIZEFLAGS`.
 
 ###> Phony Targets
 

@@ -33,6 +33,7 @@ module Rscons
     :Program,
     :SharedLibrary,
     :SharedObject,
+    :Size,
   ]
 
   # Class to represent a fatal error during an Rscons operation.
@@ -146,6 +147,7 @@ require_relative "rscons/builders/program"
 require_relative "rscons/builders/shared_library"
 require_relative "rscons/builders/shared_object"
 require_relative "rscons/builders/simple_builder"
+require_relative "rscons/builders/size"
 
 # language support
 require_relative "rscons/builders/lang/asm"

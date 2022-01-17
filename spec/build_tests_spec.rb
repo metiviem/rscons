@@ -1672,6 +1672,21 @@ EOF
     end
   end
 
+  context "Size builder" do
+    it "generates a size file" do
+      test_dir "simple"
+
+      result = run_rscons(rsconscript: "size.rb")
+      verify_lines(lines(result.stdout), [
+        /Linking .*simple\.exe/,
+        /Size .*simple\.exe .*simple\.size/,
+      ])
+      expect(File.exist?("simple.exe")).to be_truthy
+      expect(File.exist?("simple.size")).to be_truthy
+      expect(File.read("simple.size")).to match /text.*data.*bss/
+    end
+  end
+
   context "multi-threading" do
     it "waits for subcommands in threads for builders that support threaded commands" do
       test_dir("simple")
