@@ -2844,4 +2844,16 @@ EOF
     end
   end
 
+  context "FileUtils methods" do
+    it "defines FileUtils methods to be available in the build script" do
+      test_dir "typical"
+      result = run_rscons(rsconscript: "fileutils_methods.rb")
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(Dir.exist?("foobar")).to be_truthy
+      expect(Dir.exist?("foo")).to be_falsey
+      expect(File.exist?("foobar/baz/b.txt")).to be_truthy
+    end
+  end
+
 end

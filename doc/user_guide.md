@@ -233,6 +233,33 @@ The `Rsconscript` file is a Ruby script.
   * `rscons` (see ${#Using Subsidiary Build Scripts: The rscons Method})
   * `sh` (see (${#Executing Commands: The sh Method})
 
+Additionally, the following methods from the Ruby
+[FileUtils](https://ruby-doc.org/stdlib-3.1.0/libdoc/fileutils/rdoc/FileUtils.html)
+module are made available for the build script to call directly:
+
+  * `cd`
+  * `chmod`
+  * `chmod_R`
+  * `chown`
+  * `chown_R`
+  * `cp`
+  * `cp_lr`
+  * `cp_r`
+  * `install`
+  * `ln`
+  * `ln_s`
+  * `ln_sf`
+  * `mkdir`
+  * `mkdir_p`
+  * `mv`
+  * `pwd`
+  * `rm`
+  * `rm_f`
+  * `rm_r`
+  * `rm_rf`
+  * `rmdir`
+  * `touch`
+
 ###> Finding Files: The glob Method
 
 The [`glob`](../yard/Rscons/Script/GlobalDsl.html#glob-instance_method) method can be

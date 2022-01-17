@@ -159,6 +159,35 @@ module Rscons
         end
       end
 
+      [
+        :cd,
+        :chmod,
+        :chmod_R,
+        :chown,
+        :chown_R,
+        :cp,
+        :cp_lr,
+        :cp_r,
+        :install,
+        :ln,
+        :ln_s,
+        :ln_sf,
+        :mkdir,
+        :mkdir_p,
+        :mv,
+        :pwd,
+        :rm,
+        :rm_f,
+        :rm_r,
+        :rm_rf,
+        :rmdir,
+        :touch,
+      ].each do |method|
+        define_method(method) do |*args, **kwargs, &block|
+          FileUtils.__send__(method, *args, **kwargs, &block)
+        end
+      end
+
     end
 
     # Top-level DSL available to the Rsconscript.
