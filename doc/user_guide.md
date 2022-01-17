@@ -237,7 +237,7 @@ The `Rsconscript` file is a Ruby script.
 
 The [`glob`](../yard/Rscons/Script/GlobalDsl.html#glob-instance_method) method can be
 used to find files matching the patterns specified.
-It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/core-2.5.1/Dir.html#method-c-glob) but operates more deterministically.
+It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/core-3.1.0/Dir.html#method-c-glob) but operates more deterministically.
 
 Example use:
 
