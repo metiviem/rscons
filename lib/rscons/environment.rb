@@ -475,10 +475,12 @@ module Rscons
       output_fname
     end
 
-    # Expand a path to be relative to the Environment's build root.
+    # Expand paths.
     #
     # Paths beginning with "^/" are expanded by replacing "^" with the
-    # Environment's build root.
+    # Environment's build root (e.g. "build/envname").
+    # Paths beginning with "^^/" are expanded by replacing "^^" with the
+    # top-level build directory (e.g. "build").
     #
     # @param path [String, Array<String>]
     #   The path(s) to expand.
@@ -493,7 +495,7 @@ module Rscons
           expand_path(path)
         end
       else
-        path.sub(%r{^\^(?=[\\/])}, @build_root).gsub("\\", "/")
+        path.sub(%r{^\^\^(?=[\\/])}, Rscons.application.build_dir).sub(%r{^\^(?=[\\/])}, @build_root).gsub("\\", "/")
       end
     end
 

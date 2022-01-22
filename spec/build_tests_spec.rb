@@ -338,14 +338,14 @@ EOF
     ]
   end
 
-  it "expands target and source paths starting with ^/ to be relative to the build root" do
+  it "expands target and source paths starting with ^/ and ^^/" do
     test_dir("typical")
-    result = run_rscons(rsconscript: "carat.rb")
+    result = run_rscons(rsconscript: "carat.rb", rscons_args: %w[-b bld])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/one.o -MMD -MF build/e.1/one.o.mf -Isrc -Isrc/one -Isrc/two build/e.1/one.c},
-      %r{gcc -c -o build/e.1/src/two/two.c.o -MMD -MF build/e.1/src/two/two.c.o.mf -Isrc -Isrc/one -Isrc/two src/two/two.c},
-      %r{gcc -o program.exe build/e.1/src/two/two.c.o build/e.1/one.o},
+      %r{gcc -c -o bld/e.1/one.o -MMD -MF bld/e.1/one.o.mf -Isrc -Isrc/one -Isrc/two bld/e.1/one.c},
+      %r{gcc -c -o bld/e.1/bld/two.c.o -MMD -MF bld/e.1/bld/two.c.o.mf -Isrc -Isrc/one -Isrc/two bld/two.c},
+      %r{gcc -o bld/program.exe bld/e.1/one.o bld/e.1/bld/two.c.o},
     ])
   end
 
