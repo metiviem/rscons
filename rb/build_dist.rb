@@ -60,6 +60,8 @@ combined_file.each do |line|
   end
 end
 
+license = File.read("LICENSE.txt").gsub(/^/, "# ")
+
 require "zlib"
 require "base64"
 compressed_script = Zlib::Deflate.deflate(stripped.join)
@@ -71,6 +73,9 @@ FileUtils.mkdir_p(DIST)
 File.open("#{DIST}/#{PROG_NAME}", "wb", 0755) do |fh|
   fh.write(<<EOF)
 #!/usr/bin/env ruby
+
+#{license}
+
 script = File.join(File.dirname(__FILE__), ".rscons-#{VERSION}-#{hash}.rb")
 unless File.exists?(script)
   if File.read(__FILE__, mode: "rb") =~ /^#==>(.*)/
