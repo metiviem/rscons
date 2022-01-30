@@ -1,4 +1,4 @@
-Copyright (c) 2013-2019 Josh Holtrop
+Copyright (c) 2013-2022 Josh Holtrop
 
 MIT License
 
