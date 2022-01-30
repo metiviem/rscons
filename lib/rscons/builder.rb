@@ -103,7 +103,7 @@ module Rscons
     # @return [void]
     def produces(*side_effects)
       side_effects.each do |side_effect|
-        side_effect_expanded = @env.expand_path(@env.expand_varref(side_effect))
+        side_effect_expanded = @env.expand(side_effect)
         @env.register_side_effect(side_effect_expanded)
         @side_effects << side_effect_expanded
       end

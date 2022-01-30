@@ -224,7 +224,7 @@ task "build" do
 end
 
 task "flash", deps: "build" do
-  sh "nrfjprog", "-f", "NRF52", "--program", env.expand_path("^^/proj.elf")
+  sh "nrfjprog", "-f", "NRF52", "--program", env.expand("^^/proj.elf")
 end
 ```
 

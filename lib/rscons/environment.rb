@@ -337,10 +337,10 @@ module Rscons
         unless vars.is_a?(Hash) or vars.is_a?(VarSet)
           raise "Unexpected construction variable set: #{vars.inspect}"
         end
-        target = expand_path(expand_varref(target))
+        target = expand(target)
         sources = Array(sources).map do |source|
           source = source.target if source.is_a?(Builder)
-          expand_path(expand_varref(source))
+          expand(source)
         end.flatten
         builder = @builders[method.to_s].new(
           target: target,
@@ -369,12 +369,12 @@ module Rscons
       if target.is_a?(Builder)
         target = target.target
       end
-      target = expand_path(expand_varref(target.to_s))
+      target = expand(target.to_s)
       user_deps = user_deps.map do |ud|
         if ud.is_a?(Builder)
           ud = ud.target
         end
-        expand_path(expand_varref(ud))
+        expand(ud)
       end
       @user_deps[target] ||= []
       @user_deps[target] = (@user_deps[target] + user_deps).uniq
@@ -408,13 +408,13 @@ module Rscons
       targets = Array(targets)
       prerequisites = Array(prerequisites)
       targets.each do |target|
-        target = expand_path(expand_varref(target))
+        target = expand(target)
         @registered_build_dependencies[target] ||= Set.new
         prerequisites.each do |prerequisite|
           if prerequisite.is_a?(Builder)
             prerequisite = prerequisite.target
           end
-          prerequisite = expand_path(expand_varref(prerequisite))
+          prerequisite = expand(prerequisite)
           @registered_build_dependencies[target] << prerequisite
         end
       end
@@ -430,7 +430,7 @@ module Rscons
     #
     # @return [void]
     def produces(target, *side_effects)
-      target = expand_path(expand_varref(target))
+      target = expand(target)
       @builder_sets.reverse.each do |builder_set|
         if builders = builder_set[target]
           builders.last.produces(*side_effects)
@@ -512,6 +512,18 @@ module Rscons
       else
         path.sub(%r{^\^\^(?=[\\/])}, Rscons.application.build_dir).sub(%r{^\^(?=[\\/])}, @build_root).gsub("\\", "/")
       end
+    end
+
+    # Expand construction variable references and paths.
+    #
+    # @param expr [String]
+    #   Expression to expand. Can contain construction variable references and
+    #   a path.
+    #
+    # @return [String, Array<String>]
+    #   Expanded value.
+    def expand(expr)
+      expand_path(expand_varref(expr))
     end
 
     # Print the builder run message, depending on the Environment's echo mode.
