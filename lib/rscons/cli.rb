@@ -1,63 +1,86 @@
 require "rscons"
 require "optparse"
 
-# CLI usage string.
-USAGE = <<EOF
-Usage: #{$0} [global options] [operation] [operation options]
-
-Global options:
-  -b BUILD, --build=BUILD     Set build directory (default: build)
-  -f FILE                     Use FILE as Rsconscript
-  -F, --show-failure          Show failed command log from previous build and exit
-  -h, --help                  Show rscons help and exit
-  -j N, --nthreads=N          Set number of threads (local default: #{Rscons.application.n_threads})
-  -r COLOR, --color=COLOR     Set color mode (off, auto, force)
-  -v, --verbose               Run verbosely
-  --version                   Show rscons version and exit
-
-Operations:
-  configure                   Configure the project
-  build                       Build the project
-  clean                       Remove build artifacts (but not configuration)
-  distclean                   Remove build directory and configuration
-  install                     Install project to installation destination
-  uninstall                   Uninstall project from installation destination
-
-Configure options:
-  --prefix=PREFIX             Set installation prefix (default: /usr/local)
-EOF
-
 module Rscons
   # Command-Line Interface functionality.
-  module Cli
+  class Cli
 
     # Default files to look for to execute if none specified.
     DEFAULT_RSCONSCRIPTS = %w[Rsconscript Rsconscript.rb]
 
-    class << self
+    # Run the Rscons CLI.
+    #
+    # @param argv [Array]
+    #   Command-line parameters.
+    #
+    # @return [void]
+    def run(argv)
+      argv = argv.dup
+      begin
+        exit run_toplevel(argv)
+      rescue OptionParser::InvalidOption => io
+        $stderr.puts io.message
+        $stderr.puts usage
+        exit 2
+      end
+    end
 
-      # Run the Rscons CLI.
-      #
-      # @param argv [Array]
-      #   Command-line parameters.
-      #
-      # @return [void]
-      def run(argv)
-        argv = argv.dup
-        begin
-          exit run_toplevel(argv)
-        rescue OptionParser::InvalidOption => io
-          $stderr.puts io.message
-          $stderr.puts USAGE
-          exit 2
+    private
+
+    def parse_task_params(task, argv)
+      while argv.size > 0
+        if argv[0].start_with?("-")
+          valid_arg = false
+          if argv[0] =~ /^--(\S+?)(?:=(.*))?$/
+            param_name, value = $1, $2
+            if param = Task[task].params[param_name]
+              param.value = value || argv[0]
+              argv.slice!(0)
+              valid_arg = true
+            end
+          end
+          unless valid_arg
+            $stderr.puts "Invalid task '#{task}' argument '#{argv[0].split("=").first}'"
+            $stderr.puts usage
+            exit 2
+          end
+        else
+          return
         end
       end
+    end
 
-      private
+    def parse_tasks_and_params(argv)
+      tasks = []
+      while argv.size > 0
+        task = argv.shift
+        parse_task_params(task, argv)
+        tasks << task
+      end
+      tasks
+    end
 
-      def add_global_options(opts)
+    def run_toplevel(argv)
+      rsconscript = nil
+      do_help = false
+
+      OptionParser.new do |opts|
+
         opts.on("-b", "--build DIR") do |build_dir|
           Rscons.application.build_dir = build_dir
+        end
+
+        opts.on("-f FILE") do |f|
+          rsconscript = f
+        end
+
+        opts.on("-F", "--show-failure") do
+          Rscons.application.show_failure
+          return 0
+        end
+
+        opts.on("-h", "--help") do
+          do_help = true
         end
 
         opts.on("-j NTHREADS") do |n_threads|
@@ -76,103 +99,96 @@ module Rscons
         opts.on("-v", "--verbose") do
           Rscons.application.verbose = true
         end
+
+        opts.on("--version") do
+          puts "Rscons version #{Rscons::VERSION}"
+          return 0
+        end
+
+      end.order!(argv)
+
+      # Find the build script.
+      if rsconscript
+        unless File.exists?(rsconscript)
+          $stderr.puts "Cannot read #{rsconscript}"
+          return 1
+        end
+      else
+        rsconscript = DEFAULT_RSCONSCRIPTS.find do |f|
+          File.exists?(f)
+        end
       end
 
-      def run_toplevel(argv)
-        rsconscript = nil
-        do_help = false
-
-        OptionParser.new do |opts|
-
-          add_global_options(opts)
-
-          opts.on("-f FILE") do |f|
-            rsconscript = f
-          end
-
-          opts.on("-F", "--show-failure") do
-            show_failure
-            exit 0
-          end
-
-          opts.on("--version") do
-            puts "Rscons version #{Rscons::VERSION}"
-            exit 0
-          end
-
-          opts.on("-h", "--help") do
-            do_help = true
-          end
-
-        end.order!(argv)
-
-        # Retrieve the operation, or default to build.
-        operation = argv.shift || "build"
-
-        argv.each do |arg|
-          if arg =~ /^([^=]+)=(.*)$/
-            Rscons.application.vars[$1] = $2
-          end
-        end
-
+      begin
+        # Load the build script.
         if rsconscript
-          unless File.exists?(rsconscript)
-            $stderr.puts "Cannot read #{rsconscript}"
-            exit 1
-          end
-        else
-          rsconscript = DEFAULT_RSCONSCRIPTS.find do |f|
-            File.exists?(f)
-          end
+          Rscons.application.script.load(rsconscript)
         end
 
-        if rsconscript
-          script = Script.new
-          script.load(rsconscript)
-        end
-
+        # Do help after loading the build script (if found) so that any
+        # script-defined tasks and task options can be displayed.
         if do_help
-          puts USAGE
-          exit 0
+          puts usage
+          return 0
         end
 
+        # Anything else requires a build script, so complain if we didn't find
+        # one.
         unless rsconscript
           $stderr.puts "Could not find the Rsconscript to execute."
           $stderr.puts "Looked for: #{DEFAULT_RSCONSCRIPTS.join(", ")}"
-          exit 1
+          return 1
         end
 
-        operation_options = parse_operation_args(operation, argv) || {}
+        # Parse the rest of the command line. This is done after loading the
+        # build script so that script-defined tasks and task options can be
+        # taken into account.
+        tasks = parse_tasks_and_params(argv)
 
-        exit Rscons.application.run(operation, script, operation_options)
-      end
-
-      def parse_operation_args(operation, argv)
-        options = {}
-        OptionParser.new do |opts|
-          add_global_options(opts)
-          case operation
-          when "configure"
-            parse_configure_args(opts, argv, options)
-          end
-        end.order!(argv)
-        options
-      end
-
-      def parse_configure_args(opts, argv, options)
-        opts.on("--prefix PREFIX") do |prefix|
-          options[:prefix] = prefix
+        # If no user specified tasks, run "default" task.
+        if tasks.empty?
+          tasks << "default"
         end
-      end
 
-      def show_failure
-        failed_commands = Cache.instance["failed_commands"]
-        failed_commands.each_with_index do |command, i|
-          Ansi.write($stdout, :red, "Failed command (#{i + 1}/#{failed_commands.size}):", :reset, "\n")
-          $stdout.puts Util.command_to_s(command)
-        end
+        # Finally, with the script fully loaded and command-line parsed, run
+        # the application to execute all required tasks.
+        Rscons.application.run(tasks)
+      rescue RsconsError => e
+        Ansi.write($stderr, :red, e.message, :reset, "\n")
+        1
       end
-
     end
+
+    def usage
+      usage = <<EOF
+Usage: #{$0} [global options] [[task] [task options] ...]
+
+Global options:
+  -b BUILD, --build=BUILD     Set build directory (default: build)
+  -f FILE                     Use FILE as Rsconscript
+  -F, --show-failure          Show failed command log from previous build and exit
+  -h, --help                  Show rscons help and exit
+  -j N, --nthreads=N          Set number of threads (local default: #{Rscons.application.n_threads})
+  -r COLOR, --color=COLOR     Set color mode (off, auto, force)
+  -v, --verbose               Run verbosely
+  --version                   Show rscons version and exit
+
+Tasks:
+EOF
+      Task[].each do |name, task|
+        if task.desc
+          usage += %[  #{sprintf("%-27s", name)} #{task.desc}\n]
+          task.params.each do |name, param|
+            arg_text = "--#{name}"
+            if param.takes_arg
+              arg_text += "=#{name.upcase}"
+            end
+            usage += %[    #{sprintf("%-25s", "#{arg_text}")} #{param.description}\n]
+          end
+        end
+      end
+      usage
+    end
+
   end
 end

@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env.Program("simple.exe", Dir["*.c"])
     env.add_build_hook do |builder|

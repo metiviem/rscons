@@ -11,6 +11,7 @@ It supports the following features:
   * compatible with Windows, Linux, OS X, and FreeBSD
   * colorized output with build progress
   * build hooks
+  * user-defined tasks with dependencies and custom parameters
 
 At its core, Rscons is mainly an engine to:
 
@@ -22,7 +23,16 @@ Along the way, Rscons provides a concise syntax for specifying common types of
 build operations, but also provides an extensible framework for performing
 custom build operations as well.
 
-Rscons is written in Ruby, and is inspired by [SCons](https://scons.org/) and [waf](https://waf.io/).
+Rscons takes inspiration from:
+  * [SCons](https://scons.org/)
+  * [waf](https://waf.io/)
+  * [rake](https://github.com/ruby/rake)
+  * [CMake](https://cmake.org/)
+  * [Autoconf](https://www.gnu.org/software/autoconf/)
+
+Rscons is written in Ruby.
+The only requirement to run Rscons is that the system has a Ruby interpreter
+installed.
 
 ${remove}
 WARNING: This user guide is meant to be preprocessed and rendered by a custom
@@ -131,75 +141,44 @@ version control systems):
 #> Command-Line Operation
 
 Rscons is typically invoked from the command-line as `./rscons`.
-Rscons supports several build *operations*:
 
-  * configure
-  * build
-  * clean
-  * distclean
-  * install
-  * uninstall
+    ./rscons [global options] [[task] [task options] ...]
 
-##> Configure Operation
+    Global options:
+      -b BUILD, --build=BUILD     Set build directory (default: build)
+      -f FILE                     Use FILE as Rsconscript
+      -F, --show-failure          Show failed command log from previous build and exit
+      -h, --help                  Show rscons help and exit
+      -j N, --nthreads=N          Set number of threads
+      -r COLOR, --color=COLOR     Set color mode (off, auto, force)
+      -v, --verbose               Run verbosely
+      --version                   Show rscons version and exit
 
-The `configure` operation will initialize the Rscons cache file and build
-directory.
-It will also perform any configuration checks requested by the build script.
-Such configuration checks can include:
+The user can list any number of tasks on the command line.
+Any parameters beginning with a "-" that follow a task are interpreted as task
+arguments until another parameter is seen that does not begin with "-".
+For example:
 
-  * verifying operation of a compiler
-  * loading compilation/linker flags from a config program (e.g. `pkg-config`)
-  * verifying presence of a C/C++ header file
-  * verifying presence of a D import
-  * verifying presence of a library
-  * verifying presence of an executable
-  * any custom user-supplied configuration check
+    ./rscons -v build1 --build1-opt=val1 --flag build2
 
-##> Build Operation
+The above command line is interpreted as follows:
 
-If a `build` operation is requested and a `configure` operation has not yet
-been performed, a `configure` operation will be automatically invoked.
+  * The user is passing the -v global option to run verbosely.
+  * The user requests to run task build1 with task parameters "--build1-opt=val1" and "--flag".
+  * The user requests to run task build2 with no task parameters.
 
-The `build` operation will execute all builders registered to produce build
-targets.
+If no tasks are specified on the command line, Rscons executes the `default`
+task.
 
-If a `build` operation fails (e.g. due to a compilation failure), Rscons will
-log the failed commands.
+If a task fails due to a command failure (e.g. compilation or linking failed),
+Rscons will log the failed commands.
 By default Rscons does not print the failed commands to the console so that it
 is easier for the user to focus on the actual compiler failure messages rather
 than the compilation command itself.
-However, if the user wishes to see the compilation commands, rscons can be
-invoked with the `-v` command-line option to show all complilation commands
-while building, or, alternatively, following a compilation failure, the user
-can invoke rscons with the -F option which will not rebuild but will show the
-failed command log from the previous build operation.
-
-##> Clean Operation
-
-A `clean` operation will remove all built target files.
-It will not remove items installed by an `install` operation.
-It will not remove the cached configuration options.
-
-##> Distclean Operation
-
-A `distclean` operation will remove all built target files and all cached
-configuration options.
-Generally it will get the project directory back to the state it was in when
-unpacked before any configuration or build operations took place.
-It will not removed items installed by an `install` operation.
-
-##> Install Operation
-
-An `install` operation will perform a `build` (and if necessary, first a
-`configure` as well).
-In addition it will execute any `Install` or `InstallDirectory` builders to
-install items into the specified install directory.
-
-##> Uninstall Operation
-
-An `uninstall` operation will remove any items installed by an `install`
-operation.
-It will not remove all built target files, just the installed copies.
+The user can run `./rscons -F` to see the command that failed on the prior
+Rscons execution.
+The user can also invoke Rscons with the `-v` global command-line option which
+will cause Rscons to print each command it is executing.
 
 #> The Build Script
 
@@ -208,7 +187,7 @@ called `Rsconscript` (or `Rsconscript.rb`).
 Here is a simple example `Rsconscript` file:
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env.Program("myprog.exe", glob("src/**/*.c"))
   end
@@ -221,176 +200,253 @@ called `myprog.exe` which is to be built from all C source files found
 
 The `Rsconscript` file is a Ruby script.
 
-##> Build Script Methods
+##> Tasks
 
-`rscons` provides several methods that a build script can use.
+Tasks are the high-level user interface for performing functionality in a build
+script.
+Tasks can create Environments that perform compilation/linking steps.
+Tasks can also execute arbitrary commands or perform any miscellaneous logic.
 
-  * `glob` (see ${#Finding Files: The glob Method})
-  * `path_append` (see ${#PATH Management})
-  * `path_components` (see ${#PATH Management})
-  * `path_prepend` (see ${#PATH Management})
-  * `path_set` (see ${#PATH Management})
-  * `rscons` (see ${#Using Subsidiary Build Scripts: The rscons Method})
-  * `sh` (see (${#Executing Commands: The sh Method})
+Tasks can have dependencies, which are specified as names of other tasks that
+should be executed before this task executes.
 
-Additionally, the following methods from the Ruby
-[FileUtils](https://ruby-doc.org/stdlib-3.1.0/libdoc/fileutils/rdoc/FileUtils.html)
-module are made available for the build script to call directly:
+Tasks can have action blocks.
+When a task is executed, all of its action blocks are called in the order in
+which they were added.
 
-  * `cd`
-  * `chmod`
-  * `chmod_R`
-  * `chown`
-  * `chown_R`
-  * `cp`
-  * `cp_lr`
-  * `cp_r`
-  * `install`
-  * `ln`
-  * `ln_s`
-  * `ln_sf`
-  * `mkdir`
-  * `mkdir_p`
-  * `mv`
-  * `pwd`
-  * `rm`
-  * `rm_f`
-  * `rm_r`
-  * `rm_rf`
-  * `rmdir`
-  * `touch`
-
-###> Finding Files: The glob Method
-
-The [`glob`](../yard/Rscons/Script/GlobalDsl.html#glob-instance_method) method can be
-used to find files matching the patterns specified.
-It supports a syntax similar to the Ruby [Dir.glob method](https://ruby-doc.org/core-3.1.0/Dir.html#method-c-glob) but operates more deterministically.
-
-Example use:
+Example:
 
 ```ruby
-build do
+task "build" do
   Environment.new do |env|
-    env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
+    env.Program("^^/proj.elf", glob("src/**/*.c"))
+  end
+end
+
+task "flash", deps: "build" do
+  sh "nrfjprog", "-f", "NRF52", "--program", env.expand_path("^^/proj.elf")
+end
+```
+
+In this example, the `flash` task depends on the `build` task.
+So if the project had not yet been built, and the user executes
+`./rscons flash`, the project would first be built and then flashed to the
+target.
+
+If the `task` method is called again with the name of an already existing task,
+the task is not overwritten, but rather modified.
+Any newly specified dependencies are added to the current dependencies.
+Any action block is appended to the task's list of action blocks to execute
+when the task is executed.
+
+###> Task Parameters
+
+Tasks can also take parameters.
+Parameters are defined by the build script author, and have default values.
+The user can override parameter values on the command line.
+
+Task parameters are defined by passing a parameter constructed with the Rscons
+`param()` method to the `:params` argument of the `task()` method.
+The signature of the `param` method is:
+
+```ruby
+def param(name, value, takes_arg, description)
+```
+
+For example:
+
+```ruby
+task "build", params: [
+  param("myparam", "defaultvalue", true, "My special parameter"),
+  param("xyz", nil, false, "Enable the xyz feature"),
+] do |task, params|
+  Environment.new do |env|
+    env["CPPDEFINES"] << "SOMEMACRO=#{params["myparam"]}"
+    if params["flag"]
+      env["CPPDEFINES"] << "ENABLE_FEATURE_XYZ"
+    end
   end
 end
 ```
 
-This example would build the `mytests` executable from all `.cc` source files
-found recursively under the `src` or `test` directory.
+With the above `Rsconscript`, the user could invoke Rscons as:
 
-###> PATH Management
+    ./rscons build --myparam=pvalue --xyz
 
-`rscons` provides methods for management of the `PATH` environment variable.
+This would pass in "pvalue" as the value to the "myparam" parameter, and a
+truthy value ("--xyz") as the value of the "xyz" parameter.
 
-The
-[`path_append`](../yard/Rscons/Script/GlobalDsl.html#path_append-instance_method)
-and
-[`path_prepend`](../yard/Rscons/Script/GlobalDsl.html#path_prepend-instance_method)
-methods can be used to append or prepend a path to the `PATH` environment
-variable.
+As seen above, task parameter values can be accessed within a task's action
+block by using the second parameter (`params`) to the action block.
+Task parameter values can also be accessed with the `Task#[]` method on any
+task object.
+This allows accessing the parameter values of any task object, not just the
+task owning the action block being executed.
+
+Example:
 
 ```ruby
-path_prepend "i686-elf-gcc/bin"
+task "one", params: param("flag", nil, false, "Enable a flag")
+
+task "two" do
+  puts "Task one's flag #{Task["one"]["flag"] ? "is" : "is not"} set"
+end
 ```
 
-The
-[`path_set`](../yard/Rscons/Script/GlobalDsl.html#path_set-instance_method)
-method sets the `PATH` environment variable to the given Array or String.
+###> Tasks with Special Meaning
 
-The
-[`path_components`](../yard/Rscons/Script/GlobalDsl.html#path_components-instance_method)
-method returns an Array of the components in the `PATH`
-environment variable.
+Rscons recognizes special meaning for a few tasks:
 
-###> Using Subsidiary Build Scripts: The rscons Method
+  * configure
+  * default
+  * clean
+  * distclean
+  * install
+  * uninstall
 
-The
-[`rscons`](../yard/Rscons/Script/GlobalDsl.html#rscons-instance_method)
-build script method can be used to invoke an rscons subprocess to
-perform an operation using a subsidiary rscons build script.
-This can be used, for example, when a subproject is imported and a top-level
-`configure` or `build` operation should also perform the same operation in the
-subproject directory.
-
-The first argument to the `rscons` method specifies either a directory name, or
-the path to the subsidiary Rsconscript file to execute.
-Any additional arguments are passed to `rscons` when it executes the subsidiary
-script.
-`rscons` will change working directories to the directory containing the
-subsidiary script when executing it.
-
+For each of these tasks, a shortcut method of the same name as the task is
+provided which is equivalent to calling the `task()` method with the first
+argument (task name) automatically filled in by the shortcut method.
 For example:
 
 ```ruby
+default deps: "unpack_compiler" do
+  puts "default task"
+end
+```
+
+is equivalent to:
+
+```ruby
+task "default", deps: "unpack_compiler" do
+  puts "default task"
+end
+```
+
+####> Configure Task
+
+The `configure` task allows Rscons to perform any one-time setup operations
+required by a project, for example locating compilers and setting any initial
+construction variable values based on the host environment in use.
+It will also perform any configuration checks requested by the build script.
+Such configuration checks can include:
+
+  * verifying operation of a compiler
+  * loading compilation/linker flags from a config program (e.g. `pkg-config`)
+  * verifying presence of a C/C++ header file
+  * verifying presence of a D import
+  * verifying presence of a library
+  * verifying presence of an executable
+  * any custom user-supplied configuration check
+
+The configure task is implicitly a dependency of every other task unless that
+task is configured with its `autoconf` option set to `false`.
+
+The global build script `autoconf` setting can also be set to `false` to
+disable automatic invocation of the configure task.
+For example:
+
+```ruby
+autoconf false
+
 configure do
-  rscons "subproject", "configure"
+  puts "configure"
 end
 
-build do
-  rscons "subproject/Rsconscript", "build"
+default do
+  puts "default"
 end
 ```
 
-It is also perfectly valid to perform a different operation in the subsidiary
-script from the one being performed in the top-level script.
-For example, in a project that requires a particular cross compiler, the
-top-level `configure` script could build the necessary cross compiler using a
-subsidiary build script.
-This could look something like:
+With the above Rsconscript, even if the project has not yet been configured,
+a configure operation would not take place when the default task is executed.
+The user would have to explicitly request the configure task from the command
+line.
+
+The build script method `project_name` can be used to set the project name
+which will be reported to the user during a configure operation.
+For example:
 
 ```ruby
+project_name "My awesome project"
+
 configure do
-  rscons "cross/Rsconscript"
-  check_c_compiler "i686-elf-gcc"
+  check_d_compiler
 end
 ```
 
-This would build, and if necessary first configure, using the cross/Rsconscript
-subsidiary build script.
-Subsidiary build scripts are executed from within the directory containing the
-build script.
+See ${#Configuring the Project} for more details on how to make use of the
+configuration functionality that Rscons provides.
 
-###> Executing Commands: The sh Method
+####> Default Task
 
-The
-[`sh`](../yard/Rscons/Script/GlobalDsl.html#sh-instance_method)
-build script method can be used to directly execute commands.
-The `sh` method accepts either a single String argument or an Array of Strings.
-When an Array is given, if the array length is greater than 1, then the command
-will not be executed and interpreted by the system shell.
-Otherwise, it will be executed and interpreted by the system shell.
+The `default` task is special in that Rscons will execute it if no other task
+has been requested by the user on the command line.
+It is entirely feasible for the default task to be the only task defined for a
+project, and simple projects may wish to do just that.
 
+The default task can also be used to declare a dependency on another task that
+would effectively become the default.
 For example:
 
 ```ruby
-build do
-  # Run "make" in imported "subcomponent" directory.
-  sh "cd subcomponent; make"
-  # Move a file around.
-  sh "mv", "subcomponent/file with spaces.txt", "new_name.txt"
+task "build" do
+  ...
 end
+
+task "flash" do
+  ...
+end
+
+default deps: "build"
 ```
 
-If the command fails, rscons will normally print the error and terminate
-execution.
-If the `:continue` option is set, then rscons will not terminate execution.
+Then when the user runs `./rscons` the "build" task will be executed.
+
+####> Clean Task
+
+The `clean` task is built-in to Rscons.
+It removes all built target files.
+It will not remove items installed by an Install builder.
+It will not remove the cached configuration options.
+
+####> Distclean Task
+
+The `distclean` task is built-in to Rscons.
+It removes all built target files and all cached configuration options.
+Generally it will get the project directory back to the state it was in when
+unpacked before any configuration or build operations took place.
+It will not remove items installed by an Install builder.
+
+####> Install Task
+
+The `install` task is not built-in to Rscons but rather is just a convention
+for the build script author to use.
+The suggested use is for the `install` task to invoke any `Install` or
+`InstallDirectory` builders to install items into the specified installation
+directory.
+
+The `install` shortcut method can be used.
 For example:
 
 ```ruby
-build do
-  # This command will fail and a message will be printed.
-  sh "false", continue: true
-  # However, due to the :continue option being set, execution will continue.
-  sh "echo hi"
+install do
+  env.Install("${prefix}/bin", "app.exe")
+  env.Install("${prefix}/share", "share")
 end
 ```
 
-##> Configuration Operations
+####> Uninstall Task
 
-A `configure` block is optional.
-It can be used to perform various checks and setup operations for a project.
-Example `configure` block:
+The `uninstall` task is built-in to Rscons.
+It removes any items installed by an Install builder.
+It will not remove all built target files, just the installed copies.
+
+##> Configuring the Project
+
+Configure task actions can be used to perform various checks and setup
+operations for a project.
+Example `configure` action block:
 
 ```ruby
 configure do
@@ -398,6 +454,17 @@ configure do
   check_c_header "getopt.h"
 end
 ```
+
+If any configure task action blocks are present, they will be execute when the
+configure operation is performed.
+This happens if the user requests the `configure` task from the command line.
+It also happens if all of the following are true:
+
+  * The project has not yet been configured.
+  * A task that does not have `autoconf` set to `false` is being executed.
+  * The global `autoconf` setting has not been set to `false`.
+
+See ${#Configure Task} for more information about `autoconf`.
 
 ###> Checking for a Compiler
 
@@ -647,15 +714,17 @@ end
 If set, a build define of the specified String will be added to the
 `CPPDEFINES` construction variable array if the requested package is found.
 
-##> Build Operations
+##> Building Targets
 
-The `build` block is used to create Environments and register build targets.
-An Rscons build script would not be very useful without a `build` block.
+Building target files is accomplished by using Environments.
+Environments are typically created within the default task or any user-defined
+tasks.
 
-Here is an example `build` block demonstrating how to register a build target:
+Here is an example `default` task block demonstrating how to create an
+Environment and register a build target:
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env.Program("myprog.exe", glob("src/**/*.c"))
   end
@@ -687,7 +756,7 @@ to produce a user-specified build target.
 For example, for the `Rsconscript`:
 
 ```ruby
-build do
+default do
   Environment.new(name: "myproj") do |env|
     env.Program("myprog.exe", glob("src/**/*.c"))
   end
@@ -711,7 +780,7 @@ construction variables.
 Example:
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env["CCFLAGS"] += %w[-O2 -Wall]
     env["LIBS"] += %w[m]
@@ -1046,7 +1115,7 @@ build target or source file names.
 Example:
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env["CFLAGS"] << "-Wall"
     env.add_build_hook do |builder|
@@ -1078,6 +1147,184 @@ In other words, build targets are not parallelized across a barrier.
 
 ```ruby
 env.barrier
+```
+
+##> Build Script Methods
+
+`rscons` provides several methods that a build script can use.
+
+  * `autoconf` (see ${#Configure Task})
+  * `clean` (see ${#Clean Task})
+  * `configure` (see ${#Configure Task})
+  * `default` (see ${#Default Task})
+  * `distclean` (see ${#Distclean Task})
+  * `glob` (see ${#Finding Files: The glob Method})
+  * `install` (see ${#Install Task})
+  * `param` (see ${#Task Parameters})
+  * `path_append` (see ${#PATH Management})
+  * `path_components` (see ${#PATH Management})
+  * `path_prepend` (see ${#PATH Management})
+  * `path_set` (see ${#PATH Management})
+  * `project_name` (see ${#Configure Task})
+  * `rscons` (see ${#Using Subsidiary Build Scripts: The rscons Method})
+  * `sh` (see (${#Executing Commands: The sh Method})
+  * `task` (see ${#Tasks})
+  * `uninstall` (see ${#Uninstall Task})
+
+Additionally, the following methods from the Ruby
+[FileUtils](https://ruby-doc.org/stdlib-3.1.0/libdoc/fileutils/rdoc/FileUtils.html)
+module are made available for the build script to call directly:
+
+  * `cd`
+  * `chmod`
+  * `chmod_R`
+  * `chown`
+  * `chown_R`
+  * `cp`
+  * `cp_lr`
+  * `cp_r`
+  * `install`
+  * `ln`
+  * `ln_s`
+  * `ln_sf`
+  * `mkdir`
+  * `mkdir_p`
+  * `mv`
+  * `pwd`
+  * `rm`
+  * `rm_f`
+  * `rm_r`
+  * `rm_rf`
+  * `rmdir`
+  * `touch`
+
+###> Finding Files: The glob Method
+
+The [`glob`](../yard/Rscons/Script/GlobalDsl.html#glob-instance_method) method
+can be used to find files matching the patterns specified.
+It supports a syntax similar to the Ruby
+[Dir.glob method](https://ruby-doc.org/core-3.1.0/Dir.html#method-c-glob)
+but operates more deterministically (results are ordered based on file names
+rather than file system directory ordering).
+
+Example use:
+
+```ruby
+default do
+  Environment.new do |env|
+    env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
+  end
+end
+```
+
+This example would build the `mytests` executable from all `.cc` source files
+found recursively under the `src` or `test` directory.
+
+###> PATH Management
+
+`rscons` provides methods for management of the `PATH` environment variable.
+
+The
+[`path_append`](../yard/Rscons/Script/GlobalDsl.html#path_append-instance_method)
+and
+[`path_prepend`](../yard/Rscons/Script/GlobalDsl.html#path_prepend-instance_method)
+methods can be used to append or prepend a path to the `PATH` environment
+variable.
+
+```ruby
+path_prepend "i686-elf-gcc/bin"
+```
+
+The
+[`path_set`](../yard/Rscons/Script/GlobalDsl.html#path_set-instance_method)
+method sets the `PATH` environment variable to the given Array or String.
+
+The
+[`path_components`](../yard/Rscons/Script/GlobalDsl.html#path_components-instance_method)
+method returns an Array of the components in the `PATH`
+environment variable.
+
+###> Using Subsidiary Build Scripts: The rscons Method
+
+The
+[`rscons`](../yard/Rscons/Script/GlobalDsl.html#rscons-instance_method)
+build script method can be used to invoke an rscons subprocess to
+perform an operation using a subsidiary rscons build script.
+This can be used, for example, when a subproject is imported and a top-level
+`configure` or `build` operation should also perform the same operation in the
+subproject directory.
+
+The first argument to the `rscons` method specifies either a directory name, or
+the path to the subsidiary Rsconscript file to execute.
+Any additional arguments are passed to `rscons` when it executes the subsidiary
+script.
+`rscons` will change working directories to the directory containing the
+subsidiary script when executing it.
+
+For example:
+
+```ruby
+configure do
+  rscons "subproject", "configure"
+end
+
+task "build" do
+  rscons "subproject/Rsconscript", "build"
+end
+```
+
+It is also perfectly valid to perform a different operation in the subsidiary
+script from the one being performed in the top-level script.
+For example, in a project that requires a particular cross compiler, the
+top-level `configure` script could build the necessary cross compiler using a
+subsidiary build script.
+This could look something like:
+
+```ruby
+configure do
+  rscons "cross/Rsconscript"
+  check_c_compiler "i686-elf-gcc"
+end
+```
+
+This would build, and if necessary first configure, using the cross/Rsconscript
+subsidiary build script.
+Subsidiary build scripts are executed from within the directory containing the
+build script.
+
+###> Executing Commands: The sh Method
+
+The
+[`sh`](../yard/Rscons/Script/GlobalDsl.html#sh-instance_method)
+build script method can be used to directly execute commands.
+The `sh` method accepts either a single String argument or an Array of Strings.
+When an Array is given, if the array length is greater than 1, then the command
+will not be executed and interpreted by the system shell.
+Otherwise, it will be executed and interpreted by the system shell.
+
+For example:
+
+```ruby
+default do
+  # Run "make" in imported "subcomponent" directory.
+  sh "cd subcomponent; make"
+  # Move a file around.
+  sh "mv", "subcomponent/file with spaces.txt", "new_name.txt"
+end
+```
+
+If the command fails, rscons will normally print the error and terminate
+execution.
+If the `:continue` option is set, then rscons will not terminate execution.
+For example:
+
+```ruby
+default do
+  # This command will fail and a message will be printed.
+  sh "false", continue: true
+  # However, due to the :continue option being set, execution will continue.
+  sh "echo hi"
+end
 ```
 
 ##> Extending Rscons
@@ -1131,7 +1378,7 @@ For example:
 class Rscons::Builders::Mine < Rscons::Builder
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(Rscons::Builders::Mine)
   end
@@ -1154,7 +1401,7 @@ Rscons::DEFAULT_BUILDERS << :Special
 #Rsconscript
 load "SpecialBuilder.rb"
 
-build do
+default do
   Environment.new do |env|
     # A build target using the "Special" builder can be registered.
     env.Special("target", "source")
@@ -1383,7 +1630,7 @@ ${include lib/rscons/default_construction_variables.rb}
 ### Example: Building a C Program
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env["CFLAGS"] << "-Wall"
     env.Program("program", glob("src/**/*.c"))
@@ -1394,7 +1641,7 @@ end
 ### Example: Building a D Program
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env["DFLAGS"] << "-Wall"
     env.Program("program", glob("src/**/*.d"))
@@ -1405,7 +1652,7 @@ end
 ### Example: Cloning an Environment
 
 ```ruby
-build do
+default do
   main_env = Environment.new do |env|
     env["CFLAGS"] = ["-DSOME_DEFINE", "-O3"]
     env["LIBS"] = ["SDL"]
@@ -1436,7 +1683,7 @@ EOF
   end
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(GenerateFoo)
     env.GenerateFoo("foo.h", [])
@@ -1448,11 +1695,11 @@ end
 ### Example: Using different compilation flags for some sources
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env["CFLAGS"] = ["-O3", "-Wall"]
-    env.add_build_hook do |build_op|
-      if build_op[:target] =~ %r{build/third-party}
+    env.add_build_hook do |builder|
+      if builder.sources.first =~ %r{src/third-party/}
         build_op[:vars]["CFLAGS"] -= ["-Wall"]
       end
     end
@@ -1464,7 +1711,7 @@ end
 ### Example: Creating a static library
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env.Library("mylib.a", glob("src/**/*.c"))
   end
@@ -1474,7 +1721,7 @@ end
 ### Example: Creating a C++ parser source from a Yacc/Bison input file
 
 ```ruby
-build do
+default do
   Environment.new do |env|
     env.CFile("^/parser.tab.cc", "parser.yy")
   end

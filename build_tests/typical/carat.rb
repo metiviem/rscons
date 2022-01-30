@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new(echo: :command) do |env|
     env.append("CPPPATH" => glob("src/**"))
     FileUtils.mkdir_p(env.build_root)

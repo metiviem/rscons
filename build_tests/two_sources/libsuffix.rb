@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new() do |env|
     env["LIBSUFFIX"] = %w[.aaaa .aaa]
     env.Library("one.aaaa", "one.c", "CPPFLAGS" => ["-DONE"])

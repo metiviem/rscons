@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env["CXXSUFFIX"] = %w[.cccc .cc]
     env["CXXFLAGS"] += %w[-x c++]

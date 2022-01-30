@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     program = env.Program("simple.exe", Dir["*.c"])
     env.depends(program, "program.ld")

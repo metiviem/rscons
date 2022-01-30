@@ -1,4 +1,4 @@
-build do
+default do
   env1 = Environment.new(echo: :command) do |env|
     env['CFLAGS'] = '-O2'
     env.add_build_hook do |builder|

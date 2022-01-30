@@ -1,4 +1,4 @@
-build do
+default do
   base_env = Environment.new do |env|
     env.n_threads = 165
   end

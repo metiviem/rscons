@@ -3,5 +3,5 @@
 require "rscons/cli"
 
 if __FILE__ == $0
-  Rscons::Cli.run(ARGV)
+  Rscons::Cli.new.run(ARGV)
 end

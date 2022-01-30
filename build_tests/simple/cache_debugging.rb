@@ -4,17 +4,17 @@ class DebugBuilder < Rscons::Builder
       finalize_command
     else
       @command = %W[gcc -c -o #{@target} #{@sources.first}]
-      if Rscons.vars["command_change"]
+      if ENV["test"] == "command_change"
         @command += %w[-Wall]
       end
-      if Rscons.vars["new_dep"]
+      if ENV["test"] == "new_dep"
         @sources += ["extra"]
       end
-      if Rscons.vars["strict_deps1"]
+      if ENV["test"] == "strict_deps1"
         @sources += ["extra"]
         strict_deps = true
       end
-      if Rscons.vars["strict_deps2"]
+      if ENV["test"] == "strict_deps2"
         @sources = ["extra"] + @sources
         strict_deps = true
       end
@@ -27,10 +27,10 @@ class DebugBuilder < Rscons::Builder
   end
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(DebugBuilder)
-    if Rscons.vars["new_user_dep"]
+    if ENV["test"] == "new_user_dep"
       env.depends("foo.o", "new_dep")
     end
     env.DebugBuilder("foo.o", "simple.c")

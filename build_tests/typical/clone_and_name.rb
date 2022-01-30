@@ -1,4 +1,4 @@
-build do
+default do
   base_env = Environment.new do |env|
     env["CPPPATH"] += glob("src/**")
   end

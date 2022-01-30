@@ -87,14 +87,6 @@ module Rscons
       self.class.name
     end
 
-    # Return whether the builder is a no-op.
-    #
-    # @return [Boolean]
-    #   Whether the builder is a no-op.
-    def nop?
-      false
-    end
-
     # Manually record a given build target as depending on the specified files.
     #
     # @param user_deps [Array<String>]

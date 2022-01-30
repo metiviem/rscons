@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env["CPPPATH"] << "src/lib"
     env.SharedObject("one.o", "src/lib/one.c")

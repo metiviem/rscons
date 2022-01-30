@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env.Program("library.exe", ["lib.a", "three.c"])
     env.Object("two.o", "two.c")

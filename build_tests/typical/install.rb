@@ -1,9 +1,13 @@
 project_name "install_test"
 
-build do
-  Environment.new do |env|
-    env["CPPPATH"] += glob("src/**")
+Environment.new do |env|
+  env["CPPPATH"] += glob("src/**")
+
+  task "build" do
     env.Program("^/program.exe", glob("src/**/*.c"))
+  end
+
+  task "install", deps: "build" do
     env.InstallDirectory("${prefix}/bin")
     env.Install("${prefix}/bin", "^/program.exe")
     env.InstallDirectory("${prefix}/share")
@@ -12,3 +16,5 @@ build do
     env.Install("${prefix}/src", "src")
   end
 end
+
+default(deps: "build")

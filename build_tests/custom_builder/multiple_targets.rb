@@ -12,7 +12,7 @@ class CHGen < Rscons::Builder
   end
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(CHGen)
     env.CHGen("inc.c", ["program.c"])

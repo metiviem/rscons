@@ -1,3 +1,3 @@
-build do
+default do
   puts "second build"
 end

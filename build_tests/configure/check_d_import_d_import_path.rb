@@ -4,7 +4,7 @@ configure do
   check_d_import "frobulous", check_d_import_path: ["./usr2"]
 end
 
-build do
+default do
   Environment.new do |env|
     env.Object("test.o", "test.d")
   end

@@ -2,6 +2,6 @@ configure do
   puts "sub Rsconscript configure"
 end
 
-build do
+default do
   puts "sub Rsconscript build"
 end

@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new(echo: :command) do |env|
     env.Object("main.o", "main.d")
     env.Object("mod.o", "mod.d")

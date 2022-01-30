@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     File.open("foo.xyz", "wb") do |fh|
       fh.puts("hi")

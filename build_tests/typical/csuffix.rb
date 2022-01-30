@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env["CSUFFIX"] = %w[.yargh .c]
     env["CFLAGS"] += %w[-x c]

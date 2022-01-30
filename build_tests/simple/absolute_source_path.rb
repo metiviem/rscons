@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new(echo: :command) do |env|
     tempdir = ENV["TEMP"] || ENV["TMP"] || "/tmp"
     source_file = File.join(tempdir, "abs.c")

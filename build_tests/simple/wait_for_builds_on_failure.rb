@@ -11,7 +11,7 @@ class Fail < Rscons::Builder
   end
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(Fail)
     4.times do |i|

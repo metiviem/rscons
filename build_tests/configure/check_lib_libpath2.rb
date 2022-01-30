@@ -3,7 +3,7 @@ configure do
   check_lib "frobulous", check_libpath: ["./usr2"]
 end
 
-build do
+default do
   Environment.new(echo: :command) do |env|
     env.Program("simple.exe", "simple.c")
   end

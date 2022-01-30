@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env.add_builder(:MyBuilder) do |options|
       "hi"

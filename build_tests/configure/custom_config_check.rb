@@ -23,7 +23,7 @@ configure do
   end
 end
 
-build do
+default do
   Environment.new do |env|
     puts env["CPPDEFINES"]
   end

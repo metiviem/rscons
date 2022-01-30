@@ -3,7 +3,7 @@ class TestBuilder < Rscons::Builder
     true
   end
 end
-build do
+default do
   Environment.new do |env|
     env.add_builder(TestBuilder)
     env.TestBuilder("file")

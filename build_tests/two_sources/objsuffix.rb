@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env["OBJSUFFIX"] = %w[.oooo .ooo]
     env.Object("one.oooo", "one.c", "CPPFLAGS" => ["-DONE"])

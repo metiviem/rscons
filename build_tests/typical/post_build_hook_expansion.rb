@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env["CPPPATH"] << "src/two"
     env.Object("one.o", "src/one/one.c")

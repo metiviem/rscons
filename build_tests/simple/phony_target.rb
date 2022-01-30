@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env.add_builder(:Checker) do |params|
       unless @cache.up_to_date?(@target, :Checker, @sources, @env)

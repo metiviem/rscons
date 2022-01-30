@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env["ASSUFFIX"] = %w[.ssss .sss]
     env["CFLAGS"] += %w[-S]

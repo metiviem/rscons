@@ -88,7 +88,7 @@ unless File.exists?(script)
 end
 load script
 if __FILE__ == $0
-  Rscons::Cli.run(ARGV)
+  Rscons::Cli.new.run(ARGV)
 end
 #==>#{encoded_compressed_script}
 EOF

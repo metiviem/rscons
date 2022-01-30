@@ -1,4 +1,4 @@
-build do
-  rscons "second", "build"
+default do
+  rscons "second", "default"
   puts "top build"
 end

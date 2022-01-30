@@ -5,6 +5,10 @@ module Rscons
 
     # Global DSL methods.
     class GlobalDsl
+      # Create a GlobalDsl.
+      def initialize(script)
+        @script = script
+      end
 
       # Return a list of paths matching the specified pattern(s).
       #
@@ -31,6 +35,20 @@ module Rscons
             Pathname.new(path.gsub("\\", "/")).cleanpath.to_s
           end
         end.sort
+      end
+
+      # Construct a task parameter.
+      #
+      # @param name [String]
+      #   Param name.
+      # @param value [String, nil]
+      #   Param value.
+      # @param takes_arg [String]
+      #   Whether the parameter takes an argument.
+      # @param description [String]
+      #   Param description.
+      def param(name, value, takes_arg, description)
+        Task::Param.new(name, value, takes_arg, description)
       end
 
       # Return path components from the PATH variable.
@@ -159,6 +177,16 @@ module Rscons
         end
       end
 
+      # Create or modify a task.
+      def task(name, options = {}, &block)
+        if task = Task.tasks[name]
+          task.modify(options, &block)
+        else
+          task = Task.new(name, options, &block)
+        end
+        task
+      end
+
       [
         :cd,
         :chmod,
@@ -191,12 +219,7 @@ module Rscons
     end
 
     # Top-level DSL available to the Rsconscript.
-    class Dsl < GlobalDsl
-      # Create a Dsl.
-      def initialize(script)
-        @script = script
-      end
-
+    class TopLevelDsl < GlobalDsl
       # Set the project name.
       def project_name(project_name)
         @script.project_name = project_name
@@ -207,14 +230,18 @@ module Rscons
         @script.autoconf = autoconf
       end
 
-      # Enter build block.
-      def build(&block)
-        @script.operations["build"] = block
-      end
-
-      # Enter configuration block.
-      def configure(&block)
-        @script.operations["configure"] = block
+      # Shortcut methods to create task blocks for special tasks.
+      [
+        :clean,
+        :distclean,
+        :configure,
+        :default,
+        :install,
+        :uninstall,
+      ].each do |method_name|
+        define_method(method_name) do |*args, &block|
+          task(method_name.to_s, *args, &block)
+        end
       end
     end
 
@@ -222,9 +249,12 @@ module Rscons
     class ConfigureDsl < GlobalDsl
       # Create a ConfigureDsl.
       #
+      # @param script [Script]
+      #   The Script being evaluated.
       # @param configure_op [ConfigureOp]
       #   The configure operation object.
-      def initialize(configure_op)
+      def initialize(script, configure_op)
+        super(script)
         @configure_op = configure_op
       end
 
@@ -263,18 +293,36 @@ module Rscons
     attr_accessor :project_name
 
     # @return [Boolean]
-    #   Whether to autoconfigure if the user does not explicitly perform a
-    #   configure operation before building (default: true).
+    #   Whether to autoconfigure if the user does not explicitly configure
+    #   before calling a normal task (default: true).
     attr_accessor :autoconf
-
-    # @return [Hash]
-    #   Operation lambdas.
-    attr_reader :operations
 
     # Construct a Script.
     def initialize
       @autoconf = true
-      @operations = {}
+      TopLevelDsl.new(self).instance_eval do
+        task("clean",
+             desc: "Remove build artifacts (but not configuration)",
+             autoconf: false) do
+          Rscons.application.clean
+        end
+        task("configure",
+             desc: "Configure the project",
+             autoconf: false,
+             params: [param("prefix", "/usr/local", true, "Set installation prefix (default: /usr/local)")])
+        task("distclean",
+             desc: "Remove build directory and configuration",
+             autoconf: false) do
+          Rscons.application.distclean
+        end
+        task("install",
+             desc: "Install project to configured installation prefix")
+        task("uninstall",
+             desc: "Uninstall project",
+             autoconf: false) do
+          Rscons.application.uninstall
+        end
+      end
     end
 
     # Load a script from the specified file.
@@ -285,21 +333,15 @@ module Rscons
     # @return [void]
     def load(path)
       script_contents = File.read(path, mode: "rb")
-      Dsl.new(self).instance_eval(script_contents, path, 1)
+      TopLevelDsl.new(self).instance_eval(script_contents, path, 1)
     end
 
-    # Perform build operation.
-    def build
-      if build_proc = @operations["build"]
-        build_proc.call
-      end
-    end
-
-    # Perform configure operation.
+    # Perform configure action.
     def configure(configure_op)
-      if operation_lambda = @operations["configure"]
-        cdsl = ConfigureDsl.new(configure_op)
-        cdsl.instance_eval(&operation_lambda)
+      cdsl = ConfigureDsl.new(self, configure_op)
+      configure_task = Task["configure"]
+      configure_task.actions.each do |action|
+        cdsl.instance_exec(configure_task, configure_task.param_values, &action)
       end
     end
 

@@ -3,7 +3,7 @@ configure do
   check_c_header "stdio.h"
 end
 
-build do
+default do
   Environment.new do |env|
     env.Program("simple.exe", "simple.c")
   end

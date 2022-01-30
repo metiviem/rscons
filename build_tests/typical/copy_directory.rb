@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env.Directory("copy")
     env.Copy("copy", "copy_directory.rb")

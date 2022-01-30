@@ -7,29 +7,26 @@ module Rscons
 
     # Create a ConfigureOp.
     #
-    # @param options [Hash]
-    #   Optional parameters.
-    # @option options [String] :prefix
-    #   Install prefix.
-    # @option options [String] :project_name
-    #   Project name.
-    def initialize(options)
-      # Default options.
-      options[:prefix] ||= "/usr/local"
+    # @param script [Script]
+    #   Build script.
+    def initialize(script)
       @work_dir = "#{Rscons.application.build_dir}/_configure"
       FileUtils.mkdir_p(@work_dir)
       @log_fh = File.open("#{@work_dir}/config.log", "wb")
       cache = Cache.instance
       cache["failed_commands"] = []
       cache["configuration_data"] = {}
-      cache["configuration_data"]["prefix"] = options[:prefix]
-      if project_name = options[:project_name]
+      if project_name = script.project_name
         Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
       else
         $stdout.puts "Configuring project..."
       end
-      Ansi.write($stdout, "Setting prefix... ", :green, options[:prefix], :reset, "\n")
-      store_merge("prefix" => options[:prefix])
+      vars = {}
+      Task["configure"].params.each do |name, param|
+        Ansi.write($stdout, "Setting #{name}... ", :green, param.value, :reset, "\n")
+        vars[name] = param.value
+      end
+      store_merge(vars)
     end
 
     # Close the log file handle.
@@ -399,7 +396,7 @@ module Rscons
           options[:on_fail].call
         end
         if should_fail
-          raise RsconsError.new
+          raise RsconsError.new("Configuration failed")
         end
       end
     end

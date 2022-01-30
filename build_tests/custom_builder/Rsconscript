@@ -9,7 +9,7 @@ EOF
   end
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(MySource)
     env.MySource('inc.h', [])

@@ -17,7 +17,7 @@ class NonThreadedTestBuilder < Rscons::Builder
   end
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(ThreadedTestBuilder)
     env.add_builder(NonThreadedTestBuilder)

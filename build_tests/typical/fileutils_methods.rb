@@ -1,4 +1,4 @@
-build do
+default do
   mkdir "foo"
   cd "foo" do
     mkdir_p ["bar/baz", "bar/booz"]

@@ -14,7 +14,7 @@ class MyObject < Rscons::Builder
   end
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(MyObject)
     env.MyObject("simple.o", "simple.c")

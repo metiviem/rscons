@@ -2,7 +2,7 @@ configure do
   check_cfg package: "mypackage", use: "myp"
 end
 
-build do
+default do
   Environment.new(echo: :command) do |env|
     env.Copy("myconfigtest1.c", "simple.c")
     env.Program("myconfigtest1.exe", "myconfigtest1.c")

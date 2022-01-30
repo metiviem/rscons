@@ -2,7 +2,7 @@ configure do
   check_d_compiler "gdc"
 end
 
-build do
+default do
   Environment.new(echo: :command) do |env|
     env.Program("hello-d.exe", glob("*.d"))
   end

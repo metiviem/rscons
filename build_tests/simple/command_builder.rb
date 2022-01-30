@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     command = %W[gcc -o ${_TARGET} ${_SOURCES}]
     env.Command("simple.exe",

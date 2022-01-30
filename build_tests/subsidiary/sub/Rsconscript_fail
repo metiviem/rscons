@@ -3,6 +3,6 @@ configure do
   check_program "foobarfailure"
 end
 
-build do
+default do
   puts "sub Rsconscript build"
 end

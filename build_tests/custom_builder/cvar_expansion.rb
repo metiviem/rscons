@@ -9,7 +9,7 @@ EOF
   end
 end
 
-build do
+default do
   env = Environment.new do |env|
     env["hdr"] = "inc.h"
     env["src"] = "program.c"

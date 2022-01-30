@@ -14,6 +14,10 @@ module Rscons
       #   All Environments.
       attr_reader :environments
 
+      # @return [Environment]
+      #   The Environment that is currently executing a construction block.
+      attr_accessor :open_environment
+
       # Initialize class instance variables.
       def class_init
         @environments = []
@@ -72,6 +76,7 @@ module Rscons
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.
     def initialize(options = {})
+      Rscons.application.check_configure
       unless Cache.instance["configuration_data"]["configured"]
         raise "Project must be configured before creating an Environment"
       end
@@ -109,7 +114,10 @@ module Rscons
       @n_threads = Rscons.application.n_threads
 
       if block_given?
+        Environment.open_environment = self
         yield self
+        Environment.open_environment = nil
+        process
       end
     end
 
@@ -158,7 +166,10 @@ module Rscons
       env.instance_variable_set(:@n_threads, @n_threads)
 
       if block_given?
+        Environment.open_environment = env
         yield env
+        Environment.open_environment = nil
+        env.process
       end
       env
     end
@@ -274,6 +285,10 @@ module Rscons
       @process_commands_waiting_to_run = []
       @process_builder_waits = {}
       @process_builders_to_run = []
+      @build_step = 0
+      @build_steps = @builder_sets.reduce(0) do |result, builder_set|
+        result + builder_set.build_steps_remaining
+      end
       begin
         while @builder_sets.size > 0 or @threads.size > 0 or @process_commands_waiting_to_run.size > 0
           process_step
@@ -524,7 +539,7 @@ module Rscons
         message = short_description if short_description
       end
       if message
-        total_build_steps = Rscons.application.get_total_build_steps.to_s
+        total_build_steps = @build_steps.to_s
         this_build_step = sprintf("%#{total_build_steps.size}d", builder.build_step)
         progress = "[#{this_build_step}/#{total_build_steps}]"
         Ansi.write($stdout, *Util.colorize_markup("#{progress} #{message}"), "\n")
@@ -549,16 +564,6 @@ module Rscons
       @builder_sets << build_builder_set
     end
 
-    # Get the number of build steps remaining.
-    #
-    # @return [Integer]
-    #   The number of build steps remaining.
-    def build_steps_remaining
-      @builder_sets.reduce(0) do |result, builder_set|
-        result + builder_set.build_steps_remaining
-      end
-    end
-
     private
 
     # Build a BuilderSet.
@@ -569,6 +574,16 @@ module Rscons
       BuilderSet.new(@registered_build_dependencies, @side_effects)
     end
 
+    # Get the next build step number.
+    #
+    # @api private
+    #
+    # @return [Integer]
+    #   Next build step number.
+    def get_next_build_step
+      @build_step += 1
+    end
+
     # Run a builder and process its return value.
     #
     # @param builder [Builder]
@@ -576,9 +591,7 @@ module Rscons
     #
     # @return [void]
     def run_builder(builder)
-      unless builder.nop?
-        builder.build_step ||= Rscons.application.get_next_build_step
-      end
+      builder.build_step ||= get_next_build_step
       case result = builder.run({})
       when Array
         result.each do |waititem|

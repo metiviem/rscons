@@ -10,7 +10,7 @@ class ThreadedTestBuilder < Rscons::Builder
   end
 end
 
-build do
+default do
   Environment.new do |env|
     env.add_builder(ThreadedTestBuilder)
     env.ThreadedTestBuilder("T3", [], "delay" => 3)

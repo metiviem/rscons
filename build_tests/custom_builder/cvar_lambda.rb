@@ -9,7 +9,7 @@ EOF
   end
 end
 
-build do
+default do
   e1 = Environment.new do |env|
     env.add_builder(MySource)
     env["one"] = "5"

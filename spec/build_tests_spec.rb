@@ -89,26 +89,13 @@ describe Rscons do
   end
 
   def run_rscons(options = {})
-    operation = options[:op] || "build"
-    if operation.is_a?(Symbol)
-      operation = operation.to_s
-    end
-    unless operation.is_a?(Array)
-      operation = [operation]
-    end
-    rsconscript_args =
-      if options[:rsconscript]
-        %W[-f #{options[:rsconscript]}]
-      else
-        []
-      end
-    rscons_args = options[:rscons_args] || []
+    args = Array(options[:args]) || []
     if ENV["dist_specs"]
       exe = "#{@owd}/test/rscons.rb"
     else
       exe = "#{@owd}/bin/rscons"
     end
-    command = %W[ruby -I. -r _simplecov_setup #{exe}] + rsconscript_args + rscons_args + operation
+    command = %W[ruby -I. -r _simplecov_setup #{exe}] + args
     @statics[:build_test_id] ||= 0
     @statics[:build_test_id] += 1
     command_prefix =
@@ -210,7 +197,7 @@ EOF
 
   it "uses the build directory specified with -b" do
     test_dir("simple")
-    result = run_rscons(rscons_args: %w[-b b])
+    result = run_rscons(args: %w[-b b])
     expect(result.stderr).to eq ""
     expect(Dir.exist?("build")).to be_falsey
     expect(File.exists?("b/e.1/simple.c.o")).to be_truthy
@@ -227,7 +214,7 @@ EOF
 
   it "allows specifying a Builder object as the source to another build target" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "builder_as_source.rb")
+    result = run_rscons(args: %w[-f builder_as_source.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("simple.o")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
@@ -235,7 +222,7 @@ EOF
 
   it 'prints commands as they are executed' do
     test_dir('simple')
-    result = run_rscons(rsconscript: "command.rb")
+    result = run_rscons(args: %w[-f command.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{gcc -c -o build/e.1/simple.c.o -MMD -MF build/e.1/simple.c.o.mf simple.c},
@@ -304,13 +291,13 @@ EOF
 
   it 're-links a program when the link flags have changed' do
     test_dir('simple')
-    result = run_rscons(rsconscript: "command.rb")
+    result = run_rscons(args: %w[-f command.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{gcc -c -o build/e.1/simple.c.o -MMD -MF build/e.1/simple.c.o.mf simple.c},
       %r{gcc -o simple.exe build/e.1/simple.c.o},
     ])
-    result = run_rscons(rsconscript: "link_flag_change.rb")
+    result = run_rscons(args: %w[-f link_flag_change.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{gcc -o simple.exe build/e.1/simple.c.o -Llibdir},
@@ -319,7 +306,7 @@ EOF
 
   it "supports barriers and prevents parallelizing builders across them" do
     test_dir "simple"
-    result = run_rscons(rsconscript: "barrier.rb", rscons_args: %w[-j 3])
+    result = run_rscons(args: %w[-f barrier.rb -j 3])
     expect(result.stderr).to eq ""
     slines = lines(result.stdout).select {|line| line =~ /T\d/}
     expect(slines).to eq [
@@ -340,7 +327,7 @@ EOF
 
   it "expands target and source paths starting with ^/ and ^^/" do
     test_dir("typical")
-    result = run_rscons(rsconscript: "carat.rb", rscons_args: %w[-b bld])
+    result = run_rscons(args: %w[-f carat.rb -b bld])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{gcc -c -o bld/e.1/one.o -MMD -MF bld/e.1/one.o.mf -Isrc -Isrc/one -Isrc/two bld/e.1/one.c},
@@ -359,7 +346,7 @@ EOF
 
   it "raises an error when a side-effect file is registered for a build target that is not registered" do
     test_dir "simple"
-    result = run_rscons(rsconscript: "error_produces_nonexistent_target.rb")
+    result = run_rscons(args: %w[-f error_produces_nonexistent_target.rb])
     expect(result.stderr).to match /Could not find a registered build target "foo"/
   end
 
@@ -370,7 +357,7 @@ EOF
       expect(result.stderr).to eq ""
       expect(`./simple.exe`).to match /This is a simple C program/
       expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
-      result = run_rscons(op: %w[clean])
+      result = run_rscons(args: %w[clean])
       expect(File.exists?('build/e.1/simple.c.o')).to be_falsey
       expect(File.exists?('build/e.1')).to be_falsey
       expect(File.exists?('simple.exe')).to be_falsey
@@ -384,7 +371,7 @@ EOF
       expect(`./simple.exe`).to match /This is a simple C program/
       expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
       File.open('build/e.1/dum', 'w') { |fh| fh.puts "dum" }
-      result = run_rscons(op: %w[clean])
+      result = run_rscons(args: %w[clean])
       expect(File.exists?('build/e.1')).to be_truthy
       expect(File.exists?('build/e.1/dum')).to be_truthy
     end
@@ -393,15 +380,15 @@ EOF
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
         expect(File.exists?("build/e.1/src/one/one.c.o")).to be_truthy
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[clean])
+        result = run_rscons(args: %w[-f install.rb clean])
         expect(result.stderr).to eq ""
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
         expect(File.exists?("build/e.1/src/one/one.c.o")).to be_falsey
@@ -412,18 +399,18 @@ EOF
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[clean])
+        result = run_rscons(args: %w[-f install.rb clean])
         expect(result.stderr).to eq ""
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
         expect(File.exists?("build/e.1/src/one/one.c.o")).to be_falsey
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
+        result = run_rscons(args: %w[-f install.rb -v uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match %r{Removing #{prefix}/bin/program.exe}
         expect(Dir.entries(prefix)).to match_array %w[. ..]
@@ -445,7 +432,7 @@ EOF
 
   it 'supports custom builders with multiple targets' do
     test_dir('custom_builder')
-    result = run_rscons(rsconscript: "multiple_targets.rb")
+    result = run_rscons(args: %w[-f multiple_targets.rb])
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     verify_lines(slines, [
@@ -459,7 +446,7 @@ EOF
     expect(nr(`./program.exe`)).to eq "The value is 42\n"
 
     File.open("inc.c", "w") {|fh| fh.puts "int THE_VALUE = 33;"}
-    result = run_rscons(rsconscript: "multiple_targets.rb")
+    result = run_rscons(args: %w[-f multiple_targets.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [%r{CHGen inc.c}])
     expect(nr(`./program.exe`)).to eq "The value is 42\n"
@@ -467,21 +454,21 @@ EOF
 
   it 'raises an error when a custom builder returns an invalid value from #run' do
     test_dir("custom_builder")
-    result = run_rscons(rsconscript: "error_run_return_value.rb")
+    result = run_rscons(args: %w[-f error_run_return_value.rb])
     expect(result.stderr).to match /Unrecognized MyBuilder builder return value: "hi"/
     expect(result.status).to_not eq 0
   end
 
   it 'raises an error when a custom builder returns an invalid value using Builder#wait_for' do
     test_dir("custom_builder")
-    result = run_rscons(rsconscript: "error_wait_for.rb")
+    result = run_rscons(args: %w[-f error_wait_for.rb])
     expect(result.stderr).to match /Unrecognized MyBuilder builder return item: 1/
     expect(result.status).to_not eq 0
   end
 
   it 'supports a Builder waiting for a custom Thread object' do
     test_dir "custom_builder"
-    result = run_rscons(rsconscript: "wait_for_thread.rb")
+    result = run_rscons(args: %w[-f wait_for_thread.rb])
     expect(result.stderr).to eq ""
     expect(result.status).to eq 0
     verify_lines(lines(result.stdout), [%r{MyBuilder foo}])
@@ -490,7 +477,7 @@ EOF
 
   it 'supports a Builder waiting for another Builder' do
     test_dir "simple"
-    result = run_rscons(rsconscript: "builder_wait_for_builder.rb")
+    result = run_rscons(args: %w[-f builder_wait_for_builder.rb])
     expect(result.stderr).to eq ""
     expect(result.status).to eq 0
     verify_lines(lines(result.stdout), [%r{MyObject simple.o}])
@@ -512,7 +499,7 @@ EOF
 
   it 'clones all attributes of an Environment object by default' do
     test_dir('clone_env')
-    result = run_rscons(rsconscript: "clone_all.rb")
+    result = run_rscons(args: %w[-f clone_all.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{gcc -c -o build/e.1/src/program.c.o -MMD -MF build/e.1/src/program.c.o.mf -DSTRING="Hello" -O2 src/program.c},
@@ -535,7 +522,7 @@ EOF
 
   it "links with the C++ linker when object files were built from C++ sources" do
     test_dir("simple_cc")
-    result = run_rscons(rsconscript: "link_objects.rb")
+    result = run_rscons(args: %w[-f link_objects.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("simple.o")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C++ program\n"
@@ -571,7 +558,7 @@ EOF
 
   it 'supports build hooks to override construction variables' do
     test_dir("typical")
-    result = run_rscons(rsconscript: "build_hooks.rb")
+    result = run_rscons(args: %w[-f build_hooks.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{gcc -c -o build/e.1/src/one/one.c.o -MMD -MF build/e.1/src/one/one.c.o.mf -Isrc/one -Isrc/two -O1 src/one/one.c},
@@ -583,7 +570,7 @@ EOF
 
   it 'supports build hooks to override the entire vars hash' do
     test_dir("typical")
-    result = run_rscons(rsconscript: "build_hooks_override_vars.rb")
+    result = run_rscons(args: %w[-f build_hooks_override_vars.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{gcc -c -o one.o -MMD -MF build/e.1/one.o.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c},
@@ -597,7 +584,7 @@ EOF
     test_dir('simple')
 
     File.open("program.ld", "w") {|fh| fh.puts("1")}
-    result = run_rscons(rsconscript: "user_dependencies.rb")
+    result = run_rscons(args: %w[-f user_dependencies.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
@@ -607,16 +594,16 @@ EOF
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
 
     File.open("program.ld", "w") {|fh| fh.puts("2")}
-    result = run_rscons(rsconscript: "user_dependencies.rb")
+    result = run_rscons(args: %w[-f user_dependencies.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [%r{Linking simple.exe}])
 
     File.unlink("program.ld")
-    result = run_rscons(rsconscript: "user_dependencies.rb")
+    result = run_rscons(args: %w[-f user_dependencies.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [%r{Linking simple.exe}])
 
-    result = run_rscons(rsconscript: "user_dependencies.rb")
+    result = run_rscons(args: %w[-f user_dependencies.rb])
     expect(result.stderr).to eq ""
     expect(result.stdout).to eq ""
   end
@@ -625,7 +612,7 @@ EOF
     test_dir("simple")
 
     passenv["file_contents"] = "1"
-    result = run_rscons(rsconscript: "user_dependencies_carat.rb")
+    result = run_rscons(args: %w[-f user_dependencies_carat.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
@@ -633,11 +620,11 @@ EOF
     ])
 
     passenv["file_contents"] = "2"
-    result = run_rscons(rsconscript: "user_dependencies_carat.rb")
+    result = run_rscons(args: %w[-f user_dependencies_carat.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [%r{Linking .*simple.exe}])
 
-    result = run_rscons(rsconscript: "user_dependencies_carat.rb")
+    result = run_rscons(args: %w[-f user_dependencies_carat.rb])
     expect(result.stderr).to eq ""
     expect(result.stdout).to eq ""
   end
@@ -657,7 +644,7 @@ EOF
 
   it "supports building D sources with ldc2" do
     test_dir("d")
-    result = run_rscons(rsconscript: "build-ldc2.rb")
+    result = run_rscons(args: %w[-f build-ldc2.rb])
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.d.o(bj)? -deps=build/e.1/main.d.o(bj)?.mf main.d}])
@@ -668,7 +655,7 @@ EOF
 
   it "rebuilds D modules with ldc2 when deep dependencies change" do
     test_dir("d")
-    result = run_rscons(rsconscript: "build-ldc2.rb")
+    result = run_rscons(args: %w[-f build-ldc2.rb])
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.d.o(bj)? -deps=build/e.1/main.d.o(bj)?.mf main.d}])
@@ -679,7 +666,7 @@ EOF
     File.open("mod.d", "wb") do |fh|
       fh.write(contents)
     end
-    result = run_rscons(rsconscript: "build-ldc2.rb")
+    result = run_rscons(args: %w[-f build-ldc2.rb])
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     verify_lines(slines, [%r{ldc2 -c -of build/e.1/main.d.o(bj)? -deps=build/e.1/main.d.o(bj)?.mf main.d}])
@@ -691,7 +678,7 @@ EOF
   unless RUBY_PLATFORM =~ /mingw|msys/
     it "links with the D linker when object files were built from D sources" do
       test_dir("d")
-      result = run_rscons(rsconscript: "link_objects.rb")
+      result = run_rscons(args: %w[-f link_objects.rb])
       expect(result.stderr).to eq ""
       expect(File.exists?("main.o")).to be_truthy
       expect(File.exists?("mod.o")).to be_truthy
@@ -721,7 +708,7 @@ EOF
     it "creates shared libraries using D" do
       test_dir("shared_library")
 
-      result = run_rscons(rsconscript: "shared_library_d.rb")
+      result = run_rscons(args: %w[-f shared_library_d.rb])
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
       if RUBY_PLATFORM =~ /mingw|msys/
@@ -735,19 +722,19 @@ EOF
   it "supports disassembling object files" do
     test_dir("simple")
 
-    result = run_rscons(rsconscript: "disassemble.rb")
+    result = run_rscons(args: %w[-f disassemble.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("simple.txt")).to be_truthy
     expect(File.read("simple.txt")).to match /Disassembly of section .text:/
 
-    result = run_rscons(rsconscript: "disassemble.rb")
+    result = run_rscons(args: %w[-f disassemble.rb])
     expect(result.stderr).to eq ""
     expect(result.stdout).to eq ""
   end
 
   it "supports preprocessing C sources" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "preprocess.rb")
+    result = run_rscons(args: %w[-f preprocess.rb])
     expect(result.stderr).to eq ""
     expect(File.read("simplepp.c")).to match /# \d+ "simple.c"/
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
@@ -755,7 +742,7 @@ EOF
 
   it "supports preprocessing C++ sources" do
     test_dir("simple_cc")
-    result = run_rscons(rsconscript: "preprocess.rb")
+    result = run_rscons(args: %w[-f preprocess.rb])
     expect(result.stderr).to eq ""
     expect(File.read("simplepp.cc")).to match /# \d+ "simple.cc"/
     expect(nr(`./simple.exe`)).to eq "This is a simple C++ program\n"
@@ -763,13 +750,13 @@ EOF
 
   it "supports invoking builders with no sources" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "builder_no_sources.rb")
+    result = run_rscons(args: %w[-f builder_no_sources.rb])
     expect(result.stderr).to eq ""
   end
 
   it "expands construction variables in builder target and sources before invoking the builder" do
     test_dir('custom_builder')
-    result = run_rscons(rsconscript: "cvar_expansion.rb")
+    result = run_rscons(args: %w[-f cvar_expansion.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling program.c},
@@ -781,14 +768,14 @@ EOF
 
   it "supports lambdas as construction variable values" do
     test_dir "custom_builder"
-    result = run_rscons(rsconscript: "cvar_lambda.rb")
+    result = run_rscons(args: %w[-f cvar_lambda.rb])
     expect(result.stderr).to eq ""
     expect(nr(`./program.exe`)).to eq "The value is 5678\n"
   end
 
   it "supports registering build targets from within a build hook" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "register_target_in_build_hook.rb")
+    result = run_rscons(args: %w[-f register_target_in_build_hook.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
     expect(File.exists?("build/e.1/simple.c.o.txt")).to be_truthy
@@ -798,7 +785,7 @@ EOF
   it "supports multiple values for CXXSUFFIX" do
     test_dir("simple_cc")
     File.open("other.cccc", "w") {|fh| fh.puts}
-    result = run_rscons(rsconscript: "cxxsuffix.rb")
+    result = run_rscons(args: %w[-f cxxsuffix.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("build/e.1/simple.cc.o")).to be_truthy
     expect(File.exists?("build/e.1/other.cccc.o")).to be_truthy
@@ -808,7 +795,7 @@ EOF
   it "supports multiple values for CSUFFIX" do
     test_dir("typical")
     FileUtils.mv("src/one/one.c", "src/one/one.yargh")
-    result = run_rscons(rsconscript: "csuffix.rb")
+    result = run_rscons(args: %w[-f csuffix.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("build/e.1/src/one/one.yargh.o")).to be_truthy
     expect(File.exists?("build/e.1/src/two/two.c.o")).to be_truthy
@@ -817,7 +804,7 @@ EOF
 
   it "supports multiple values for OBJSUFFIX" do
     test_dir("two_sources")
-    result = run_rscons(rsconscript: "objsuffix.rb")
+    result = run_rscons(args: %w[-f objsuffix.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("two_sources.exe")).to be_truthy
     expect(File.exists?("one.oooo")).to be_truthy
@@ -827,7 +814,7 @@ EOF
 
   it "supports multiple values for LIBSUFFIX" do
     test_dir("two_sources")
-    result = run_rscons(rsconscript: "libsuffix.rb")
+    result = run_rscons(args: %w[-f libsuffix.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("two_sources.exe")).to be_truthy
     expect(nr(`./two_sources.exe`)).to eq "This is a C program with two sources.\n"
@@ -835,7 +822,7 @@ EOF
 
   it "supports multiple values for ASSUFFIX" do
     test_dir("two_sources")
-    result = run_rscons(rsconscript: "assuffix.rb")
+    result = run_rscons(args: %w[-f assuffix.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling one.c},
@@ -850,7 +837,7 @@ EOF
 
   it "supports dumping an Environment's construction variables" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "dump.rb")
+    result = run_rscons(args: %w[-f dump.rb])
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     expect(slines.include?(%{:foo => :bar})).to be_truthy
@@ -881,7 +868,7 @@ EOF
 
   it "allows construction variable references which expand to arrays in sources of a build target" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "cvar_array.rb")
+    result = run_rscons(args: %w[-f cvar_array.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
@@ -889,7 +876,7 @@ EOF
 
   it "supports registering multiple build targets with the same target path" do
     test_dir("typical")
-    result = run_rscons(rsconscript: "multiple_targets_same_name.rb")
+    result = run_rscons(args: %w[-f multiple_targets_same_name.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("one.o")).to be_truthy
     verify_lines(lines(result.stdout), [
@@ -900,7 +887,7 @@ EOF
 
   it "expands target and source paths when builders are registered in build hooks" do
     test_dir("typical")
-    result = run_rscons(rsconscript: "post_build_hook_expansion.rb")
+    result = run_rscons(args: %w[-f post_build_hook_expansion.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("one.o")).to be_truthy
     expect(File.exists?("two.o")).to be_truthy
@@ -915,15 +902,13 @@ EOF
     File.open("two.c", "w") do |fh|
       fh.puts("FOO")
     end
-    result = run_rscons(rsconscript: "cache_successful_builds_when_one_fails.rb",
-                      rscons_args: %w[-j1])
+    result = run_rscons(args: %w[-f cache_successful_builds_when_one_fails.rb -j1])
     expect(result.stderr).to match /FOO/
     expect(File.exists?("simple.o")).to be_truthy
     expect(File.exists?("two.o")).to be_falsey
 
     File.open("two.c", "w") {|fh|}
-    result = run_rscons(rsconscript: "cache_successful_builds_when_one_fails.rb",
-                      rscons_args: %w[-j1])
+    result = run_rscons(args: %w[-f cache_successful_builds_when_one_fails.rb -j1])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling two.c},
@@ -932,7 +917,7 @@ EOF
 
   it "allows overriding PROGSUFFIX" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "progsuffix.rb")
+    result = run_rscons(args: %w[-f progsuffix.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
@@ -942,7 +927,7 @@ EOF
 
   it "does not use PROGSUFFIX when the Program target name expands to a value already containing an extension" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "progsuffix2.rb")
+    result = run_rscons(args: %w[-f progsuffix2.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
@@ -952,7 +937,7 @@ EOF
 
   it "allows overriding PROGSUFFIX from extra vars passed in to the builder" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "progsuffix3.rb")
+    result = run_rscons(args: %w[-f progsuffix3.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
       %r{Compiling simple.c},
@@ -962,7 +947,7 @@ EOF
 
   it "creates object files under the build root for absolute source paths" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "absolute_source_path.rb")
+    result = run_rscons(args: %w[-f absolute_source_path.rb])
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     verify_lines(slines, [%r{build/e.1/.*/abs\.c.o$}])
@@ -995,7 +980,7 @@ EOF
   it "creates shared libraries using assembly" do
     test_dir("shared_library")
 
-    result = run_rscons(rsconscript: "shared_library_as.rb")
+    result = run_rscons(args: %w[-f shared_library_as.rb])
     expect(result.stderr).to eq ""
     expect(File.exists?("file.S")).to be_truthy
   end
@@ -1003,7 +988,7 @@ EOF
   it "creates shared libraries using C++" do
     test_dir("shared_library")
 
-    result = run_rscons(rsconscript: "shared_library_cxx.rb")
+    result = run_rscons(args: %w[-f shared_library_cxx.rb])
     expect(result.stderr).to eq ""
     slines = lines(result.stdout)
     if RUBY_PLATFORM =~ /mingw|msys/
@@ -1012,7 +997,7 @@ EOF
       verify_lines(slines, [%r{Linking libmine.so}])
     end
 
-    result = run_rscons(rsconscript: "shared_library_cxx.rb")
+    result = run_rscons(args: %w[-f shared_library_cxx.rb])
     expect(result.stderr).to eq ""
     expect(result.stdout).to eq ""
 
@@ -1023,27 +1008,27 @@ EOF
 
   it "raises an error for a circular dependency" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "error_circular_dependency.rb")
+    result = run_rscons(args: %w[-f error_circular_dependency.rb])
     expect(result.stderr).to match /Possible circular dependency for (foo|bar|baz)/
     expect(result.status).to_not eq 0
   end
 
   it "raises an error for a circular dependency where a build target contains itself in its source list" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "error_circular_dependency2.rb")
+    result = run_rscons(args: %w[-f error_circular_dependency2.rb])
     expect(result.stderr).to match /Possible circular dependency for foo/
     expect(result.status).to_not eq 0
   end
 
   it "orders builds to respect user dependencies" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "user_dep_build_order.rb", rscons_args: %w[-j4])
+    result = run_rscons(args: %w[-f user_dep_build_order.rb -j4])
     expect(result.stderr).to eq ""
   end
 
   it "waits for all parallelized builds to complete if one fails" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "wait_for_builds_on_failure.rb", rscons_args: %w[-j4])
+    result = run_rscons(args: %w[-f wait_for_builds_on_failure.rb -j4])
     expect(result.status).to_not eq 0
     expect(result.stderr).to match /Failed to build foo_1/
     expect(result.stderr).to match /Failed to build foo_2/
@@ -1053,7 +1038,7 @@ EOF
 
   it "clones n_threads attribute when cloning an Environment" do
     test_dir("simple")
-    result = run_rscons(rsconscript: "clone_n_threads.rb")
+    result = run_rscons(args: %w[-f clone_n_threads.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [/165/])
   end
@@ -1061,7 +1046,7 @@ EOF
   it "prints a builder's short description with 'command' echo mode if there is no command" do
     test_dir("typical")
 
-    result = run_rscons(rsconscript: "echo_command_ruby_builder.rb")
+    result = run_rscons(args: %w[-f echo_command_ruby_builder.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [%r{Copy echo_command_ruby_builder.rb => copy.rb}])
   end
@@ -1069,7 +1054,7 @@ EOF
   it "supports a string for a builder's echoed 'command' with Environment#print_builder_run_message" do
     test_dir("typical")
 
-    result = run_rscons(rsconscript: "echo_command_string.rb")
+    result = run_rscons(args: %w[-f echo_command_string.rb])
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [%r{MyBuilder foo command}])
   end
@@ -1086,7 +1071,7 @@ EOF
     expect(result.stderr).to match %r{^Use .*/rscons(\.rb)? -F.*to view the failed command log}
     expect(result.status).to_not eq 0
 
-    result = run_rscons(rscons_args: %w[-F])
+    result = run_rscons(args: %w[-F])
     expect(result.stderr).to eq ""
     expect(result.stdout).to match %r{Failed command \(1/1\):}
     expect(result.stdout).to match %r{^gcc -}
@@ -1104,7 +1089,7 @@ EOF
   it "names Environment during clone" do
     test_dir "typical"
 
-    result = run_rscons(rsconscript: "clone_and_name.rb")
+    result = run_rscons(args: %w[-f clone_and_name.rb])
     expect(File.exist?("build/typical/typical.exe")).to be_truthy
     expect(File.exist?("build/typical/src/one/one.c.o")).to be_truthy
     expect(Dir.exist?("build/e.1")).to be_falsey
@@ -1113,7 +1098,7 @@ EOF
   context "colored output" do
     it "does not output in color with --color=off" do
       test_dir("simple")
-      result = run_rscons(rscons_args: %w[--color=off])
+      result = run_rscons(args: %w[--color=off])
       expect(result.stderr).to eq ""
       expect(result.stdout).to_not match(/\e\[/)
     end
@@ -1121,14 +1106,14 @@ EOF
     it "displays output in color with --color=force" do
       test_dir("simple")
 
-      result = run_rscons(rscons_args: %w[--color=force])
+      result = run_rscons(args: %w[--color=force])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match(/\e\[/)
 
       File.open("simple.c", "wb") do |fh|
         fh.write("foobar")
       end
-      result = run_rscons(rscons_args: %w[--color=force])
+      result = run_rscons(args: %w[--color=force])
       expect(result.stderr).to match(/\e\[/)
     end
   end
@@ -1151,7 +1136,7 @@ EOF
 
     it "raises an error when an unknown source file is specified" do
       test_dir("cfile")
-      result = run_rscons(rsconscript: "error_unknown_extension.rb")
+      result = run_rscons(args: %w[-f error_unknown_extension.rb])
       expect(result.stderr).to match /Unknown source file .foo.bar. for CFile builder/
       expect(result.status).to_not eq 0
     end
@@ -1161,12 +1146,12 @@ EOF
     it "allows executing an arbitrary command" do
       test_dir('simple')
 
-      result = run_rscons(rsconscript: "command_builder.rb")
+      result = run_rscons(args: %w[-f command_builder.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{BuildIt simple.exe}])
       expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
 
-      result = run_rscons(rsconscript: "command_builder.rb")
+      result = run_rscons(args: %w[-f command_builder.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
     end
@@ -1174,7 +1159,7 @@ EOF
     it "allows redirecting standard output to a file" do
       test_dir("simple")
 
-      result = run_rscons(rsconscript: "command_redirect.rb")
+      result = run_rscons(args: %w[-f command_redirect.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
@@ -1187,7 +1172,7 @@ EOF
   context "Directory builder" do
     it "creates the requested directory" do
       test_dir("simple")
-      result = run_rscons(rsconscript: "directory.rb")
+      result = run_rscons(args: %w[-f directory.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Creating directory teh_dir}])
       expect(File.directory?("teh_dir")).to be_truthy
@@ -1196,7 +1181,7 @@ EOF
     it "succeeds when the requested directory already exists" do
       test_dir("simple")
       FileUtils.mkdir("teh_dir")
-      result = run_rscons(rsconscript: "directory.rb")
+      result = run_rscons(args: %w[-f directory.rb])
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to_not include a_string_matching /Creating directory/
       expect(File.directory?("teh_dir")).to be_truthy
@@ -1205,7 +1190,7 @@ EOF
     it "fails when the target path is a file" do
       test_dir("simple")
       FileUtils.touch("teh_dir")
-      result = run_rscons(rsconscript: "directory.rb")
+      result = run_rscons(args: %w[-f directory.rb])
       expect(result.stderr).to match %r{Error: `teh_dir' already exists and is not a directory}
     end
   end
@@ -1214,11 +1199,11 @@ EOF
     it "copies a file to the target file name" do
       test_dir("typical")
 
-      result = run_rscons(rsconscript: "copy.rb")
+      result = run_rscons(args: %w[-f copy.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy copy.rb => inst.exe}])
 
-      result = run_rscons(rsconscript: "copy.rb")
+      result = run_rscons(args: %w[-f copy.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
 
@@ -1226,7 +1211,7 @@ EOF
       expect(File.read("inst.exe", mode: "rb")).to eq(File.read("copy.rb", mode: "rb"))
 
       FileUtils.rm("inst.exe")
-      result = run_rscons(rsconscript: "copy.rb")
+      result = run_rscons(args: %w[-f copy.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy copy.rb => inst.exe}])
     end
@@ -1234,11 +1219,11 @@ EOF
     it "copies multiple files to the target directory name" do
       test_dir("typical")
 
-      result = run_rscons(rsconscript: "copy_multiple.rb")
+      result = run_rscons(args: %w[-f copy_multiple.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy copy.rb \(\+1\) => dest}])
 
-      result = run_rscons(rsconscript: "copy_multiple.rb")
+      result = run_rscons(args: %w[-f copy_multiple.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
 
@@ -1247,7 +1232,7 @@ EOF
       expect(File.exists?("dest/copy_multiple.rb")).to be_truthy
 
       FileUtils.rm_rf("dest")
-      result = run_rscons(rsconscript: "copy_multiple.rb")
+      result = run_rscons(args: %w[-f copy_multiple.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy copy.rb \(\+1\) => dest}])
     end
@@ -1255,20 +1240,20 @@ EOF
     it "copies a file to the target directory name" do
       test_dir("typical")
 
-      result = run_rscons(rsconscript: "copy_directory.rb")
+      result = run_rscons(args: %w[-f copy_directory.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy copy_directory.rb => copy}])
       expect(File.exists?("copy/copy_directory.rb")).to be_truthy
       expect(File.read("copy/copy_directory.rb", mode: "rb")).to eq(File.read("copy_directory.rb", mode: "rb"))
 
-      result = run_rscons(rsconscript: "copy_directory.rb")
+      result = run_rscons(args: %w[-f copy_directory.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
     end
 
     it "copies a directory to the non-existent target directory name" do
       test_dir("typical")
-      result = run_rscons(rsconscript: "copy_directory.rb")
+      result = run_rscons(args: %w[-f copy_directory.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy src => noexist/src}])
       %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
@@ -1279,7 +1264,7 @@ EOF
 
     it "copies a directory to the existent target directory name" do
       test_dir("typical")
-      result = run_rscons(rsconscript: "copy_directory.rb")
+      result = run_rscons(args: %w[-f copy_directory.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy src => exist/src}])
       %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
@@ -1293,7 +1278,7 @@ EOF
     it "allows specifying a Symbol as a target name and reruns the builder if the sources or command have changed" do
       test_dir("simple")
 
-      result = run_rscons(rsconscript: "phony_target.rb")
+      result = run_rscons(args: %w[-f phony_target.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
@@ -1301,7 +1286,7 @@ EOF
         %r{Checker simple.exe},
       ])
 
-      result = run_rscons(rsconscript: "phony_target.rb")
+      result = run_rscons(args: %w[-f phony_target.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
 
@@ -1310,7 +1295,7 @@ EOF
       File.open("simple.exe", "w") do |fh|
         fh.puts "Changed simple.exe"
       end
-      result = run_rscons(rsconscript: "phony_target2.rb")
+      result = run_rscons(args: %w[-f phony_target2.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Checker simple.exe},
@@ -1321,7 +1306,7 @@ EOF
   context "Environment#clear_targets" do
     it "clears registered targets" do
       test_dir("simple")
-      result = run_rscons(rsconscript: "clear_targets.rb")
+      result = run_rscons(args: %w[-f clear_targets.rb])
       expect(result.stderr).to eq ""
       expect(lines(result.stdout)).to_not include a_string_matching %r{Linking}
     end
@@ -1381,7 +1366,7 @@ EOF
         %r{Linking simple.exe},
       ])
 
-      result = run_rscons(rsconscript: "cache_command_change.rb")
+      result = run_rscons(args: %w[-f cache_command_change.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Linking simple.exe},
@@ -1391,14 +1376,14 @@ EOF
     it "forces a build when there is a new dependency" do
       test_dir("simple")
 
-      result = run_rscons(rsconscript: "cache_new_dep1.rb")
+      result = run_rscons(args: %w[-f cache_new_dep1.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
         %r{Linking simple.exe},
       ])
 
-      result = run_rscons(rsconscript: "cache_new_dep2.rb")
+      result = run_rscons(args: %w[-f cache_new_dep2.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Linking simple.exe},
@@ -1408,14 +1393,14 @@ EOF
     it "forces a build when a dependency's checksum has changed" do
       test_dir("simple")
 
-      result = run_rscons(rsconscript: "cache_dep_checksum_change.rb")
+      result = run_rscons(args: %w[-f cache_dep_checksum_change.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy simple.c => simple.copy}])
       File.open("simple.c", "wb") do |fh|
         fh.write("hi")
       end
 
-      result = run_rscons(rsconscript: "cache_dep_checksum_change.rb")
+      result = run_rscons(args: %w[-f cache_dep_checksum_change.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy simple.c => simple.copy}])
     end
@@ -1426,18 +1411,18 @@ EOF
       File.open("sources", "wb") do |fh|
         fh.write("one.o two.o")
       end
-      result = run_rscons(rsconscript: "cache_strict_deps.rb")
+      result = run_rscons(args: %w[-f cache_strict_deps.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{gcc -o program.exe one.o two.o}])
 
-      result = run_rscons(rsconscript: "cache_strict_deps.rb")
+      result = run_rscons(args: %w[-f cache_strict_deps.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
 
       File.open("sources", "wb") do |fh|
         fh.write("two.o one.o")
       end
-      result = run_rscons(rsconscript: "cache_strict_deps.rb")
+      result = run_rscons(args: %w[-f cache_strict_deps.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{gcc -o program.exe one.o two.o}])
     end
@@ -1447,7 +1432,7 @@ EOF
 
       File.open("foo", "wb") {|fh| fh.write("hi")}
       File.open("user_deps", "wb") {|fh| fh.write("")}
-      result = run_rscons(rsconscript: "cache_user_dep.rb")
+      result = run_rscons(args: %w[-f cache_user_dep.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
@@ -1455,7 +1440,7 @@ EOF
       ])
 
       File.open("user_deps", "wb") {|fh| fh.write("foo")}
-      result = run_rscons(rsconscript: "cache_user_dep.rb")
+      result = run_rscons(args: %w[-f cache_user_dep.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Linking simple.exe},
@@ -1467,19 +1452,19 @@ EOF
 
       File.open("foo", "wb") {|fh| fh.write("hi")}
       File.open("user_deps", "wb") {|fh| fh.write("foo")}
-      result = run_rscons(rsconscript: "cache_user_dep.rb")
+      result = run_rscons(args: %w[-f cache_user_dep.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Compiling simple.c},
         %r{Linking simple.exe},
       ])
 
-      result = run_rscons(rsconscript: "cache_user_dep.rb")
+      result = run_rscons(args: %w[-f cache_user_dep.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
 
       File.open("foo", "wb") {|fh| fh.write("hi2")}
-      result = run_rscons(rsconscript: "cache_user_dep.rb")
+      result = run_rscons(args: %w[-f cache_user_dep.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{Linking simple.exe},
@@ -1488,12 +1473,12 @@ EOF
 
     it "allows a VarSet to be passed in as the command parameter" do
       test_dir("simple")
-      result = run_rscons(rsconscript: "cache_varset.rb")
+      result = run_rscons(args: %w[-f cache_varset.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{TestBuilder foo},
       ])
-      result = run_rscons(rsconscript: "cache_varset.rb")
+      result = run_rscons(args: %w[-f cache_varset.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
     end
@@ -1512,7 +1497,7 @@ EOF
 
     it "allows prepending and appending to PATH" do
       test_dir "simple"
-      result = run_rscons(rsconscript: "pathing.rb")
+      result = run_rscons(args: %w[-f pathing.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match /flex!/
       expect(result.stdout).to match /foobar!/
@@ -1521,7 +1506,7 @@ EOF
 
     it "writes the dependency file to the build root" do
       test_dir "simple"
-      result = run_rscons(rsconscript: "distclean.rb")
+      result = run_rscons(args: %w[-f distclean.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match /Compiling simple\.c/
       expect(File.exist?("simple.o")).to be_truthy
@@ -1532,7 +1517,7 @@ EOF
     context "debugging" do
       it "prints a message when the target does not exist" do
         test_dir("simple")
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because it does not exist on disk/
       end
@@ -1540,67 +1525,72 @@ EOF
       it "prints a message when there is no cached build information for the target" do
         test_dir("simple")
         FileUtils.touch("foo.o")
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because there is no cached build information for it/
       end
 
       it "prints a message when the target file has changed on disk" do
         test_dir("simple")
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         File.open("foo.o", "wb") {|fh| fh.puts "hi"}
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because it has been changed on disk since being built last/
       end
 
       it "prints a message when the command has changed" do
         test_dir("simple")
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
-        result = run_rscons(rsconscript: "cache_debugging.rb", op: %w[build command_change=yes])
+        passenv["test"] = "command_change"
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the command used to build it has changed/
       end
 
       it "prints a message when strict_deps is in use and the set of dependencies does not match" do
         test_dir("simple")
-        result = run_rscons(rsconscript: "cache_debugging.rb", op: %w[build strict_deps1=yes])
+        passenv["test"] = "strict_deps1"
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
-        result = run_rscons(rsconscript: "cache_debugging.rb", op: %w[build strict_deps2=yes])
+        passenv["test"] = "strict_deps2"
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the :strict_deps option is given and the set of dependencies does not match the previous set of dependencies/
       end
 
       it "prints a message when there is a new dependency" do
         test_dir("simple")
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
-        result = run_rscons(rsconscript: "cache_debugging.rb", op: %w[build new_dep=yes])
+        passenv["test"] = "new_dep"
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because there are new dependencies/
       end
 
       it "prints a message when there is a new user-specified dependency" do
         test_dir("simple")
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
-        result = run_rscons(rsconscript: "cache_debugging.rb", op: %w[build new_user_dep=yes])
+        passenv["test"] = "new_user_dep"
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because the set of user-specified dependency files has changed/
       end
 
       it "prints a message when a dependency file has changed" do
         test_dir("simple")
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         f = File.read("simple.c", mode: "rb")
         f += "\n"
         File.open("simple.c", "wb") do |fh|
           fh.write(f)
         end
-        result = run_rscons(rsconscript: "cache_debugging.rb")
+        result = run_rscons(args: %w[-f cache_debugging.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Target foo\.o needs rebuilding because dependency file simple\.c has changed/
       end
@@ -1610,7 +1600,7 @@ EOF
   context "Object builder" do
     it "allows overriding CCCMD construction variable" do
       test_dir("simple")
-      result = run_rscons(rsconscript: "override_cccmd.rb")
+      result = run_rscons(args: %w[-f override_cccmd.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{gcc -c -o simple.o -Dfoobar simple.c},
@@ -1619,7 +1609,7 @@ EOF
 
     it "allows overriding DEPFILESUFFIX construction variable" do
       test_dir("simple")
-      result = run_rscons(rsconscript: "override_depfilesuffix.rb")
+      result = run_rscons(args: %w[-f override_depfilesuffix.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{gcc -c -o simple.o -MMD -MF build/e.1/simple.o.deppy simple.c},
@@ -1628,7 +1618,7 @@ EOF
 
     it "raises an error when given a source file with an unknown suffix" do
       test_dir("simple")
-      result = run_rscons(rsconscript: "error_unknown_suffix.rb")
+      result = run_rscons(args: %w[-f error_unknown_suffix.rb])
       expect(result.stderr).to match /Unknown input file type: "foo.xyz"/
     end
   end
@@ -1636,7 +1626,7 @@ EOF
   context "SharedObject builder" do
     it "raises an error when given a source file with an unknown suffix" do
       test_dir("shared_library")
-      result = run_rscons(rsconscript: "error_unknown_suffix.rb")
+      result = run_rscons(args: %w[-f error_unknown_suffix.rb])
       expect(result.stderr).to match /Unknown input file type: "foo.xyz"/
     end
   end
@@ -1644,14 +1634,14 @@ EOF
   context "Library builder" do
     it "allows overriding ARCMD construction variable" do
       test_dir("library")
-      result = run_rscons(rsconscript: "override_arcmd.rb")
+      result = run_rscons(args: %w[-f override_arcmd.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{ar rcf lib.a build/e.1/one.c.o build/e.1/three.c.o build/e.1/two.c.o}])
     end
 
     it "allows passing object files as sources" do
       test_dir("library")
-      result = run_rscons(rsconscript: "library_from_object.rb")
+      result = run_rscons(args: %w[-f library_from_object.rb])
       expect(result.stderr).to eq ""
       expect(File.exists?("two.o")).to be_truthy
       verify_lines(lines(result.stdout), [%r{Building static library archive lib.a}])
@@ -1662,7 +1652,7 @@ EOF
     it "allows explicitly specifying SHLD construction variable value" do
       test_dir("shared_library")
 
-      result = run_rscons(rsconscript: "shared_library_set_shld.rb")
+      result = run_rscons(args: %w[-f shared_library_set_shld.rb])
       expect(result.stderr).to eq ""
       slines = lines(result.stdout)
       if RUBY_PLATFORM =~ /mingw|msys/
@@ -1674,7 +1664,7 @@ EOF
 
     it "allows passing object files as sources" do
       test_dir "shared_library"
-      result = run_rscons(rsconscript: "shared_library_from_object.rb")
+      result = run_rscons(args: %w[-f shared_library_from_object.rb])
       expect(result.stderr).to eq ""
       expect(File.exists?("one.c.o"))
     end
@@ -1684,7 +1674,7 @@ EOF
     it "generates a size file" do
       test_dir "simple"
 
-      result = run_rscons(rsconscript: "size.rb")
+      result = run_rscons(args: %w[-f size.rb])
       verify_lines(lines(result.stdout), [
         /Linking .*simple\.exe/,
         /Size .*simple\.exe .*simple\.size/,
@@ -1699,7 +1689,7 @@ EOF
     it "waits for subcommands in threads for builders that support threaded commands" do
       test_dir("simple")
       start_time = Time.new
-      result = run_rscons(rsconscript: "threading.rb", rscons_args: %w[-j 4])
+      result = run_rscons(args: %w[-f threading.rb -j 4])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{ThreadedTestBuilder a},
@@ -1713,20 +1703,20 @@ EOF
 
     it "allows the user to specify that a target be built after another" do
       test_dir("custom_builder")
-      result = run_rscons(rsconscript: "build_after.rb", rscons_args: %w[-j 4])
+      result = run_rscons(args: %w[-f build_after.rb -j 4])
       expect(result.stderr).to eq ""
     end
 
     it "allows the user to specify side-effect files produced by another builder with Builder#produces" do
       test_dir("custom_builder")
-      result = run_rscons(rsconscript: "produces.rb", rscons_args: %w[-j 4])
+      result = run_rscons(args: %w[-f produces.rb -j 4])
       expect(result.stderr).to eq ""
       expect(File.exists?("copy_inc.h")).to be_truthy
     end
 
     it "allows the user to specify side-effect files produced by another builder with Environment#produces" do
       test_dir("custom_builder")
-      result = run_rscons(rsconscript: "produces_env.rb", rscons_args: %w[-j 4])
+      result = run_rscons(args: %w[-f produces_env.rb -j 4])
       expect(result.stderr).to eq ""
       expect(File.exists?("copy_inc.h")).to be_truthy
     end
@@ -1735,7 +1725,7 @@ EOF
   context "CLI" do
     it "shows the version number and exits with --version argument" do
       test_dir("simple")
-      result = run_rscons(rscons_args: %w[--version])
+      result = run_rscons(args: %w[--version])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /version #{Rscons::VERSION}/
@@ -1743,7 +1733,7 @@ EOF
 
     it "shows CLI help and exits with --help argument" do
       test_dir("simple")
-      result = run_rscons(rscons_args: %w[--help])
+      result = run_rscons(args: %w[--help])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /Usage:/
@@ -1759,21 +1749,21 @@ EOF
 
     it "prints an error and exits with an error status when the given Rsconscript cannot be read" do
       test_dir("simple")
-      result = run_rscons(rsconscript: "nonexistent")
+      result = run_rscons(args: %w[-f nonexistent])
       expect(result.stderr).to match /Cannot read nonexistent/
       expect(result.status).to_not eq 0
     end
 
-    it "outputs an error for an unknown operation" do
+    it "outputs an error for an unknown task" do
       test_dir "simple"
-      result = run_rscons(op: "unknownop")
-      expect(result.stderr).to match /Unknown operation: unknownop/
+      result = run_rscons(args: "unknownop")
+      expect(result.stderr).to match /Task 'unknownop' not found/
       expect(result.status).to_not eq 0
     end
 
     it "displays usage and error message without a backtrace for an invalid CLI option" do
       test_dir "simple"
-      result = run_rscons(rscons_args: %w[--xyz])
+      result = run_rscons(args: %w[--xyz])
       expect(result.stderr).to_not match /Traceback/
       expect(result.stderr).to match /invalid option.*--xyz/
       expect(result.stderr).to match /Usage:/
@@ -1782,9 +1772,9 @@ EOF
 
     it "displays usage and error message without a backtrace for an invalid CLI option to a valid subcommand" do
       test_dir "simple"
-      result = run_rscons(op: %w[configure --xyz])
+      result = run_rscons(args: %w[configure --xyz])
       expect(result.stderr).to_not match /Traceback/
-      expect(result.stderr).to match /invalid option.*--xyz/
+      expect(result.stderr).to match /Invalid task 'configure' argument.*--xyz/
       expect(result.stderr).to match /Usage:/
       expect(result.status).to_not eq 0
     end
@@ -1793,7 +1783,7 @@ EOF
   context "configure operation" do
     it "raises a method not found error for configure methods called outside a configure block" do
       test_dir "configure"
-      result = run_rscons(rsconscript: "scope.rb")
+      result = run_rscons(args: %w[-f scope.rb])
       expect(result.stderr).to match /NoMethodError/
       expect(result.status).to_not eq 0
     end
@@ -1801,13 +1791,13 @@ EOF
     it "automatically runs the configure operation if the project is not yet configured in the given build directory" do
       test_dir "configure"
 
-      result = run_rscons(rsconscript: "check_c_compiler.rb")
+      result = run_rscons(args: %w[-f check_c_compiler.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /Checking for C compiler\.\.\./
       expect(Dir.exist?("build/_configure")).to be_truthy
 
-      result = run_rscons(rsconscript: "check_c_compiler.rb", rscons_args: %w[--build=bb])
+      result = run_rscons(args: %w[-f check_c_compiler.rb --build=bb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /Checking for C compiler\.\.\./
@@ -1820,7 +1810,7 @@ EOF
         context desc do
           it "finds the first listed C compiler" do
             test_dir "configure"
-            result = run_rscons(rsconscript: rsconscript, op: "configure")
+            result = run_rscons(args: %W[-f #{rsconscript} configure])
             expect(result.stderr).to eq ""
             expect(result.status).to eq 0
             expect(result.stdout).to match /Checking for C compiler\.\.\. gcc/
@@ -1829,7 +1819,7 @@ EOF
           it "finds the second listed C compiler" do
             test_dir "configure"
             create_exe "gcc", "exit 1"
-            result = run_rscons(rsconscript: rsconscript, op: "configure")
+            result = run_rscons(args: %W[-f #{rsconscript} configure])
             expect(result.stderr).to eq ""
             expect(result.status).to eq 0
             expect(result.stdout).to match /Checking for C compiler\.\.\. clang/
@@ -1839,7 +1829,7 @@ EOF
             test_dir "configure"
             create_exe "gcc", "exit 1"
             create_exe "clang", "exit 1"
-            result = run_rscons(rsconscript: rsconscript, op: "configure")
+            result = run_rscons(args: %W[-f #{rsconscript} configure])
             expect(result.stderr).to match /Configuration failed/
             expect(result.status).to_not eq 0
             expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
@@ -1850,7 +1840,7 @@ EOF
       it "successfully tests a compiler with an unknown name" do
         test_dir "configure"
         create_exe "mycompiler", %[exec gcc "$@"]
-        result = run_rscons(rsconscript: "check_c_compiler_custom.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_c_compiler_custom.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C compiler\.\.\. mycompiler/
@@ -1863,7 +1853,7 @@ EOF
         context desc do
           it "finds the first listed C++ compiler" do
             test_dir "configure"
-            result = run_rscons(rsconscript: rsconscript, op: "configure")
+            result = run_rscons(args: %W[-f #{rsconscript} configure])
             expect(result.stderr).to eq ""
             expect(result.status).to eq 0
             expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. g\+\+/
@@ -1872,7 +1862,7 @@ EOF
           it "finds the second listed C++ compiler" do
             test_dir "configure"
             create_exe "g++", "exit 1"
-            result = run_rscons(rsconscript: rsconscript, op: "configure")
+            result = run_rscons(args: %W[-f #{rsconscript} configure])
             expect(result.stderr).to eq ""
             expect(result.status).to eq 0
             expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. clang\+\+/
@@ -1882,7 +1872,7 @@ EOF
             test_dir "configure"
             create_exe "g++", "exit 1"
             create_exe "clang++", "exit 1"
-            result = run_rscons(rsconscript: rsconscript, op: "configure")
+            result = run_rscons(args: %W[-f #{rsconscript} configure])
             expect(result.stderr).to match /Configuration failed/
             expect(result.status).to_not eq 0
             expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. not found/
@@ -1893,7 +1883,7 @@ EOF
       it "successfully tests a compiler with an unknown name" do
         test_dir "configure"
         create_exe "mycompiler", %[exec clang++ "$@"]
-        result = run_rscons(rsconscript: "check_cxx_compiler_custom.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_cxx_compiler_custom.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. mycompiler/
@@ -1907,7 +1897,7 @@ EOF
           unless RUBY_PLATFORM =~ /mingw|msys/
             it "finds the first listed D compiler" do
               test_dir "configure"
-              result = run_rscons(rsconscript: rsconscript, op: "configure")
+              result = run_rscons(args: %W[-f #{rsconscript} configure])
               expect(result.stderr).to eq ""
               expect(result.status).to eq 0
               expect(result.stdout).to match /Checking for D compiler\.\.\. gdc/
@@ -1917,7 +1907,7 @@ EOF
           it "finds the second listed D compiler" do
             test_dir "configure"
             create_exe "gdc", "exit 1"
-            result = run_rscons(rsconscript: rsconscript, op: "configure")
+            result = run_rscons(args: %W[-f #{rsconscript} configure])
             expect(result.stderr).to eq ""
             expect(result.status).to eq 0
             expect(result.stdout).to match /Checking for D compiler\.\.\. ldc2/
@@ -1927,7 +1917,7 @@ EOF
             test_dir "configure"
             create_exe "gdc", "exit 1"
             create_exe "ldc2", "exit 1"
-            result = run_rscons(rsconscript: rsconscript, op: "configure")
+            result = run_rscons(args: %W[-f #{rsconscript} configure])
             expect(result.stderr).to match /Configuration failed/
             expect(result.status).to_not eq 0
             expect(result.stdout).to match /Checking for D compiler\.\.\. not found/
@@ -1939,7 +1929,7 @@ EOF
         it "successfully tests a compiler with an unknown name that uses gdc-compatible options" do
           test_dir "configure"
           create_exe "mycompiler", %[exec gdc "$@"]
-          result = run_rscons(rsconscript: "check_d_compiler_custom.rb", op: "configure")
+          result = run_rscons(args: %w[-f check_d_compiler_custom.rb configure])
           expect(result.stderr).to eq ""
           expect(result.status).to eq 0
           expect(result.stdout).to match /Checking for D compiler\.\.\. mycompiler/
@@ -1949,7 +1939,7 @@ EOF
       it "successfully tests a compiler with an unknown name that uses ldc2-compatible options" do
         test_dir "configure"
         create_exe "mycompiler", %[exec ldc2 "$@"]
-        result = run_rscons(rsconscript: "check_d_compiler_custom.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_d_compiler_custom.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for D compiler\.\.\. mycompiler/
@@ -1959,7 +1949,7 @@ EOF
     context "check_c_header" do
       it "succeeds when the requested header is found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_c_header_success.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_c_header_success.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C header 'string\.h'... found/
@@ -1967,7 +1957,7 @@ EOF
 
       it "fails when the requested header is not found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_c_header_failure.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_c_header_failure.rb configure])
         expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for C header 'not___found\.h'... not found/
@@ -1975,7 +1965,7 @@ EOF
 
       it "succeeds when the requested header is not found but :fail is set to false" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_c_header_no_fail.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_c_header_no_fail.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C header 'not___found\.h'... not found/
@@ -1983,11 +1973,11 @@ EOF
 
       it "sets the specified define when the header is found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_c_header_success_set_define.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_c_header_success_set_define.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C header 'string\.h'... found/
-        result = run_rscons(rsconscript: "check_c_header_success_set_define.rb", op: "build")
+        result = run_rscons(args: %w[-f check_c_header_success_set_define.rb])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /-DHAVE_STRING_H/
@@ -1995,11 +1985,11 @@ EOF
 
       it "does not set the specified define when the header is not found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_c_header_no_fail_set_define.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_c_header_no_fail_set_define.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C header 'not___found\.h'... not found/
-        result = run_rscons(rsconscript: "check_c_header_no_fail_set_define.rb", op: "build")
+        result = run_rscons(args: %w[-f check_c_header_no_fail_set_define.rb])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to_not match /-DHAVE_/
@@ -2012,10 +2002,10 @@ EOF
         File.open("usr2/frobulous.h", "wb") do |fh|
           fh.puts("#define FOO 42")
         end
-        result = run_rscons(rsconscript: "check_c_header_cpppath.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_c_header_cpppath.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
-        result = run_rscons(rsconscript: "check_c_header_cpppath.rb", rscons_args: %w[-v])
+        result = run_rscons(args: %w[-f check_c_header_cpppath.rb -v])
         expect(result.stdout).to_not match %r{-I./usr1}
         expect(result.stdout).to match %r{-I./usr2}
       end
@@ -2024,7 +2014,7 @@ EOF
     context "check_cxx_header" do
       it "succeeds when the requested header is found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_cxx_header_success.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_cxx_header_success.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C\+\+ header 'string\.h'... found/
@@ -2032,7 +2022,7 @@ EOF
 
       it "fails when the requested header is not found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_cxx_header_failure.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_cxx_header_failure.rb configure])
         expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for C\+\+ header 'not___found\.h'... not found/
@@ -2040,7 +2030,7 @@ EOF
 
       it "succeeds when the requested header is not found but :fail is set to false" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_cxx_header_no_fail.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_cxx_header_no_fail.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for C\+\+ header 'not___found\.h'... not found/
@@ -2053,10 +2043,10 @@ EOF
         File.open("usr2/frobulous.h", "wb") do |fh|
           fh.puts("#define FOO 42")
         end
-        result = run_rscons(rsconscript: "check_cxx_header_cpppath.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_cxx_header_cpppath.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
-        result = run_rscons(rsconscript: "check_cxx_header_cpppath.rb", rscons_args: %w[-v])
+        result = run_rscons(args: %w[-f check_cxx_header_cpppath.rb -v])
         expect(result.stdout).to_not match %r{-I./usr1}
         expect(result.stdout).to match %r{-I./usr2}
       end
@@ -2065,7 +2055,7 @@ EOF
     context "check_d_import" do
       it "succeeds when the requested import is found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_d_import_success.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_d_import_success.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for D import 'std\.stdio'... found/
@@ -2073,7 +2063,7 @@ EOF
 
       it "fails when the requested import is not found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_d_import_failure.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_d_import_failure.rb configure])
         expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for D import 'not\.found'... not found/
@@ -2081,7 +2071,7 @@ EOF
 
       it "succeeds when the requested import is not found but :fail is set to false" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_d_import_no_fail.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_d_import_no_fail.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for D import 'not\.found'... not found/
@@ -2094,10 +2084,10 @@ EOF
         File.open("usr2/frobulous.d", "wb") do |fh|
           fh.puts("int foo = 42;")
         end
-        result = run_rscons(rsconscript: "check_d_import_d_import_path.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_d_import_d_import_path.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
-        result = run_rscons(rsconscript: "check_d_import_d_import_path.rb", rscons_args: %w[-v])
+        result = run_rscons(args: %w[-f check_d_import_d_import_path.rb -v])
         expect(result.stdout).to_not match %r{-I./usr1}
         expect(result.stdout).to match %r{-I./usr2}
       end
@@ -2106,7 +2096,7 @@ EOF
     context "check_lib" do
       it "succeeds when the requested library is found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_lib_success.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_lib_success.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for library 'm'... found/
@@ -2114,7 +2104,7 @@ EOF
 
       it "fails when the requested library is not found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_lib_failure.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_lib_failure.rb configure])
         expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for library 'mfoofoo'... not found/
@@ -2122,7 +2112,7 @@ EOF
 
       it "succeeds when the requested library is not found but :fail is set to false" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_lib_no_fail.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_lib_no_fail.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for library 'mfoofoo'... not found/
@@ -2130,7 +2120,7 @@ EOF
 
       it "links against the checked library by default" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_lib_success.rb", op: "build")
+        result = run_rscons(args: %w[-f check_lib_success.rb])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for library 'm'... found/
@@ -2139,7 +2129,7 @@ EOF
 
       it "does not link against the checked library by default if :use is specified" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_lib_use.rb", op: "build")
+        result = run_rscons(args: %w[-f check_lib_use.rb])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for library 'm'... found/
@@ -2149,7 +2139,7 @@ EOF
 
       it "does not link against the checked library if :use is set to false" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_lib_use_false.rb", op: "build")
+        result = run_rscons(args: %w[-f check_lib_use_false.rb])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for library 'm'... found/
@@ -2160,13 +2150,13 @@ EOF
         test_dir "configure"
         FileUtils.mkdir_p("usr1")
         FileUtils.mkdir_p("usr2")
-        result = run_rscons(rsconscript: "check_lib_libpath1.rb")
+        result = run_rscons(args: %w[-f check_lib_libpath1.rb])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
-        result = run_rscons(rsconscript: "check_lib_libpath2.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_lib_libpath2.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
-        result = run_rscons(rsconscript: "check_lib_libpath2.rb")
+        result = run_rscons(args: %w[-f check_lib_libpath2.rb])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match %r{-L\./usr2}
@@ -2177,7 +2167,7 @@ EOF
     context "check_program" do
       it "succeeds when the requested program is found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_program_success.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_program_success.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for program 'find'... .*find/
@@ -2186,7 +2176,7 @@ EOF
       context "with non-existent PATH entries" do
         it "succeeds when the requested program is found" do
           test_dir "configure"
-          result = run_rscons(rsconscript: "check_program_success.rb", op: "configure", path: "/foo/bar")
+          result = run_rscons(args: %w[-f check_program_success.rb configure], path: "/foo/bar")
           expect(result.stderr).to eq ""
           expect(result.status).to eq 0
           expect(result.stdout).to match /Checking for program 'find'... .*find/
@@ -2195,7 +2185,7 @@ EOF
 
       it "fails when the requested program is not found" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_program_failure.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_program_failure.rb configure])
         expect(result.stderr).to match /Configuration failed/
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Checking for program 'program-that-is-not-found'... not found/
@@ -2203,7 +2193,7 @@ EOF
 
       it "succeeds when the requested program is not found but :fail is set to false" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "check_program_no_fail.rb", op: "configure")
+        result = run_rscons(args: %w[-f check_program_no_fail.rb configure])
         expect(result.stderr).to eq ""
         expect(result.status).to eq 0
         expect(result.stdout).to match /Checking for program 'program-that-is-not-found'... not found/
@@ -2215,11 +2205,11 @@ EOF
         it "stores flags and uses them during a build operation" do
           test_dir "configure"
           create_exe "pkg-config", "echo '-DMYPACKAGE'"
-          result = run_rscons(rsconscript: "check_cfg_package.rb", op: "configure")
+          result = run_rscons(args: %w[-f check_cfg_package.rb configure])
           expect(result.stderr).to eq ""
           expect(result.status).to eq 0
           expect(result.stdout).to match /Checking for package 'mypackage'\.\.\. found/
-          result = run_rscons(rsconscript: "check_cfg_package.rb", op: "build")
+          result = run_rscons(args: %w[-f check_cfg_package.rb])
           expect(result.stderr).to eq ""
           expect(result.status).to eq 0
           expect(result.stdout).to match /gcc.*-o.*\.o.*-DMYPACKAGE/
@@ -2227,7 +2217,7 @@ EOF
 
         it "fails when the configure program given does not exist" do
           test_dir "configure"
-          result = run_rscons(rsconscript: "check_cfg.rb", op: "configure")
+          result = run_rscons(args: %w[-f check_cfg.rb configure])
           expect(result.stderr).to match /Configuration failed/
           expect(result.status).to_not eq 0
           expect(result.stdout).to match /Checking 'my-config'\.\.\. not found/
@@ -2236,11 +2226,11 @@ EOF
         it "does not use the flags found by default if :use is specified" do
           test_dir "configure"
           create_exe "pkg-config", "echo '-DMYPACKAGE'"
-          result = run_rscons(rsconscript: "check_cfg_use.rb", op: "configure")
+          result = run_rscons(args: %w[-f check_cfg_use.rb configure])
           expect(result.stderr).to eq ""
           expect(result.status).to eq 0
           expect(result.stdout).to match /Checking for package 'mypackage'\.\.\. found/
-          result = run_rscons(rsconscript: "check_cfg_use.rb", op: "build")
+          result = run_rscons(args: %w[-f check_cfg_use.rb])
           expect(result.stderr).to eq ""
           expect(result.status).to eq 0
           expect(result.stdout).to_not match /gcc.*-o.*myconfigtest1.*-DMYPACKAGE/
@@ -2252,11 +2242,11 @@ EOF
         it "stores flags and uses them during a build operation" do
           test_dir "configure"
           create_exe "my-config", "echo '-DMYCONFIG -lm'"
-          result = run_rscons(rsconscript: "check_cfg.rb", op: "configure")
+          result = run_rscons(args: %w[-f check_cfg.rb configure])
           expect(result.stderr).to eq ""
           expect(result.status).to eq 0
           expect(result.stdout).to match /Checking 'my-config'\.\.\. found/
-          result = run_rscons(rsconscript: "check_cfg.rb", op: "build")
+          result = run_rscons(args: %w[-f check_cfg.rb])
           expect(result.stderr).to eq ""
           expect(result.status).to eq 0
           expect(result.stdout).to match /gcc.*-o.*\.o.*-DMYCONFIG/
@@ -2272,7 +2262,7 @@ EOF
             it "fails configuration with the correct error message" do
               test_dir "configure"
               create_exe "grep", "exit 4"
-              result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+              result = run_rscons(args: %w[-f custom_config_check.rb configure])
               expect(result.stderr).to match /Configuration failed/
               expect(result.stdout).to match /Checking 'grep' version\.\.\. error executing grep/
               expect(result.status).to_not eq 0
@@ -2283,7 +2273,7 @@ EOF
             it "fails configuration with the correct error message" do
               test_dir "configure"
               create_exe "grep", "echo 'grep (GNU grep) 1.1'"
-              result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+              result = run_rscons(args: %w[-f custom_config_check.rb configure])
               expect(result.stderr).to match /Configuration failed/
               expect(result.stdout).to match /Checking 'grep' version\.\.\. too old!/
               expect(result.status).to_not eq 0
@@ -2296,11 +2286,11 @@ EOF
             it "displays the correct message and does not fail configuration" do
               test_dir "configure"
               create_exe "grep", "echo 'grep (GNU grep) 2.1'"
-              result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+              result = run_rscons(args: %w[-f custom_config_check.rb configure])
               expect(result.stderr).to eq ""
               expect(result.stdout).to match /Checking 'grep' version\.\.\. we'll work with it but you should upgrade/
               expect(result.status).to eq 0
-              result = run_rscons(rsconscript: "custom_config_check.rb", op: "build")
+              result = run_rscons(args: %w[-f custom_config_check.rb])
               expect(result.stderr).to eq ""
               expect(result.stdout).to match /GREP_WORKAROUND/
               expect(result.status).to eq 0
@@ -2312,11 +2302,11 @@ EOF
           it "passes configuration with the correct message" do
             test_dir "configure"
             create_exe "grep", "echo 'grep (GNU grep) 3.0'"
-            result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+            result = run_rscons(args: %w[-f custom_config_check.rb configure])
             expect(result.stderr).to eq ""
             expect(result.stdout).to match /Checking 'grep' version\.\.\. good!/
             expect(result.status).to eq 0
-            result = run_rscons(rsconscript: "custom_config_check.rb", op: "build")
+            result = run_rscons(args: %w[-f custom_config_check.rb])
             expect(result.stderr).to eq ""
             expect(result.stdout).to match /GREP_FULL/
             expect(result.status).to eq 0
@@ -2325,7 +2315,7 @@ EOF
 
         it "allows passing standard input data to the executed command" do
           test_dir "configure"
-          result = run_rscons(rsconscript: "custom_config_check.rb", op: "configure")
+          result = run_rscons(args: %w[-f custom_config_check.rb configure])
           expect(result.stderr).to eq ""
           expect(result.stdout).to match /Checking sed -E flag\.\.\. good/
           expect(result.status).to eq 0
@@ -2336,7 +2326,7 @@ EOF
     context "on_fail option" do
       it "prints on_fail messages and calls on_fail procs on failure" do
         test_dir "configure"
-        result = run_rscons(rsconscript: "on_fail.rb", op: %w[configure])
+        result = run_rscons(args: %w[-f on_fail.rb configure])
         expect(result.status).to_not eq 0
         expect(result.stdout).to match /Install the foo123 package/
         expect(result.stdout).to match /Install the foo123cxx package/
@@ -2346,7 +2336,7 @@ EOF
     it "does everything" do
       test_dir "configure"
       create_exe "pkg-config", "echo '-DMYPACKAGE'"
-      result = run_rscons(rsconscript: "everything.rb", op: %w[configure --build=bb --prefix=/my/prefix])
+      result = run_rscons(args: %w[-f everything.rb --build=bb configure --prefix=/my/prefix])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /Configuring configure test\.\.\./
@@ -2366,10 +2356,10 @@ EOF
 
     it "aggregates multiple set_define's" do
       test_dir "configure"
-      result = run_rscons(rsconscript: "multiple_set_define.rb", op: "configure")
+      result = run_rscons(args: %w[-f multiple_set_define.rb configure])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
-      result = run_rscons(rsconscript: "multiple_set_define.rb", op: "build")
+      result = run_rscons(args: %w[-f multiple_set_define.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to match /gcc.*-o.*\.o.*-DHAVE_MATH_H\s.*-DHAVE_STDIO_H/
@@ -2377,34 +2367,27 @@ EOF
 
     it "exits with an error if the project is not configured and a build is requested and autoconf is false" do
       test_dir "configure"
-      result = run_rscons(rsconscript: "autoconf_false.rb")
-      expect(result.stderr).to match /Project must be configured first, and autoconf is disabled/
+      result = run_rscons(args: %w[-f autoconf_false.rb])
+      expect(result.stderr).to match /Project must be configured before creating an Environment/
       expect(result.status).to_not eq 0
     end
 
     it "exits with an error code and message if configuration fails during autoconf" do
       test_dir "configure"
-      result = run_rscons(rsconscript: "autoconf_fail.rb")
+      result = run_rscons(args: %w[-f autoconf_fail.rb])
       expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
       expect(result.status).to_not eq 0
       expect(result.stderr).to_not match /from\s/
       expect(lines(result.stderr).last).to eq "Configuration failed"
     end
 
-    it "exits with an error if configuration has not been performed before attempting to create an environment" do
-      test_dir "configure"
-      result = run_rscons(rsconscript: "error_env_construction_before_configure.rb")
-      expect(result.stderr).to match /Project must be configured before creating an Environment/
-      expect(result.status).to_not eq 0
-    end
-
     it "does not rebuild after building with auto-configuration" do
       test_dir "configure"
-      result = run_rscons(rsconscript: "autoconf_rebuild.rb")
+      result = run_rscons(args: %w[-f autoconf_rebuild.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(File.exists?("simple.exe")).to be_truthy
-      result = run_rscons(rsconscript: "autoconf_rebuild.rb")
+      result = run_rscons(args: %w[-f autoconf_rebuild.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(result.stdout).to eq ""
@@ -2414,12 +2397,12 @@ EOF
   context "distclean" do
     it "removes built files and the build directory" do
       test_dir "simple"
-      result = run_rscons(rsconscript: "distclean.rb")
+      result = run_rscons(args: %w[-f distclean.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(File.exists?("simple.o")).to be_truthy
       expect(File.exists?("build")).to be_truthy
-      result = run_rscons(rsconscript: "distclean.rb", op: "distclean")
+      result = run_rscons(args: %w[-f distclean.rb distclean])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(File.exists?("simple.o")).to be_falsey
@@ -2437,33 +2420,16 @@ EOF
 
     it "echoes commands by default with -v" do
       test_dir('simple')
-      result = run_rscons(rscons_args: %w[-v])
+      result = run_rscons(args: %w[-v])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match /gcc.*-o.*simple/
     end
 
     it "echoes commands by default with --verbose" do
       test_dir('simple')
-      result = run_rscons(rscons_args: %w[--verbose])
+      result = run_rscons(args: %w[--verbose])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match /gcc.*-o.*simple/
-    end
-
-    it "echoes commands by default with -v after build operation" do
-      test_dir('simple')
-      result = run_rscons(op: %w[build -v])
-      expect(result.stderr).to eq ""
-      expect(result.stdout).to match /gcc.*-o.*simple/
-    end
-
-    it "prints operation start time" do
-      test_dir("simple")
-      result = run_rscons(rscons_args: %w[-v])
-      expect(result.stderr).to eq ""
-      expect(result.stdout).to match /Starting 'configure' at/
-      expect(result.stdout).to match /Starting 'build' at/
-      expect(result.stdout).to match /'build' complete at/
-      expect(result.stdout).to_not match /'configure' complete at/
     end
   end
 
@@ -2471,13 +2437,13 @@ EOF
     it "allows calling Program builder in direct mode and passes all sources to the C compiler" do
       test_dir("direct")
 
-      result = run_rscons(rsconscript: "c_program.rb")
+      result = run_rscons(args: %w[-f c_program.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match %r{Compiling/Linking}
       expect(File.exists?("test.exe")).to be_truthy
       expect(`./test.exe`).to match /three/
 
-      result = run_rscons(rsconscript: "c_program.rb")
+      result = run_rscons(args: %w[-f c_program.rb])
       expect(result.stdout).to eq ""
 
       three_h = File.read("three.h", mode: "rb")
@@ -2485,21 +2451,21 @@ EOF
         fh.write(three_h)
         fh.puts("#define FOO 42")
       end
-      result = run_rscons(rsconscript: "c_program.rb")
+      result = run_rscons(args: %w[-f c_program.rb])
       expect(result.stdout).to match %r{Compiling/Linking}
     end
 
     it "allows calling SharedLibrary builder in direct mode and passes all sources to the C compiler" do
       test_dir("direct")
 
-      result = run_rscons(rsconscript: "c_shared_library.rb")
+      result = run_rscons(args: %w[-f c_shared_library.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match %r{Compiling/Linking}
       expect(File.exists?("test.exe")).to be_truthy
       ld_library_path_prefix = (RUBY_PLATFORM =~ /mingw|msys/ ? "" : "LD_LIBRARY_PATH=. ")
       expect(`#{ld_library_path_prefix}./test.exe`).to match /three/
 
-      result = run_rscons(rsconscript: "c_shared_library.rb")
+      result = run_rscons(args: %w[-f c_shared_library.rb])
       expect(result.stdout).to eq ""
 
       three_h = File.read("three.h", mode: "rb")
@@ -2507,7 +2473,7 @@ EOF
         fh.write(three_h)
         fh.puts("#define FOO 42")
       end
-      result = run_rscons(rsconscript: "c_shared_library.rb")
+      result = run_rscons(args: %w[-f c_shared_library.rb])
       expect(result.stdout).to match %r{Compiling/Linking}
     end
   end
@@ -2516,7 +2482,7 @@ EOF
     it "invokes a configure operation if the project is not yet configured" do
       test_dir "typical"
 
-      result = run_rscons(rsconscript: "install.rb", op: %W[install])
+      result = run_rscons(args: %w[-f install.rb install])
       expect(result.stdout).to match /Configuring install_test/
     end
 
@@ -2524,9 +2490,9 @@ EOF
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Compiling/
         expect(result.stdout).to match /Linking/
@@ -2537,10 +2503,10 @@ EOF
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Creating directory/
         expect(result.stdout).to match /Install install.rb =>/
@@ -2555,7 +2521,7 @@ EOF
         expect(File.exists?("#{prefix}/mult/install.rb")).to be_truthy
         expect(File.exists?("#{prefix}/mult/copy.rb")).to be_truthy
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
         expect(result.stdout).to eq ""
       end
@@ -2565,15 +2531,15 @@ EOF
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[build])
+        result = run_rscons(args: %w[-f install.rb])
         expect(result.stderr).to eq ""
         expect(result.stdout).to_not match /Install/
         expect(Dir.entries(prefix)).to match_array %w[. ..]
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match /Install/
       end
@@ -2585,15 +2551,15 @@ EOF
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
         expect(File.exists?("build/e.1/src/one/one.c.o")).to be_truthy
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall])
+        result = run_rscons(args: %w[-f install.rb uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to_not match /Removing/
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
@@ -2606,13 +2572,13 @@ EOF
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
+        result = run_rscons(args: %w[-f install.rb -v uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match %r{Removing #{prefix}/bin/program.exe}
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
@@ -2624,13 +2590,13 @@ EOF
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
+        result = run_rscons(args: %w[-f install.rb -v uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match %r{Removing #{prefix}/bin/program.exe}
         expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
@@ -2638,7 +2604,7 @@ EOF
 
         FileUtils.mkdir_p("#{prefix}/bin")
         File.open("#{prefix}/bin/program.exe", "w") {|fh| fh.write("hi")}
-        result = run_rscons(rsconscript: "install.rb", op: %W[uninstall -v])
+        result = run_rscons(args: %w[-f install.rb -v uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to_not match /Removing/
       end
@@ -2649,7 +2615,7 @@ EOF
     it "does not include install targets in build progress when not doing an install" do
       test_dir "typical"
 
-      result = run_rscons(rsconscript: "install.rb")
+      result = run_rscons(args: %w[-f install.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
         %r{\[1/3\] Compiling},
@@ -2658,35 +2624,35 @@ EOF
       ])
     end
 
-    it "does include install targets in build progress when doing an install" do
+    it "counts install task targets separately from build task targets" do
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
-        result = run_rscons(rsconscript: "install.rb", op: %W[configure --prefix=#{prefix}])
+        result = run_rscons(args: %W[-f install.rb configure --prefix=#{prefix}])
         expect(result.stderr).to eq ""
 
-        result = run_rscons(rsconscript: "install.rb", op: %w[install])
+        result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
         verify_lines(lines(result.stdout), [
-          %r{\[1/9\] Compiling},
-          %r{\[2/9\] Compiling},
-          %r{\[\d/9\] Install},
+          %r{\[1/3\] Compiling},
+          %r{\[2/3\] Compiling},
+          %r{\[\d/6\] Install},
         ])
       end
     end
 
-    it "includes build steps from all environments when showing build progress" do
+    it "separates build steps from each environment when showing build progress" do
       test_dir "typical"
 
-      result = run_rscons(rsconscript: "multiple_environments.rb")
+      result = run_rscons(args: %w[-f multiple_environments.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [
-        %r{\[1/6\] Compiling},
-        %r{\[2/6\] Compiling},
-        %r{\[3/6\] Linking},
-        %r{\[4/6\] Compiling},
-        %r{\[5/6\] Compiling},
-        %r{\[6/6\] Linking},
+        %r{\[1/3\] Compiling},
+        %r{\[2/3\] Compiling},
+        %r{\[3/3\] Linking},
+        %r{\[1/3\] Compiling},
+        %r{\[2/3\] Compiling},
+        %r{\[3/3\] Linking},
       ])
     end
   end
@@ -2696,7 +2662,7 @@ EOF
       it "executes the subsidiary script from configure block" do
         test_dir "subsidiary"
 
-        result = run_rscons(op: %W[configure])
+        result = run_rscons(args: %w[configure])
         expect(result.stderr).to eq ""
         verify_lines(lines(result.stdout), [
           %r{Entering directory '.*/sub'},
@@ -2715,9 +2681,9 @@ EOF
       it "executes the subsidiary script from build block" do
         test_dir "subsidiary"
 
-        result = run_rscons(op: %W[configure])
+        result = run_rscons(args: %w[configure])
         expect(result.stderr).to eq ""
-        result = run_rscons(op: %W[build])
+        result = run_rscons
         expect(result.stderr).to eq ""
         verify_lines(lines(result.stdout), [
           %r{sub Rsconscript2 build},
@@ -2730,7 +2696,7 @@ EOF
       it "executes the subsidiary script from configure block" do
         test_dir "subsidiary"
 
-        result = run_rscons(rsconscript: "Rsconscript_dir", op: %W[configure])
+        result = run_rscons(args: %w[-f Rsconscript_dir configure])
         expect(result.stderr).to eq ""
         verify_lines(lines(result.stdout), [
           %r{Entering directory '.*/sub'},
@@ -2749,9 +2715,9 @@ EOF
       it "executes the subsidiary script from build block" do
         test_dir "subsidiary"
 
-        result = run_rscons(rsconscript: "Rsconscript_dir", op: %W[configure])
+        result = run_rscons(args: %w[-f Rsconscript_dir configure])
         expect(result.stderr).to eq ""
-        result = run_rscons(rsconscript: "Rsconscript_dir", op: %W[build])
+        result = run_rscons(args: %w[-f Rsconscript_dir])
         expect(result.stderr).to eq ""
         verify_lines(lines(result.stdout), [
           %r{sub Rsconscript2 build},
@@ -2769,7 +2735,7 @@ EOF
 puts "sub rscons"
 EOF
         FileUtils.chmod(0755, "sub/rscons")
-        result = run_rscons(op: %W[configure])
+        result = run_rscons(args: %w[configure])
         expect(result.stderr).to eq ""
         verify_lines(lines(result.stdout), [
           %r{Entering directory '.*/sub'},
@@ -2789,9 +2755,9 @@ EOF
     it "does not print entering/leaving directory messages when the subsidiary script is in the same directory" do
       test_dir "subsidiary"
 
-      result = run_rscons(rsconscript: "Rsconscript_samedir", op: %W[configure])
+      result = run_rscons(args: %w[-f Rsconscript_samedir configure])
       expect(result.stderr).to eq ""
-      result = run_rscons(rsconscript: "Rsconscript_samedir", op: %W[build])
+      result = run_rscons(args: %w[-f Rsconscript_samedir])
       expect(result.stderr).to eq ""
       expect(result.stdout).to_not match(%{(Entering|Leaving) directory})
       verify_lines(lines(result.stdout), [
@@ -2803,7 +2769,7 @@ EOF
     it "terminates execution when a subsidiary script fails" do
       test_dir "subsidiary"
 
-      result = run_rscons(rsconscript: "Rsconscript_fail", op: %W[configure])
+      result = run_rscons(args: %w[-f Rsconscript_fail configure])
       expect(result.stderr).to_not eq ""
       expect(result.status).to_not eq 0
       expect(result.stdout).to_not match /top configure/
@@ -2812,7 +2778,7 @@ EOF
     it "does not pass RSCONS_BUILD_DIR to subsidiary scripts" do
       test_dir "subsidiary"
       passenv["RSCONS_BUILD_DIR"] = "buildit"
-      result = run_rscons(op: %W[configure])
+      result = run_rscons(args: %w[configure])
       expect(result.stderr).to eq ""
       expect(Dir.exist?("build")).to be_falsey
       expect(Dir.exist?("buildit")).to be_truthy
@@ -2824,7 +2790,7 @@ EOF
   context "sh method" do
     it "executes the command given" do
       test_dir "sh"
-      result = run_rscons(rsconscript: "sh.rb")
+      result = run_rscons(args: %w[-f sh.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       verify_lines(lines(result.stdout), [
@@ -2835,7 +2801,7 @@ EOF
 
     it "prints the command when executing verbosely" do
       test_dir "sh"
-      result = run_rscons(rsconscript: "sh.rb", rscons_args: %w[-v])
+      result = run_rscons(args: %w[-f sh.rb -v])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       verify_lines(lines(result.stdout), [
@@ -2848,7 +2814,7 @@ EOF
 
     it "terminates execution on failure" do
       test_dir "sh"
-      result = run_rscons(rsconscript: "sh_fail.rb")
+      result = run_rscons(args: %w[-f sh_fail.rb])
       expect(result.stderr).to match /sh_fail\.rb:2:.*foobar42/
       expect(result.status).to_not eq 0
       expect(result.stdout).to_not match /continued/
@@ -2856,7 +2822,7 @@ EOF
 
     it "continues execution on failure when :continue option is set" do
       test_dir "sh"
-      result = run_rscons(rsconscript: "sh_fail_continue.rb")
+      result = run_rscons(args: %w[-f sh_fail_continue.rb])
       expect(result.stderr).to match /sh_fail_continue\.rb:2:.*foobar42/
       expect(result.status).to eq 0
       expect(result.stdout).to match /continued/
@@ -2866,13 +2832,94 @@ EOF
   context "FileUtils methods" do
     it "defines FileUtils methods to be available in the build script" do
       test_dir "typical"
-      result = run_rscons(rsconscript: "fileutils_methods.rb")
+      result = run_rscons(args: %w[-f fileutils_methods.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
       expect(Dir.exist?("foobar")).to be_truthy
       expect(Dir.exist?("foo")).to be_falsey
       expect(File.exist?("foobar/baz/b.txt")).to be_truthy
     end
+  end
+
+  it "executes the requested tasks in the requested order" do
+    test_dir "tasks"
+    result = run_rscons(args: %w[-f tasks.rb configure])
+    result = run_rscons(args: %w[-f tasks.rb one three])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(result.stdout).to eq "one\nthree\n"
+    result = run_rscons(args: %w[-f tasks.rb three one])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(result.stdout).to eq "three\none\n"
+  end
+
+  it "executes the task's dependencies before the requested task" do
+    test_dir "tasks"
+    result = run_rscons(args: %w[-f tasks.rb configure])
+    result = run_rscons(args: %w[-f tasks.rb two])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(result.stdout).to eq "one\nthree\ntwo\n"
+  end
+
+  it "does not execute a task more than once" do
+    test_dir "tasks"
+    result = run_rscons(args: %w[-f tasks.rb configure])
+    result = run_rscons(args: %w[-f tasks.rb one two three])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(result.stdout).to eq "one\nthree\ntwo\n"
+  end
+
+  it "passes task arguments" do
+    test_dir "tasks"
+    result = run_rscons(args: %w[-f tasks.rb configure])
+    result = run_rscons(args: %w[-f tasks.rb four])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(result.stdout).to eq %[four\nmyparam:"defaultvalue"\nmyp2:nil\n]
+    result = run_rscons(args: %w[-f tasks.rb four --myparam=cli-value --myp2 one])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(result.stdout).to eq %[four\nmyparam:"cli-value"\nmyp2:"--myp2"\none\n]
+  end
+
+  it "allows accessing task arguments via Task#[]" do
+    test_dir "tasks"
+    result = run_rscons(args: %w[-f tasks.rb configure])
+    result = run_rscons(args: %w[-f tasks.rb five])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(result.stdout).to match /four myparam value is defaultvalue/
+    result = run_rscons(args: %w[-f tasks.rb four --myparam=v42 five])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    expect(result.stdout).to match /four myparam value is v42/
+  end
+
+  it "exits with an error when attempting to get a nonexistent parameter value" do
+    test_dir "tasks"
+    result = run_rscons(args: %w[-f tasks.rb configure])
+    result = run_rscons(args: %w[-f tasks.rb six])
+    expect(result.stderr).to match /Could not find parameter 'nope'/
+    expect(result.status).to_not eq 0
+  end
+
+  it "displays tasks and their arguments in the help info" do
+    test_dir "tasks"
+    result = run_rscons(args: %w[-f tasks.rb -h])
+    expect(result.stderr).to eq ""
+    expect(result.status).to eq 0
+    verify_lines(lines(result.stdout), [
+      "Tasks:",
+      /\bthree\b\s+Task three/,
+      /\bfour\b\s+Task four/,
+      /--myparam=MYPARAM\s+My special parameter/,
+      /--myp2\s+My parameter 2/,
+    ])
+    expect(result.stdout).to_not match /^\s*one\b/
+    expect(result.stdout).to_not match /^\s*two\b/
   end
 
 end

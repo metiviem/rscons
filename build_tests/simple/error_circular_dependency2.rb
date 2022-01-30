@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env.Command("foo", "foo")
   end

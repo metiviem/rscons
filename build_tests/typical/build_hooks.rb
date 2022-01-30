@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new(echo: :command) do |env|
     env.append('CPPPATH' => glob('src/**/*/'))
     env.add_build_hook do |builder|

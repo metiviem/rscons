@@ -1,4 +1,4 @@
-build do
+default do
   Environment.new do |env|
     env["build_root"] = env.build_root
     env["inc_h"] = "inc.h"

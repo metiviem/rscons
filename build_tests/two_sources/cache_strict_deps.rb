@@ -13,7 +13,7 @@ class StrictBuilder < Rscons::Builder
   end
 end
 
-build do
+default do
   Environment.new(echo: :command) do |env|
     env.add_builder(StrictBuilder)
     env.Object("one.o", "one.c", "CCFLAGS" => %w[-DONE])

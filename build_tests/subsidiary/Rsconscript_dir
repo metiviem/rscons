@@ -4,7 +4,7 @@ configure do
   puts "top configure"
 end
 
-build do
-  rscons "sub", "-f", "Rsconscript2", "build"
+default do
+  rscons "sub", "-f", "Rsconscript2"
   puts "top build"
 end

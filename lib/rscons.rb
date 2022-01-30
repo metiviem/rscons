@@ -10,6 +10,7 @@ require_relative "rscons/configure_op"
 require_relative "rscons/default_construction_variables"
 require_relative "rscons/environment"
 require_relative "rscons/script"
+require_relative "rscons/task"
 require_relative "rscons/util"
 require_relative "rscons/varset"
 require_relative "rscons/version"
@@ -47,13 +48,6 @@ module Rscons
     #   The Application singleton.
     def application
       @application ||= Application.new
-    end
-
-    # Access any variables set on the rscons command-line.
-    #
-    # @return [VarSet]
-    def vars(*args)
-      application.vars(*args)
     end
 
     # Return whether the given target is a phony target.
