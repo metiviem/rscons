@@ -15,12 +15,12 @@ It supports the following features:
 
 At its core, Rscons is mainly an engine to:
 
-  * determine the proper order to perform build operations,
+  * determine the proper order to perform build steps,
   * determine whether each build target is up to date or in need of rebuild, and
-  * schedule those build operations across multiple threads as efficiently as possible.
+  * schedule those build steps across multiple threads as efficiently as possible.
 
 Along the way, Rscons provides a concise syntax for specifying common types of
-build operations, but also provides an extensible framework for performing
+build steps, but also provides an extensible framework for performing
 custom build operations as well.
 
 Rscons takes inspiration from:
@@ -48,8 +48,8 @@ ${/remove}
 ### Build Correctness
 
 The number one design principle in Rscons is build correctness.
-This means that a build operation will be performed when Rscons cannot
-determine that a build target is already up-to-date.
+This means that a target will be built when Rscons cannot determine that a
+build target is already up-to-date.
 A build target will be built whenever:
 
   * the target file has been removed or changed since it was last built
@@ -80,10 +80,10 @@ files coming from a particular source directory.
 
 Rscons will automatically determine the number of threads to use based on the
 host CPU configuration, and will schedule jobs as efficiently as possible
-across the available threads in order to complete the build operation in as
-little time as possible.
-As development occurs and build operations are executed, Rscons makes use of a
-cache file in order to avoid rebuilding a target when it is already up to date.
+across the available threads in order to complete the build in as little time
+as possible.
+As development occurs and builders are executed, Rscons makes use of a cache
+file in order to avoid rebuilding a target when it is already up to date.
 
 ### Build Directory
 
@@ -130,8 +130,8 @@ The following files should be added to source control:
   * `rscons`
   * `Rsconscript`
 
-Add the following contents to `.gitignore` (or the equivalent thereof for different
-version control systems):
+Add the following contents to `.gitignore` (or the equivalent thereof for
+different version control systems):
 
 ```
 /.rscons*
@@ -649,8 +649,8 @@ The command and its output are also logged to the config.log file.
 The [`store_merge`](../yard/Rscons/ConfigureOp.html#store_merge-instance_method),
 [`store_append`](../yard/Rscons/ConfigureOp.html#store_append-instance_method),
 and [`store_parse`](../yard/Rscons/ConfigureOp.html#store_parse-instance_method)
-methods can be used to store construction variables for Environments created
-during the `build` operation.
+methods can be used to store construction variables to be used in Environments
+created later.
 Finally, the [`complete`](../yard/Rscons/ConfigureOp.html#complete-instance_method)
 method can be used to complete the configuration check and indicate a success
 or failure.
@@ -831,7 +831,7 @@ There are several default builders that are built-in to Rscons:
   * `Directory`, which creates a directory.
   * `Disassemble`, which disassembles an object file to a disassembly listing.
   * `Install`, which installs files or directories to a specified destination.
-  * `InstallDirectory`, which creates a directory during an install operation.
+  * `InstallDirectory`, which creates a directory in an install destination.
   * `Library`, which collects object files into a static library archive file.
   * `Object`, which compiles source files to produce an object file.
   * `Preprocess`, which invokes the C/C++ preprocessor on a source file.
@@ -923,8 +923,12 @@ env.Install("${prefix}/share", "share")
 
 The `Install` builder can install files or directories to their installation
 target location.
-`Install` builders are only processed when the user has requested to perform
-an `install` operation from the command line.
+It functions almost identically to the `Copy` builder.
+The only difference relates to the `clean` and `uninstall` tasks.
+The `clean` task removes targets created by the `Copy` builder but not by
+the `Install` builder.
+The `uninstall` task removes targets created by the `Install` builder but not
+by the `Copy` builder.
 
 ####> The InstallDirectory Builder
 
@@ -934,11 +938,17 @@ env.InstallDirectory(target)
 env.InstallDirectory("${prefix}/share")
 ```
 
-The `InstallDirectory` builder can be used to explicitly create a directory.
-`InstallDirectory` builders are only processed when the user has requested to
-perform an `install` operation from the command line.
+The `InstallDirectory` builder can be used to explicitly create a directory in
+an installation location.
 This can also disambiguate whether the target for a subsequent builder
 (e.g. `Install`) refers to a file path or directory path.
+
+It functions almost identically to the `Directory` builder.
+The only difference relates to the `clean` and `uninstall` tasks.
+The `clean` task removes targets created by the `Directory` builder but not by
+the `InstallDirectory` builder.
+The `uninstall` task removes targets created by the `InstallDirectory` builder
+but not by the `Directory` builder.
 
 ####> The Library Builder
 
@@ -1133,7 +1143,7 @@ This example script would compile all C sources under the `src` directory with
 the `-Wall` flag except for sources under the `src/tests` directory.
 
 A post-build hook can be added with `env.add_post_build_hook`.
-Post-build hooks are only invoked if the build operation was a success.
+Post-build hooks are only invoked if the build step was a success.
 
 Build hooks and post-build hooks can register new build targets.
 
@@ -1248,10 +1258,10 @@ environment variable.
 
 The
 [`rscons`](../yard/Rscons/Script/GlobalDsl.html#rscons-instance_method)
-build script method can be used to invoke an rscons subprocess to
-perform an operation using a subsidiary rscons build script.
+build script method can be used to invoke an rscons subprocess using a
+subsidiary rscons build script.
 This can be used, for example, when a subproject is imported and a top-level
-`configure` or `build` operation should also perform the same operation in the
+`configure` or `build` task should also perform the same task in the
 subproject directory.
 
 The first argument to the `rscons` method specifies either a directory name, or
@@ -1273,7 +1283,7 @@ task "build" do
 end
 ```
 
-It is also perfectly valid to perform a different operation in the subsidiary
+It is also perfectly valid to perform different task(s) in the subsidiary
 script from the one being performed in the top-level script.
 For example, in a project that requires a particular cross compiler, the
 top-level `configure` script could build the necessary cross compiler using a
@@ -1445,13 +1455,13 @@ The base constructor will set several instance attributes within the builder:
   * `@env` will contain a reference to the Environment object that registered
     the build target using the builder
   * `@vars` will contain any user-specified construction variable values that
-    should be used for the build operation (overriding any Environment-wide
+    should be used for the builder execution (overriding any Environment-wide
     construction variable values)
 
 ####> Custom Builder Operation
 
-In order for a builder to perform a build operation, the builder class must
-implement a the `Builder#run()` method.
+In order for a builder to run, the builder class must implement a the
+`Builder#run()` method.
 Generally, the `run()` method will use the source file(s) to produce the target
 file.
 Here is an example of a trivial builder:
@@ -1469,16 +1479,15 @@ end
 
 ##### Return Value
 
-If the build operation has completed and failed, the `run` method should return
+If the builder has completed and failed, the `run` method should return
 `false`.
 In this case, generally the command executed or the builder itself would be
 expected to output something to `$stderr` indicating the reason for the build
 failure.
-If the build operation has completed successfully, the `run` method should
+If the builder has completed successfully, the `run` method should
 return `true`.
-If the build operation is not yet complete and is waiting on other operations,
-the `run` method should return the return value from the `Builder#wait_for`
-method.
+If the builder is not yet complete and is waiting on other steps, the `run`
+method should return the return value from the `Builder#wait_for` method.
 See ${#Custom Builder Parallelization}.
 
 ##### Printing Build Status
@@ -1552,9 +1561,9 @@ In any of these cases, the builder's `run` method should make use of
 `Builder#wait_for` to "sleep" until one of the items being waited for has
 completed.
 
-###### Using a Ruby Thread to Parallelize a Build Operation
+###### Using a Ruby Thread to Parallelize a Builder
 
-Here is an example of using a Ruby thread to parallelize a build operation:
+Here is an example of using a Ruby thread to parallelize a builder:
 
 ```ruby
 ${include build_tests/custom_builder/wait_for_thread.rb}
