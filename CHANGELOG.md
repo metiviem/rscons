@@ -7,7 +7,7 @@
 
 ### Fixes
 
-- #121 - env.depends() does not work with built-root-relative "^/" paths
+- #121 - env.depends() does not work with build-root-relative "^/" paths
 - #130 - Document -f command line option
 - #133 - Clarify failed command error message indicating to run -F
 - #134 - Document CMD_STDOUT variable for Command builder
