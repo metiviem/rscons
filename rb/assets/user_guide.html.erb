@@ -7,23 +7,15 @@
         margin: 0px;
         padding: 0px;
       }
-      #body-table {
+      #body-content {
         margin-left: auto;
         margin-right: auto;
-        border-collapse: collapse;
-      }
-      #body-left-border {
-        width: 10px;
-        background-image: linear-gradient(to right, #CCC, #000, #FFF);
-      }
-      #body-right-border {
-        width: 10px;
-        background-image: linear-gradient(to right, #FFF, #000, #CCC);
-      }
-      #body-center {
+        margin-top: 1em;
+        margin-bottom: 1em;
+        border: 1px solid black;
         background-color: #FFF;
         width: 120ex;
-        padding: 1ex;
+        padding: 2ex;
       }
       a {
         text-decoration: none;
@@ -71,12 +63,6 @@
     </style>
   </head>
   <body>
-    <table id="body-table">
-      <tr>
-        <td id="body-left-border"></td>
-        <td id="body-center"><%= content %></td>
-        <td id="body-right-border"></td>
-      </tr>
-    </table>
+    <div id="body-content"><%= content %></div>
   </body>
 </html>
