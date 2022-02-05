@@ -1,3 +1,5 @@
+require "net/http"
+require "digest"
 require_relative "rscons/ansi"
 require_relative "rscons/application"
 require_relative "rscons/basic_environment"

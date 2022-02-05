@@ -37,6 +37,62 @@ module Rscons
         end.sort
       end
 
+      # Download a file.
+      #
+      # @param url [String]
+      #   URL.
+      # @param dest [String]
+      #   Path to where to save the file.
+      # @param options [Hash]
+      #   Options.
+      # @option options [String] :sha256sum
+      #   Expected file checksum.
+      # @option options [Integer] :redirect_limit
+      #   Maximum number of times to allow HTTP redirection (default 5).
+      #
+      # @return [void]
+      def download(url, dest, options = {})
+        options[:redirect_limit] ||= 5
+        unless options[:redirected]
+          if File.exist?(dest) && options[:sha256sum]
+            if Digest::SHA2.hexdigest(File.binread(dest)) == options[:sha256sum]
+              # Destination file already exists and has the expected checksum.
+              return
+            end
+          end
+        end
+        uri = URI(url)
+        use_ssl = url.start_with?("https://")
+        response = nil
+        socketerror_message = ""
+        digest = Digest::SHA2.new
+        begin
+          Net::HTTP.start(uri.host, uri.port, use_ssl: use_ssl) do |http|
+            File.open(dest, "wb") do |fh|
+              response = http.get(uri.request_uri) do |data|
+                fh.write(data)
+                digest << data
+              end
+            end
+          end
+        rescue SocketError => e
+          raise RsconsError.new("Error downloading #{dest}: #{e.message}")
+        end
+        if response.is_a?(Net::HTTPRedirection)
+          if options[:redirect_limit] == 0
+            raise RsconsError.new("Redirect limit reached when downloading #{dest}")
+          else
+            return download(response["location"], dest, options.merge(redirect_limit: options[:redirect_limit] - 1, redirected: true))
+          end
+        end
+        unless response.is_a?(Net::HTTPSuccess)
+          raise RsconsError.new("Error downloading #{dest}")
+        end
+        if options[:sha256sum] && options[:sha256sum] != digest.hexdigest
+          raise RsconsError.new("Unexpected checksum on #{dest}")
+        end
+      end
+
       # Construct a task parameter.
       #
       # @param name [String]

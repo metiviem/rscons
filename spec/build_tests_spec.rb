@@ -2922,4 +2922,51 @@ EOF
     expect(result.stdout).to_not match /^\s*two\b/
   end
 
+  context "download script method" do
+    it "downloads the specified file unless it already exists with the expected checksum" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f download.rb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("rscons-2.3.0")).to be_truthy
+    end
+
+    it "downloads the specified file if no checksum is given" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f download.rb nochecksum])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("rscons-2.3.0")).to be_truthy
+      expect(File.binread("rscons-2.3.0").size).to be > 100
+    end
+
+    it "exits with an error if the downloaded file checksum does not match the given checksum" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f download.rb badchecksum])
+      expect(result.stderr).to match /Unexpected checksum on rscons-2.3.0/
+      expect(result.status).to_not eq 0
+    end
+
+    it "exits with an error if the redirect limit is reached" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f download.rb redirectlimit])
+      expect(result.stderr).to match /Redirect limit reached when downloading rscons-2.3.0/
+      expect(result.status).to_not eq 0
+    end
+
+    it "exits with an error if the download results in an error" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f download.rb badurl])
+      expect(result.stderr).to match /Error downloading rscons-2.3.0/
+      expect(result.status).to_not eq 0
+    end
+
+    it "exits with an error if the download results in a socket error" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f download.rb badhost])
+      expect(result.stderr).to match /Error downloading foo: .*ksfjlias/
+      expect(result.status).to_not eq 0
+    end
+  end
+
 end
