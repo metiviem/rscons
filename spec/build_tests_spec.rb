@@ -2789,7 +2789,7 @@ EOF
 
   context "sh method" do
     it "executes the command given" do
-      test_dir "sh"
+      test_dir "typical"
       result = run_rscons(args: %w[-f sh.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
@@ -2799,8 +2799,16 @@ EOF
       ])
     end
 
+    it "changes directory to execute the requested command" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f sh_chdir.rb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match %r{/src$}
+    end
+
     it "prints the command when executing verbosely" do
-      test_dir "sh"
+      test_dir "typical"
       result = run_rscons(args: %w[-f sh.rb -v])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
@@ -2813,7 +2821,7 @@ EOF
     end
 
     it "terminates execution on failure" do
-      test_dir "sh"
+      test_dir "typical"
       result = run_rscons(args: %w[-f sh_fail.rb])
       expect(result.stderr).to match /sh_fail\.rb:2:.*foobar42/
       expect(result.status).to_not eq 0
@@ -2821,7 +2829,7 @@ EOF
     end
 
     it "continues execution on failure when :continue option is set" do
-      test_dir "sh"
+      test_dir "typical"
       result = run_rscons(args: %w[-f sh_fail_continue.rb])
       expect(result.stderr).to match /sh_fail_continue\.rb:2:.*foobar42/
       expect(result.status).to eq 0

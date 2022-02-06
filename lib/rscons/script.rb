@@ -211,6 +211,7 @@ module Rscons
         if command.last.is_a?(Hash)
           options = command.slice!(-1)
         end
+        continue = options.delete(:continue)
         if command.size == 1 && command[0].is_a?(Array)
           command = command[0]
         end
@@ -222,10 +223,10 @@ module Rscons
           end
         end
         begin
-          system(*command, exception: true)
+          system(*command, options.merge(exception: true))
         rescue StandardError => e
           message = "#{e.backtrace[2]}: #{e.message}"
-          if options[:continue]
+          if continue
             Ansi.write($stderr, :red, message, :reset, "\n")
           else
             raise RsconsError.new(message)
