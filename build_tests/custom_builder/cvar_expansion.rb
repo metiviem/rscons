@@ -9,12 +9,10 @@ EOF
   end
 end
 
-default do
-  env = Environment.new do |env|
-    env["hdr"] = "inc.h"
-    env["src"] = "program.c"
-    env.add_builder(MySource)
-    env.MySource('${hdr}')
-    env.Program('program.exe', "${src}")
-  end
+env = env do |env|
+  env["hdr"] = "inc.h"
+  env["src"] = "program.c"
+  env.add_builder(MySource)
+  env.MySource('${hdr}')
+  env.Program('program.exe', "${src}")
 end

@@ -1,6 +1,4 @@
-default do
-  Environment.new(name: "typical") do |env|
-    env["CPPPATH"] += glob("src/**")
-    env.Program("^/typical.exe", glob("src/**/*.c"))
-  end
+env "typical" do |env|
+  env["CPPPATH"] += glob("src/**")
+  env.Program("^/typical.exe", glob("src/**/*.c"))
 end

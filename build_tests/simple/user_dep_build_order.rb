@@ -13,11 +13,9 @@ class TestBuilder < Rscons::Builder
   end
 end
 
-default do
-  Environment.new do |env|
-    env.add_builder(TestBuilder)
-    one = env.TestBuilder("one", [], "wait_time" => "3")
-    two = env.TestBuilder("two", [], "wait_time" => "0")
-    env.depends(two, one)
-  end
+env do |env|
+  env.add_builder(TestBuilder)
+  one = env.TestBuilder("one", [], "wait_time" => "3")
+  two = env.TestBuilder("two", [], "wait_time" => "0")
+  env.depends(two, one)
 end

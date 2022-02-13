@@ -28,41 +28,32 @@ module Rscons
     private
 
     def parse_task_params(task, argv)
+      task_params = {}
       while argv.size > 0
-        if argv[0].start_with?("-")
-          valid_arg = false
-          if argv[0] =~ /^--(\S+?)(?:=(.*))?$/
-            param_name, value = $1, $2
-            if param = Task[task].params[param_name]
-              param.value = value || argv[0]
-              argv.slice!(0)
-              valid_arg = true
-            end
-          end
-          unless valid_arg
-            $stderr.puts "Invalid task '#{task}' argument '#{argv[0].split("=").first}'"
-            $stderr.puts usage
-            exit 2
-          end
+        if argv[0] =~ /^--(\S+?)(?:=(.*))?$/
+          param_name, param_value = $1, $2
+          param_value ||= true
+          task_params[param_name] = param_value
+          argv.slice!(0)
         else
-          return
+          break
         end
       end
+      task_params
     end
 
     def parse_tasks_and_params(argv)
-      tasks = []
+      tasks_and_params = {}
       while argv.size > 0
         task = argv.shift
-        parse_task_params(task, argv)
-        tasks << task
+        tasks_and_params[task] = parse_task_params(task, argv)
       end
-      tasks
+      tasks_and_params
     end
 
     def run_toplevel(argv)
       rsconscript = nil
-      do_help = false
+      show_tasks = false
 
       OptionParser.new do |opts|
 
@@ -80,7 +71,8 @@ module Rscons
         end
 
         opts.on("-h", "--help") do
-          do_help = true
+          puts usage
+          return 0
         end
 
         opts.on("-j NTHREADS") do |n_threads|
@@ -96,6 +88,10 @@ module Rscons
           end
         end
 
+        opts.on("-T", "--tasks") do
+          show_tasks = true
+        end
+
         opts.on("-v", "--verbose") do
           Rscons.application.verbose = true
         end
@@ -106,6 +102,9 @@ module Rscons
         end
 
       end.order!(argv)
+
+      # Parse the rest of the command line.
+      tasks_and_params = parse_tasks_and_params(argv)
 
       # Find the build script.
       if rsconscript
@@ -119,40 +118,16 @@ module Rscons
         end
       end
 
+      # Anything else requires a build script, so complain if we didn't find
+      # one.
+      unless rsconscript
+        $stderr.puts "Could not find the Rsconscript to execute."
+        $stderr.puts "Looked for: #{DEFAULT_RSCONSCRIPTS.join(", ")}"
+        return 1
+      end
+
       begin
-        # Load the build script.
-        if rsconscript
-          Rscons.application.script.load(rsconscript)
-        end
-
-        # Do help after loading the build script (if found) so that any
-        # script-defined tasks and task options can be displayed.
-        if do_help
-          puts usage
-          return 0
-        end
-
-        # Anything else requires a build script, so complain if we didn't find
-        # one.
-        unless rsconscript
-          $stderr.puts "Could not find the Rsconscript to execute."
-          $stderr.puts "Looked for: #{DEFAULT_RSCONSCRIPTS.join(", ")}"
-          return 1
-        end
-
-        # Parse the rest of the command line. This is done after loading the
-        # build script so that script-defined tasks and task options can be
-        # taken into account.
-        tasks = parse_tasks_and_params(argv)
-
-        # If no user specified tasks, run "default" task.
-        if tasks.empty?
-          tasks << "default"
-        end
-
-        # Finally, with the script fully loaded and command-line parsed, run
-        # the application to execute all required tasks.
-        Rscons.application.run(tasks)
+        Rscons.application.run(rsconscript, tasks_and_params, show_tasks)
       rescue RsconsError => e
         Ansi.write($stderr, :red, e.message, :reset, "\n")
         1
@@ -160,7 +135,7 @@ module Rscons
     end
 
     def usage
-      usage = <<EOF
+      <<EOF
 Usage: #{$0} [global options] [[task] [task options] ...]
 
 Global options:
@@ -170,24 +145,10 @@ Global options:
   -h, --help                  Show rscons help and exit
   -j N, --nthreads=N          Set number of threads (local default: #{Rscons.application.n_threads})
   -r COLOR, --color=COLOR     Set color mode (off, auto, force)
+  -T, --tasks                 Show task list and parameters and exit
   -v, --verbose               Run verbosely
   --version                   Show rscons version and exit
-
-Tasks:
 EOF
-      Task[].each do |name, task|
-        if task.desc
-          usage += %[  #{sprintf("%-27s", name)} #{task.desc}\n]
-          task.params.each do |name, param|
-            arg_text = "--#{name}"
-            if param.takes_arg
-              arg_text += "=#{name.upcase}"
-            end
-            usage += %[    #{sprintf("%-25s", "#{arg_text}")} #{param.description}\n]
-          end
-        end
-      end
-      usage
     end
 
   end

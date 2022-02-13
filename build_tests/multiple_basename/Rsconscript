@@ -1,5 +1,3 @@
-default do
-  Environment.new do |env|
-    env.Program("foo.exe", glob("*.cc", "*.c"))
-  end
+env do |env|
+  env.Program("foo.exe", glob("*.cc", "*.c"))
 end

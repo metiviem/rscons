@@ -95,13 +95,9 @@ module Rscons
     #   Whether to automatically configure before running this task.
     attr_reader :autoconf
 
-    # @return [Array<String>]
-    #   Task dependencies.
-    attr_reader :deps
-
     # @return [String, nil]
     #   Task description, if given.
-    attr_reader :desc
+    attr_reader :description
 
     # @return [String]
     #   Task name.
@@ -122,8 +118,8 @@ module Rscons
     #   true).
     def initialize(name, options, &block)
       @autoconf = true
-      @deps = []
-      @desc = nil
+      @dependencies = []
+      @description = nil
       @name = name
       @params = {}
       @actions = []
@@ -153,9 +149,10 @@ module Rscons
       @executed = true
       if @autoconf
         Rscons.application.check_configure
+        Rscons.application.check_process_environments
       end
-      @deps.each do |dep|
-        Task[dep].check_execute
+      @dependencies.each do |dependency|
+        Task[dependency].check_execute
       end
       if @name == "configure"
         Rscons.application.configure
@@ -193,10 +190,10 @@ module Rscons
         @autoconf = options[:autoconf]
       end
       if options.include?(:desc)
-        @desc = options[:desc]
+        @description = options[:desc]
       end
-      if options.include?(:deps)
-        @deps += Array(options[:deps])
+      if options.include?(:depends)
+        @dependencies += Array(options[:depends])
       end
       if options.include?(:params)
         Array(options[:params]).each do |param|
@@ -204,7 +201,7 @@ module Rscons
         end
       end
       if block
-        if env = Environment.open_environment
+        if env = Environment.running_environment
           @actions << proc do
             block[]
             env.process

@@ -191,6 +191,16 @@ module Rscons
         deps
       end
 
+      # Create or modify a task.
+      def task(name, options = {}, &block)
+        if task = Task.tasks[name]
+          task.modify(options, &block)
+        else
+          task = Task.new(name, options, &block)
+        end
+        task
+      end
+
       # Wait for any of a number of threads to complete.
       #
       # @param threads [Array<Thread>]

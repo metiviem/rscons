@@ -1,5 +1,3 @@
-default do
-  Environment.new do |env|
-    env.Copy("inst.exe", "copy.rb")
-  end
+env do |env|
+  env.Copy("inst.exe", "copy.rb")
 end

@@ -27,12 +27,10 @@ class DebugBuilder < Rscons::Builder
   end
 end
 
-default do
-  Environment.new do |env|
-    env.add_builder(DebugBuilder)
-    if ENV["test"] == "new_user_dep"
-      env.depends("foo.o", "new_dep")
-    end
-    env.DebugBuilder("foo.o", "simple.c")
+env do |env|
+  env.add_builder(DebugBuilder)
+  if ENV["test"] == "new_user_dep"
+    env.depends("foo.o", "new_dep")
   end
+  env.DebugBuilder("foo.o", "simple.c")
 end

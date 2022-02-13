@@ -2,7 +2,7 @@ task "one" do
   puts "one"
 end
 
-task "two", deps: ["one", "three"] do
+task "two", depends: ["one", "three"] do
   puts "two"
 end
 

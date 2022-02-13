@@ -1,5 +1,3 @@
-default do
-  Environment.new do |env|
-    env.Command("foo", "foo")
-  end
+env do |env|
+  env.Command("foo", "foo")
 end

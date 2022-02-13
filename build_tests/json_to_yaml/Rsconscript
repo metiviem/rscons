@@ -1,18 +1,16 @@
-default do
-  Environment.new do |env|
-    require 'json'
-    require 'yaml'
-    env.add_builder(:JsonToYaml) do |params|
-      unless @cache.up_to_date?(@target, :JsonToYaml, @sources, @env)
-        print_run_message("JsonToYaml #{@target}", nil)
-        @cache.mkdir_p(File.dirname(@target))
-        File.open(@target, 'w') do |f|
-          f.write(YAML.dump(JSON.load(IO.read(@sources.first))))
-        end
-        @cache.register_build(@target, :JsonToYaml, @sources, @env)
+env do |env|
+  require 'json'
+  require 'yaml'
+  env.add_builder(:JsonToYaml) do |params|
+    unless @cache.up_to_date?(@target, :JsonToYaml, @sources, @env)
+      print_run_message("JsonToYaml #{@target}", nil)
+      @cache.mkdir_p(File.dirname(@target))
+      File.open(@target, 'w') do |f|
+        f.write(YAML.dump(JSON.load(IO.read(@sources.first))))
       end
-      true
+      @cache.register_build(@target, :JsonToYaml, @sources, @env)
     end
-    env.JsonToYaml('foo.yml', 'foo.json')
+    true
   end
+  env.JsonToYaml('foo.yml', 'foo.json')
 end

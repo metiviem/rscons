@@ -1,5 +1,3 @@
-default do
-  Environment.new do |env|
-    env.Program("simple", Dir["*.c"], "PROGSUFFIX" => ".xyz")
-  end
+env do |env|
+  env.Program("simple", Dir["*.c"], "PROGSUFFIX" => ".xyz")
 end

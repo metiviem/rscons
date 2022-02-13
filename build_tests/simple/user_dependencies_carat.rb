@@ -8,11 +8,10 @@ class FileBuilder < Builder
     true
   end
 end
-default do
-  Environment.new do |env|
-    env.add_builder(FileBuilder)
-    env.File("^/file.txt")
-    program = env.Program("^/simple.exe", Dir["*.c"])
-    env.depends("^/simple.exe", "^/file.txt")
-  end
+
+env do |env|
+  env.add_builder(FileBuilder)
+  env.File("^/file.txt")
+  program = env.Program("^/simple.exe", Dir["*.c"])
+  env.depends("^/simple.exe", "^/file.txt")
 end

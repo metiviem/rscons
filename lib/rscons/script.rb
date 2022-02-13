@@ -93,6 +93,11 @@ module Rscons
         end
       end
 
+      # Create an environment.
+      def env(*args, &block)
+        Environment.new(*args, &block)
+      end
+
       # Construct a task parameter.
       #
       # @param name [String]
@@ -235,13 +240,8 @@ module Rscons
       end
 
       # Create or modify a task.
-      def task(name, options = {}, &block)
-        if task = Task.tasks[name]
-          task.modify(options, &block)
-        else
-          task = Task.new(name, options, &block)
-        end
-        task
+      def task(*args, &block)
+        Util.task(*args, &block)
       end
 
       [

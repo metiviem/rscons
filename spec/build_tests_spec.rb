@@ -1095,6 +1095,15 @@ EOF
     expect(Dir.exist?("build/e.1")).to be_falsey
   end
 
+  it "allows looking up environments by name" do
+    test_dir "typical"
+
+    result = run_rscons(args: %w[-f clone_with_lookup.rb])
+    expect(File.exist?("build/typical/typical.exe")).to be_truthy
+    expect(File.exist?("build/typical/src/one/one.c.o")).to be_truthy
+    expect(Dir.exist?("build/first")).to be_falsey
+  end
+
   context "colored output" do
     it "does not output in color with --color=off" do
       test_dir("simple")
@@ -1774,8 +1783,7 @@ EOF
       test_dir "simple"
       result = run_rscons(args: %w[configure --xyz])
       expect(result.stderr).to_not match /Traceback/
-      expect(result.stderr).to match /Invalid task 'configure' argument.*--xyz/
-      expect(result.stderr).to match /Usage:/
+      expect(result.stderr).to match /Unknown parameter "xyz" for task configure/
       expect(result.status).to_not eq 0
     end
   end
@@ -2890,7 +2898,7 @@ EOF
     result = run_rscons(args: %w[-f tasks.rb four --myparam=cli-value --myp2 one])
     expect(result.stderr).to eq ""
     expect(result.status).to eq 0
-    expect(result.stdout).to eq %[four\nmyparam:"cli-value"\nmyp2:"--myp2"\none\n]
+    expect(result.stdout).to eq %[four\nmyparam:"cli-value"\nmyp2:true\none\n]
   end
 
   it "allows accessing task arguments via Task#[]" do
@@ -2914,20 +2922,22 @@ EOF
     expect(result.status).to_not eq 0
   end
 
-  it "displays tasks and their arguments in the help info" do
-    test_dir "tasks"
-    result = run_rscons(args: %w[-f tasks.rb -h])
-    expect(result.stderr).to eq ""
-    expect(result.status).to eq 0
-    verify_lines(lines(result.stdout), [
-      "Tasks:",
-      /\bthree\b\s+Task three/,
-      /\bfour\b\s+Task four/,
-      /--myparam=MYPARAM\s+My special parameter/,
-      /--myp2\s+My parameter 2/,
-    ])
-    expect(result.stdout).to_not match /^\s*one\b/
-    expect(result.stdout).to_not match /^\s*two\b/
+  context "with -T flag" do
+    it "displays tasks and their parameters" do
+      test_dir "tasks"
+      result = run_rscons(args: %w[-f tasks.rb -T])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      verify_lines(lines(result.stdout), [
+        "Tasks:",
+        /\bthree\b\s+Task three/,
+        /\bfour\b\s+Task four/,
+        /--myparam=MYPARAM\s+My special parameter/,
+        /--myp2\s+My parameter 2/,
+      ])
+      expect(result.stdout).to_not match /^\s*one\b/
+      expect(result.stdout).to_not match /^\s*two\b/
+    end
   end
 
   context "download script method" do

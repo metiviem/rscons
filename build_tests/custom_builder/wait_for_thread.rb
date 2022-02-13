@@ -13,9 +13,7 @@ class MyBuilder < Rscons::Builder
   end
 end
 
-default do
-  Environment.new do |env|
-    env.add_builder(MyBuilder)
-    env.MyBuilder("foo")
-  end
+env do |env|
+  env.add_builder(MyBuilder)
+  env.MyBuilder("foo")
 end

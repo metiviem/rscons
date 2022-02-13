@@ -10,16 +10,13 @@ module Rscons
 
     class << self
 
-      # @return [Array<Environment>]
-      #   All Environments.
-      attr_reader :environments
-
       # @return [Environment]
       #   The Environment that is currently executing a construction block.
-      attr_accessor :open_environment
+      attr_accessor :running_environment
 
       # Initialize class instance variables.
       def class_init
+        @environments_by_name = {}
         @environments = []
       end
 
@@ -36,9 +33,24 @@ module Rscons
 
       # Register an Environment.
       def register(env)
-        @environments ||= []
         @environments << env
+        if env.name
+          @environments_by_name[env.name] = env
+        end
       end
+
+      # Get an Environment by name.
+      #
+      # @param name [String]
+      #   Environment name.
+      def [](name = nil)
+        if name
+          @environments_by_name[name]
+        else
+          @environments
+        end
+      end
+
     end
 
     # @return [Hash] Set of !{"builder_name" => builder_object} pairs.
@@ -61,28 +73,36 @@ module Rscons
 
     # Create an Environment object.
     #
+    # @overload initialize(name, options)
+    # @overload initialize(options)
+    #
+    # @param name [String]
+    #   Environment name. This determines the folder name used to store all
+    #   environment build files under the top-level build directory.
     # @param options [Hash]
     # @option options [Symbol] :echo
     #   :command, :short, or :off (default :short)
     # @option options [Boolean] :exclude_builders
     #   Whether to omit adding default builders (default false)
-    # @option options [String, nil] :name
-    #   Environment name. This determines the folder name used to store all
-    #   environment build files under the top-level build directory.
     # @option options [String, Array<String>] :use
     #   Use flag(s). If specified, any configuration flags which were saved
     #   with a corresponding `:use` value will be applied to this Environment.
     #
     # If a block is given, the Environment object is yielded to the block and
     # when the block returns, the {#process} method is automatically called.
-    def initialize(options = {})
+    def initialize(*args, &block)
+      @id = self.class.get_id
+      if args.first.is_a?(String)
+        @name = args.slice!(0)
+      else
+        @name = "e.#{@id}"
+      end
+      options = args.first || {}
       Rscons.application.check_configure
       unless Cache.instance["configuration_data"]["configured"]
         raise "Project must be configured before creating an Environment"
       end
       super(options)
-      @id = self.class.get_id
-      self.class.register(self)
       # Hash of Thread object => {Command} or {Builder}.
       @threads = {}
       @registered_build_dependencies = {}
@@ -109,15 +129,13 @@ module Rscons
         else
           :short
         end
-      @name = options[:name] || "e.#{@id}"
       @build_root = "#{Rscons.application.build_dir}/#{@name}"
       @n_threads = Rscons.application.n_threads
-
-      if block_given?
-        Environment.open_environment = self
-        yield self
-        Environment.open_environment = nil
-        process
+      self.class.register(self)
+      if block
+        Environment.running_environment = self
+        block[self]
+        Environment.running_environment = nil
       end
     end
 
@@ -140,7 +158,11 @@ module Rscons
     # Any options that #initialize receives can also be specified here.
     #
     # @return [Environment] The newly created {Environment} object.
-    def clone(options = {})
+    def clone(*args, &block)
+      if args.first.is_a?(String)
+        name = args.slice!(0)
+      end
+      options = args.first || {}
       options = options.dup
       clone = options[:clone] || :all
       clone = Set[:variables, :builders, :build_hooks] if clone == :all
@@ -148,7 +170,9 @@ module Rscons
       clone = Set.new(clone) if clone.is_a?(Array)
       clone.delete(:builders) if options[:exclude_builders]
       options[:echo] ||= @echo
-      env = self.class.new(options.merge(exclude_builders: true))
+      new_args = name ? [name] : []
+      new_args << options.merge(exclude_builders: true)
+      env = self.class.new(*new_args)
       if clone.include?(:builders)
         @builders.each do |builder_name, builder|
           env.add_builder(builder)
@@ -164,12 +188,10 @@ module Rscons
         end
       end
       env.instance_variable_set(:@n_threads, @n_threads)
-
-      if block_given?
-        Environment.open_environment = env
-        yield env
-        Environment.open_environment = nil
-        env.process
+      if block
+        Environment.running_environment = self
+        block[env]
+        Environment.running_environment = nil
       end
       env
     end

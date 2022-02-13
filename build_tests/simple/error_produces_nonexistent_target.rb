@@ -1,5 +1,3 @@
-default do
-  Environment.new do |env|
-    env.produces("foo", "bar")
-  end
+env do |env|
+  env.produces("foo", "bar")
 end

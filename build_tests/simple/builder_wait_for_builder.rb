@@ -14,10 +14,8 @@ class MyObject < Rscons::Builder
   end
 end
 
-default do
-  Environment.new do |env|
-    env.add_builder(MyObject)
-    env.MyObject("simple.o", "simple.c")
-    env.Program("simple.exe", "simple.o")
-  end
+env do |env|
+  env.add_builder(MyObject)
+  env.MyObject("simple.o", "simple.c")
+  env.Program("simple.exe", "simple.o")
 end

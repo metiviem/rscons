@@ -3,8 +3,6 @@ configure do
   check_cxx_header "frobulous.h", check_cpppath: ["./usr2"]
 end
 
-default do
-  Environment.new do |env|
-    env.Object("test.o", "test.cc")
-  end
+env do |env|
+  env.Object("test.o", "test.cc")
 end

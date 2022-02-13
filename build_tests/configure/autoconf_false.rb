@@ -1,3 +1,3 @@
 autoconf false
-Environment.new do |env|
+env do |env|
 end

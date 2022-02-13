@@ -9,10 +9,8 @@ EOF
   end
 end
 
-default do
-  Environment.new do |env|
-    env.add_builder(MySource)
-    env.MySource('inc.h', [])
-    env.Program('program.exe', Dir['*.c'])
-  end
+env do |env|
+  env.add_builder(MySource)
+  env.MySource('inc.h', [])
+  env.Program('program.exe', Dir['*.c'])
 end

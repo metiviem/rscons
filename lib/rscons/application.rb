@@ -39,15 +39,32 @@ module Rscons
     #
     # @api private
     #
-    # @param tasks [Array<String>]
+    # @param rsconscript [String]
+    #   Build script file name.
+    # @param tasks_and_params [Hash<String => Hash<String => String>>]
     #   List of task(s) to execute.
+    # @param show_tasks [Boolean]
+    #   Flag to show tasks and exit.
     #
     # @return [Integer]
     #   Process exit code (0 on success).
-    def run(tasks)
+    def run(rsconscript, tasks_and_params, show_tasks)
       Cache.instance["failed_commands"] = []
-      tasks.each do |task|
-        Task[task].check_execute
+      @script.load(rsconscript)
+      if show_tasks
+        show_script_tasks
+        return 0
+      end
+      apply_task_params(tasks_and_params)
+      if tasks_and_params.empty?
+        check_process_environments
+        if Task.tasks["default"]
+          Task["default"].check_execute
+        end
+      else
+        tasks_and_params.each do |task_name, params|
+          Task[task_name].check_execute
+        end
       end
       0
     end
@@ -111,6 +128,20 @@ module Rscons
       end
     end
 
+    # Check if environments need to be processed.
+    #
+    # @api private
+    #
+    # @return [void]
+    def check_process_environments
+      unless @_processed_environments
+        Environment[].each do |env|
+          env.process
+        end
+        @_processed_environments = true
+      end
+    end
+
     # Configure the project.
     #
     # @api private
@@ -156,6 +187,36 @@ module Rscons
         end
       end
       cache.write
+    end
+
+    private
+
+    def show_script_tasks
+      puts "Tasks:"
+      Task[].each do |task_name, task|
+        if task.description
+          puts %[  #{sprintf("%-27s", task_name)} #{task.description}]
+          task.params.each do |param_name, param|
+            arg_text = "--#{param_name}"
+            if param.takes_arg
+              arg_text += "=#{param_name.upcase}"
+            end
+            puts %[    #{sprintf("%-25s", "#{arg_text}")} #{param.description}]
+          end
+        end
+      end
+    end
+
+    def apply_task_params(tasks_and_params)
+      tasks_and_params.each do |task_name, task_params|
+        task_params.each do |param_name, param_value|
+          if param = Task[task_name].params[param_name]
+            param.value = param_value
+          else
+            raise RsconsError.new("Unknown parameter #{param_name.inspect} for task #{task_name}")
+          end
+        end
+      end
     end
 
   end

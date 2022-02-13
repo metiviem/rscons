@@ -1,5 +1,3 @@
-default do
-  Environment.new do |env|
-    env.Preprocess("pp", "foo.h")
-  end
+env do |env|
+  env.Preprocess("pp", "foo.h")
 end

@@ -1,6 +1,4 @@
-default do
-  Environment.new do |env|
-    env.CFile("lexer.c", "lexer.l")
-    env.CFile("parser.c", "parser.y")
-  end
+env do |env|
+  env.CFile("lexer.c", "lexer.l")
+  env.CFile("parser.c", "parser.y")
 end

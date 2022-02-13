@@ -3,9 +3,8 @@ class TestBuilder < Rscons::Builder
     true
   end
 end
-default do
-  Environment.new do |env|
-    env.add_builder(TestBuilder)
-    env.TestBuilder("file")
-  end
+
+env do |env|
+  env.add_builder(TestBuilder)
+  env.TestBuilder("file")
 end
