@@ -49,7 +49,11 @@ module Rscons
     # @return [Application]
     #   The Application singleton.
     def application
-      @application ||= Application.new
+      unless @application
+        @application = Application.new
+        @application._initialize
+      end
+      @application
     end
 
     # Return whether the given target is a phony target.

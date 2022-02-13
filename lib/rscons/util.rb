@@ -192,7 +192,15 @@ module Rscons
       end
 
       # Create or modify a task.
+      #
+      # @api private
+      #
+      # @return [Task]
+      #   Created task.
       def task(name, options = {}, &block)
+        if name == "configure"
+          Rscons.application.silent_configure = false
+        end
         if task = Task.tasks[name]
           task.modify(options, &block)
         else

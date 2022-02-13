@@ -389,6 +389,7 @@ module Rscons
     #
     # @return [void]
     def load(path)
+      Rscons.application.silent_configure = true
       script_contents = File.read(path, mode: "rb")
       TopLevelDsl.new(self).instance_eval(script_contents, path, 1)
     end

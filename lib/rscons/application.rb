@@ -22,12 +22,17 @@ module Rscons
     attr_reader :script
 
     # @return [Boolean]
+    #   Whether to configure silently.
+    attr_accessor :silent_configure
+
+    # @return [Boolean]
     #   Whether to run verbosely.
     attr_accessor :verbose
 
     # Create Application instance.
-    def initialize
+    def _initialize
       @script = Script.new
+      @silent_configure = true
       @build_dir = ENV["RSCONS_BUILD_DIR"] || "build"
       ENV.delete("RSCONS_BUILD_DIR")
       @n_threads = Util.determine_n_threads

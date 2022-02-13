@@ -155,6 +155,7 @@ module Rscons
         Task[dependency].check_execute
       end
       if @name == "configure"
+        Rscons.application.silent_configure = false
         Rscons.application.configure
       else
         @actions.each do |action|

@@ -1,5 +1,8 @@
 project_name "install_test"
 
+configure do
+end
+
 env do |env|
   env["CPPPATH"] += glob("src/**")
 

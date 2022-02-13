@@ -16,14 +16,18 @@ module Rscons
       cache = Cache.instance
       cache["failed_commands"] = []
       cache["configuration_data"] = {}
-      if project_name = script.project_name
-        Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
-      else
-        $stdout.puts "Configuring project..."
+      unless Rscons.application.silent_configure
+        if project_name = script.project_name
+          Ansi.write($stdout, "Configuring ", :cyan, project_name, :reset, "...\n")
+        else
+          $stdout.puts "Configuring project..."
+        end
       end
       vars = {}
       Task["configure"].params.each do |name, param|
-        Ansi.write($stdout, "Setting #{name}... ", :green, param.value, :reset, "\n")
+        unless Rscons.application.silent_configure
+          Ansi.write($stdout, "Setting #{name}... ", :green, param.value, :reset, "\n")
+        end
         vars[name] = param.value
       end
       store_merge(vars)

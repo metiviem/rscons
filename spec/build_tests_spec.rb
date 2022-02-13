@@ -1789,6 +1789,14 @@ EOF
   end
 
   context "configure operation" do
+    it "does not print configuring messages when no configure block and configure task not called" do
+      test_dir "configure"
+      result = run_rscons(args: %w[-f no_configure_output.rb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout.chomp).to eq "default"
+    end
+
     it "raises a method not found error for configure methods called outside a configure block" do
       test_dir "configure"
       result = run_rscons(args: %w[-f scope.rb])
