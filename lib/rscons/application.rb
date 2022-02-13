@@ -193,7 +193,7 @@ module Rscons
 
     def show_script_tasks
       puts "Tasks:"
-      Task[].each do |task_name, task|
+      Task[].sort.each do |task_name, task|
         if task.description
           puts %[  #{sprintf("%-27s", task_name)} #{task.description}]
           task.params.each do |param_name, param|
