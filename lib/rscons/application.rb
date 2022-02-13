@@ -216,7 +216,7 @@ module Rscons
       tasks_and_params.each do |task_name, task_params|
         task_params.each do |param_name, param_value|
           if param = Task[task_name].params[param_name]
-            param.value = param_value
+            Task[task_name].set_param_value(param_name, param_value)
           else
             raise RsconsError.new("Unknown parameter #{param_name.inspect} for task #{task_name}")
           end

@@ -107,6 +107,10 @@ module Rscons
     #   Task params.
     attr_reader :params
 
+    # @return [Hash<String => String>]
+    #   Task parameter values.
+    attr_reader :param_values
+
     # Construct a task.
     #
     # @param name [String]
@@ -122,6 +126,7 @@ module Rscons
       @description = nil
       @name = name
       @params = {}
+      @param_values = {}
       @actions = []
       Task.register(self)
       modify(options, &block)
@@ -199,6 +204,7 @@ module Rscons
       if options.include?(:params)
         Array(options[:params]).each do |param|
           @params[param.name] = param
+          set_param_value(param.name, param.value)
         end
       end
       if block
@@ -213,16 +219,19 @@ module Rscons
       end
     end
 
-    # Get parameter values as a Hash.
+    # Set parameter value.
     #
-    # @return [Hash]
-    #   Parameter values.
-    def param_values
-      param_values = {}
-      @params.each do |name, param|
-        param_values[name] = param.value
+    # @param param_name [String]
+    #   Parameter name.
+    # @param param_value [String, Boolean]
+    #   Parameter value.
+    #
+    # @return [void]
+    def set_param_value(param_name, param_value)
+      if param = @params[param_name]
+        param.value = param_value
       end
-      param_values
+      @param_values[param_name] = param_value
     end
 
   end
