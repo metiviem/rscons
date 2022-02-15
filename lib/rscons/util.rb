@@ -206,6 +206,11 @@ module Rscons
         else
           task = Task.new(name, options, &block)
         end
+        if name == "configure"
+          if configuration_params = Cache.instance["configuration_data"]["params"]
+            task.param_values.merge!(configuration_params)
+          end
+        end
         task
       end
 

@@ -44,6 +44,7 @@ module Rscons
       @log_fh = nil
       cache = Cache.instance
       cache["configuration_data"]["configured"] = success
+      cache["configuration_data"]["params"] = Task["configure"].param_values
       cache.write
     end
 

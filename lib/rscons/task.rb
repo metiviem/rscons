@@ -144,7 +144,7 @@ module Rscons
       unless param
         raise RsconsError.new("Could not find parameter '#{param_name}'")
       end
-      param.value
+      @param_values[param_name]
     end
 
     # Execute a task's actions.

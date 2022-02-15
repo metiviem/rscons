@@ -11,12 +11,12 @@ env do |env|
   end
 
   task "install", depends: "build" do
-    env.InstallDirectory("${prefix}/bin")
-    env.Install("${prefix}/bin", "^/program.exe")
-    env.InstallDirectory("${prefix}/share")
-    env.Install("${prefix}/share/proj/install.rb", "install.rb")
-    env.Install("${prefix}/mult", ["install.rb", "copy.rb"])
-    env.Install("${prefix}/src", "src")
+    env.InstallDirectory("${configure:prefix}/bin")
+    env.Install("${configure:prefix}/bin", "^/program.exe")
+    env.InstallDirectory("${configure:prefix}/share")
+    env.Install("${configure:prefix}/share/proj/install.rb", "install.rb")
+    env.Install("${configure:prefix}/mult", ["install.rb", "copy.rb"])
+    env.Install("${configure:prefix}/src", "src")
   end
 end
 

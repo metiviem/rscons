@@ -31,7 +31,6 @@ module Rscons
 
     # Create Application instance.
     def _initialize
-      @script = Script.new
       @silent_configure = true
       @build_dir = ENV["RSCONS_BUILD_DIR"] || "build"
       ENV.delete("RSCONS_BUILD_DIR")
@@ -55,6 +54,7 @@ module Rscons
     #   Process exit code (0 on success).
     def run(rsconscript, tasks_and_params, show_tasks)
       Cache.instance["failed_commands"] = []
+      @script = Script.new
       @script.load(rsconscript)
       if show_tasks
         show_script_tasks

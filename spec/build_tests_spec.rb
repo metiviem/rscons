@@ -1820,6 +1820,16 @@ EOF
       expect(Dir.exist?("bb/_configure")).to be_truthy
     end
 
+    it "applies the configured settings to top-level created environments" do
+      test_dir "configure"
+
+      result = run_rscons(args: %w[-f check_c_compiler_non_default.rb -v])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /Checking for C compiler\.\.\./
+      expect(result.stdout).to match /clang.*simple\.exe/
+    end
+
     context "check_c_compiler" do
       {"check_c_compiler.rb" => "when no arguments are given",
        "check_c_compiler_find_first.rb" => "when arguments are given"}.each_pair do |rsconscript, desc|
@@ -2992,6 +3002,40 @@ EOF
       result = run_rscons(args: %w[-f download.rb badhost])
       expect(result.stderr).to match /Error downloading foo: .*ksfjlias/
       expect(result.status).to_not eq 0
+    end
+  end
+
+  context "configure task parameters" do
+    it "allows access to configure task parameters from another task" do
+      test_dir "tasks"
+
+      result = run_rscons(args: %w[-f configure_params.rb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /xyz: xyz/
+      expect(result.stdout).to match /flag: nil/
+
+      result = run_rscons(args: %w[-f configure_params.rb configure --with-xyz=foo --flag default])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /xyz: foo/
+      expect(result.stdout).to match /flag: true/
+    end
+
+    it "stores configure task parameters in the cache for subsequent invocations" do
+      test_dir "tasks"
+
+      result = run_rscons(args: %w[-f configure_params.rb configure --with-xyz=foo --flag default])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /xyz: foo/
+      expect(result.stdout).to match /flag: true/
+
+      result = run_rscons(args: %w[-f configure_params.rb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match /xyz: foo/
+      expect(result.stdout).to match /flag: true/
     end
   end
 

@@ -12,6 +12,7 @@ module Rscons
     def initialize(options = {})
       @varset = VarSet.new(Rscons::DEFAULT_CONSTRUCTION_VARIABLES)
       load_configuration_data!(options)
+      load_task_param_variables!
     end
 
     # Access the value of a construction variable.
@@ -268,6 +269,15 @@ module Rscons
         end
       IO.popen([*shell_cmd, command]) do |io|
         io.read
+      end
+    end
+
+    # Load task parameters as construction variables.
+    def load_task_param_variables!
+      Task[].each do |task_name, task|
+        task.param_values.each do |param_name, param_value|
+          self["#{task.name}:#{param_name}"] = param_value
+        end
       end
     end
 

@@ -24,6 +24,7 @@ build steps, but also provides an extensible framework for performing
 custom build operations as well.
 
 Rscons takes inspiration from:
+
   * [SCons](https://scons.org/)
   * [waf](https://waf.io/)
   * [rake](https://github.com/ruby/rake)
@@ -290,6 +291,22 @@ task "one", params: param("flag", nil, false, "Enable a flag")
 
 task "two" do
   puts "Task one's flag #{Task["one"]["flag"] ? "is" : "is not"} set"
+end
+```
+
+Task parameters can also be referenced via construction variables.
+Each task parameter is stored in a construction variable.
+The name for the construction variable is created by joining the task name
+and the parameter name with a ":" character.
+For example:
+
+```ruby
+task "build", params: [
+  param("heap-size", "1024", true, "Set heap size"),
+] do
+  env["CPPDEFINES"] << "HEAP_SIZE=${build:heap-size}"
+  env.Program("^/myprog", glob("src/**/*.c"))
+  env.Install("${configure:prefix}/bin/myprog", "^/myprog")
 end
 ```
 
