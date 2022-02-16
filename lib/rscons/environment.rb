@@ -93,10 +93,14 @@ module Rscons
     def initialize(*args, &block)
       @id = self.class.get_id
       if args.first.is_a?(String)
-        @name = args.slice!(0)
+        base_name = args.slice!(0)
       else
-        @name = "e.#{@id}"
+        base_name = "e.#{@id}"
       end
+      variant_keys = (Rscons.application.active_variants || []).map do |variant|
+        variant[:key]
+      end.compact
+      @name = [base_name, *variant_keys].join("-")
       options = args.first || {}
       Rscons.application.check_configure
       unless Cache.instance["configuration_data"]["configured"]

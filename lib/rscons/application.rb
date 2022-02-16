@@ -5,6 +5,10 @@ module Rscons
   # Functionality for an instance of the rscons application invocation.
   class Application
 
+    # @return [Array<String>]
+    #   Active variant names.
+    attr_reader :active_variants
+
     # @return [String]
     #   Top-level build directory.
     attr_accessor :build_dir
@@ -35,6 +39,7 @@ module Rscons
       @build_dir = ENV["RSCONS_BUILD_DIR"] || "build"
       ENV.delete("RSCONS_BUILD_DIR")
       @n_threads = Util.determine_n_threads
+      @variant_groups = []
     end
 
     # Run the application.
@@ -192,6 +197,64 @@ module Rscons
         end
       end
       cache.write
+    end
+
+    # Define a variant, or within a with_variants block, query if it is
+    # active.
+    #
+    # @param name [String]
+    #   Variant name.
+    def variant(name, options = {})
+      if @active_variants
+        !!@active_variants.find {|variant| variant[:name] == name}
+      else
+        if @variant_groups.empty?
+          variant_group
+        end
+        options = options.dup
+        options[:name] = name
+        options[:active] = options.fetch(:default, true)
+        options[:key] = options.fetch(:key, name)
+        @variant_groups.last[:variants] << options
+      end
+    end
+
+    # Create a variant group.
+    def variant_group(*args, &block)
+      if args.first.is_a?(String)
+        name = args.slice!(0)
+      end
+      @variant_groups << {name: name, variants: []}
+      if block
+        block[]
+      end
+    end
+
+    # Iterate through variants.
+    def with_variants(&block)
+      if @active_variants
+        raise "with_variants cannot be called within another with_variants block"
+      end
+      if @variant_groups.empty?
+        raise "with_variants cannot be called with no variants defined"
+      end
+      if @variant_groups.any? {|variant_group| variant_group[:variants].empty?}
+        raise "Error: empty variant group found"
+      end
+      iter_vgs = lambda do |variants|
+        if variants.size == @variant_groups.size
+          @active_variants = variants
+          block[]
+          @active_variants = nil
+        else
+          @variant_groups[variants.size][:variants].each do |variant|
+            if variant[:active]
+              iter_vgs[variants + [variant]]
+            end
+          end
+        end
+      end
+      iter_vgs[[]]
     end
 
     private

@@ -3039,4 +3039,73 @@ EOF
     end
   end
 
+  context "variants" do
+    it "appends variant names to environment names to form build directories" do
+      test_dir "variants"
+      result = run_rscons
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("build/prog-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-release/prog.exe")).to be_truthy
+    end
+
+    it "allows querying active variants and changing behavior" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("build/prog-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-release/prog.exe")).to be_truthy
+      expect(result.stdout).to match %r{gcc .*-o.*build/prog-debug/.*-DDEBUG}
+      expect(result.stdout).to match %r{gcc .*-o.*build/prog-release/.*-DNDEBUG}
+    end
+
+    it "allows specifying a nil key for a variant" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v -f nil_key.rb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("build/prog-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog/prog.exe")).to be_truthy
+      expect(result.stdout).to match %r{gcc .*-o.*build/prog-debug/.*-DDEBUG}
+      expect(result.stdout).to match %r{gcc .*-o.*build/prog/.*-DNDEBUG}
+    end
+
+    it "allows multiple variant groups" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v -f multiple_groups.rb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("build/prog-kde-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-kde-release/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-gnome-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-gnome-release/prog.exe")).to be_truthy
+      expect(result.stdout).to match %r{gcc .*-o.*build/prog-kde-debug/.*-DKDE.*-DDEBUG}
+      expect(result.stdout).to match %r{gcc .*-o.*build/prog-kde-release/.*-DKDE.*-DNDEBUG}
+      expect(result.stdout).to match %r{gcc .*-o.*build/prog-gnome-debug/.*-DGNOME.*-DDEBUG}
+      expect(result.stdout).to match %r{gcc .*-o.*build/prog-gnome-release/.*-DGNOME.*-DNDEBUG}
+    end
+
+    it "raises an error when with_variants is called within another with_variants block" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-f error_nested_with_variants.rb])
+      expect(result.stderr).to match %r{with_variants cannot be called within another with_variants block}
+      expect(result.status).to_not eq 0
+    end
+
+    it "raises an error when with_variants is called with no variants defined" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-f error_with_variants_without_variants.rb])
+      expect(result.stderr).to match %r{with_variants cannot be called with no variants defined}
+      expect(result.status).to_not eq 0
+    end
+
+    it "raises an error when with_variants is called with an empty variant group" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-f error_with_variants_with_empty_variant_group.rb])
+      expect(result.stderr).to match %r{Error: empty variant group found}
+      expect(result.status).to_not eq 0
+    end
+  end
+
 end

@@ -244,6 +244,22 @@ module Rscons
         Util.task(*args, &block)
       end
 
+      # Define a variant, or within a with_variants block, query if it is
+      # active.
+      def variant(*args)
+        Rscons.application.variant(*args)
+      end
+
+      # Create a variant group.
+      def variant_group(*args, &block)
+        Rscons.application.variant_group(*args, &block)
+      end
+
+      # Iterate through variants.
+      def with_variants(&block)
+        Rscons.application.with_variants(&block)
+      end
+
       [
         :cd,
         :chmod,
