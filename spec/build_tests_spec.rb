@@ -3187,4 +3187,22 @@ EOF
     end
   end
 
+  context "build_dir method" do
+    it "returns the top-level build directory path 1" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f build_dir.rb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("build/a.file")).to be_truthy
+    end
+
+    it "returns the top-level build directory path 2" do
+      test_dir "typical"
+      result = run_rscons(args: %w[-f build_dir.rb -b bb])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("bb/a.file")).to be_truthy
+    end
+  end
+
 end

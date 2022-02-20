@@ -10,6 +10,14 @@ module Rscons
         @script = script
       end
 
+      # Get the Rscons build directory path.
+      #
+      # @return [String]
+      #   Rscons build directory path.
+      def build_dir
+        Rscons.application.build_dir
+      end
+
       # Return a list of paths matching the specified pattern(s).
       #
       # A pattern can contain a "/**" component to recurse through directories.
