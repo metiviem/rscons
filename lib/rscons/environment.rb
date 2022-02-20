@@ -102,7 +102,6 @@ module Rscons
       end.compact
       @name = [base_name, *variant_keys].join("-")
       options = args.first || {}
-      Rscons.application.check_configure
       unless Cache.instance["configuration_data"]["configured"]
         raise "Project must be configured before creating an Environment"
       end

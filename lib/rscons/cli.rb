@@ -54,11 +54,16 @@ module Rscons
     def run_toplevel(argv)
       rsconscript = nil
       show_tasks = false
+      enabled_variants = ""
 
       OptionParser.new do |opts|
 
         opts.on("-b", "--build DIR") do |build_dir|
           Rscons.application.build_dir = build_dir
+        end
+
+        opts.on("-e", "--variants VS") do |variants|
+          enabled_variants = variants
         end
 
         opts.on("-f FILE") do |f|
@@ -127,7 +132,7 @@ module Rscons
       end
 
       begin
-        Rscons.application.run(rsconscript, tasks_and_params, show_tasks)
+        Rscons.application.run(rsconscript, tasks_and_params, show_tasks, enabled_variants)
       rescue RsconsError => e
         Ansi.write($stderr, :red, e.message, :reset, "\n")
         1
@@ -140,6 +145,7 @@ Usage: #{$0} [global options] [[task] [task options] ...]
 
 Global options:
   -b BUILD, --build=BUILD     Set build directory (default: build)
+  -e VS, --variants=VS        Enable or disable variants
   -f FILE                     Use FILE as Rsconscript
   -F, --show-failure          Show failed command log from previous build and exit
   -h, --help                  Show rscons help and exit

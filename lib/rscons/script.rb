@@ -95,6 +95,7 @@ module Rscons
 
       # Create an environment.
       def env(*args, &block)
+        Rscons.application.check_configure
         Environment.new(*args, &block)
       end
 
@@ -250,6 +251,11 @@ module Rscons
         Rscons.application.variant(*args)
       end
 
+      # Check if a variant is enabled.
+      def variant_enabled?(*args)
+        Rscons.application.variant_enabled?(*args)
+      end
+
       # Create a variant group.
       def variant_group(*args, &block)
         Rscons.application.variant_group(*args, &block)
@@ -257,6 +263,7 @@ module Rscons
 
       # Iterate through variants.
       def with_variants(&block)
+        Rscons.application.enable_variants
         Rscons.application.with_variants(&block)
       end
 

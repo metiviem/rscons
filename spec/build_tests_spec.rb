@@ -3100,11 +3100,90 @@ EOF
       expect(result.status).to_not eq 0
     end
 
-    it "raises an error when with_variants is called with an empty variant group" do
+    it "allows specifying the exact enabled variants on the command line 1" do
       test_dir "variants"
-      result = run_rscons(args: %w[-f error_with_variants_with_empty_variant_group.rb])
-      expect(result.stderr).to match %r{Error: empty variant group found}
+      result = run_rscons(args: %w[-v -f multiple_groups.rb -e kde,debug])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("build/prog-kde-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-kde-release/prog.exe")).to be_falsey
+      expect(File.exist?("build/prog-gnome-debug/prog.exe")).to be_falsey
+      expect(File.exist?("build/prog-gnome-release/prog.exe")).to be_falsey
+    end
+
+    it "allows specifying the exact enabled variants on the command line 2" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v -f multiple_groups.rb -e kde,gnome,release])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("build/prog-kde-debug/prog.exe")).to be_falsey
+      expect(File.exist?("build/prog-kde-release/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-gnome-debug/prog.exe")).to be_falsey
+      expect(File.exist?("build/prog-gnome-release/prog.exe")).to be_truthy
+    end
+
+    it "allows disabling a single variant on the command line" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v -f multiple_groups.rb --variants=-kde])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(File.exist?("build/prog-kde-debug/prog.exe")).to be_falsey
+      expect(File.exist?("build/prog-kde-release/prog.exe")).to be_falsey
+      expect(File.exist?("build/prog-gnome-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-gnome-release/prog.exe")).to be_truthy
+    end
+
+    it "allows turning off variants by default" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v -f default.rb])
+      expect(File.exist?("build/prog-debug/prog.exe")).to be_falsey
+      expect(File.exist?("build/prog-release/prog.exe")).to be_truthy
+    end
+
+    it "allows turning on an off-by-default-variant from the command line" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v -f default.rb -e +debug])
+      expect(File.exist?("build/prog-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-release/prog.exe")).to be_truthy
+    end
+
+    it "allows only turning on an off-by-default-variant from the command line" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v -f default.rb -e debug])
+      expect(File.exist?("build/prog-debug/prog.exe")).to be_truthy
+      expect(File.exist?("build/prog-release/prog.exe")).to be_falsey
+    end
+
+    it "exits with an error if no variant in a variant group is activated" do
+      test_dir "variants"
+      result = run_rscons(args: %w[-v -f multiple_groups.rb --variants=kde])
+      expect(result.stderr).to match %r{No variants enabled for variant group}
       expect(result.status).to_not eq 0
+    end
+
+    it "allows querying if a variant is enabled" do
+      test_dir "variants"
+
+      result = run_rscons(args: %w[-f variant_enabled.rb configure])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match %r{one enabled}
+      expect(result.stdout).to_not match %r{two enabled}
+      expect(result.stdout).to_not match %r{three enabled}
+
+      result = run_rscons(args: %w[-f variant_enabled.rb --variants=+two configure])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match %r{one enabled}
+      expect(result.stdout).to match %r{two enabled}
+      expect(result.stdout).to_not match %r{three enabled}
+
+      result = run_rscons(args: %w[-f variant_enabled.rb --variants=two configure])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to_not match %r{one enabled}
+      expect(result.stdout).to match %r{two enabled}
+      expect(result.stdout).to_not match %r{three enabled}
     end
   end
 

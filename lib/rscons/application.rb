@@ -5,8 +5,8 @@ module Rscons
   # Functionality for an instance of the rscons application invocation.
   class Application
 
-    # @return [Array<String>]
-    #   Active variant names.
+    # @return [Array<Hash>]
+    #   Active variants.
     attr_reader :active_variants
 
     # @return [String]
@@ -54,11 +54,19 @@ module Rscons
     #   List of task(s) to execute.
     # @param show_tasks [Boolean]
     #   Flag to show tasks and exit.
+    # @param enabled_variants [String]
+    #   User-specified variants list.
     #
     # @return [Integer]
     #   Process exit code (0 on success).
-    def run(rsconscript, tasks_and_params, show_tasks)
+    def run(rsconscript, tasks_and_params, show_tasks, enabled_variants)
       Cache.instance["failed_commands"] = []
+      @enabled_variants = enabled_variants
+      if enabled_variants == "" && !tasks_and_params.include?("configure")
+        if cache_enabled_variants = Cache.instance["configuration_data"]["enabled_variants"]
+          @enabled_variants = cache_enabled_variants
+        end
+      end
       @script = Script.new
       @script.load(rsconscript)
       if show_tasks
@@ -66,6 +74,7 @@ module Rscons
         return 0
       end
       apply_task_params(tasks_and_params)
+      enable_variants
       if tasks_and_params.empty?
         check_process_environments
         if Task.tasks["default"]
@@ -77,6 +86,32 @@ module Rscons
         end
       end
       0
+    end
+
+    # Apply user-specified variant enables and complain if they don't make
+    # sense given the build script variant configuration.
+    def enable_variants
+      unless @_variants_enabled
+        if @enabled_variants != ""
+          exact = !(@enabled_variants =~ /^(\+|-)/)
+          enabled_variants = @enabled_variants.split(",")
+          specified_variants = {}
+          enabled_variants.each do |enable_variant|
+            enable_variant =~ /^(\+|-)?(.*)$/
+            enable_disable, variant_name = $1, $2
+            specified_variants[variant_name] = enable_disable != "-"
+          end
+          each_variant do |variant|
+            if specified_variants.include?(variant[:name])
+              variant[:enabled] = specified_variants[variant[:name]]
+            elsif exact
+              variant[:enabled] = false
+            end
+          end
+        end
+        @_variants_enabled = true
+      end
+      check_enabled_variants
     end
 
     # Show the last failures.
@@ -131,6 +166,7 @@ module Rscons
     #
     # @return [void]
     def check_configure
+      enable_variants
       unless Cache.instance["configuration_data"]["configured"]
         if @script.autoconf
           configure
@@ -168,6 +204,7 @@ module Rscons
         co.close(false)
         raise e
       end
+      Cache.instance["configuration_data"]["enabled_variants"] = @enabled_variants
       co.close(true)
     end
 
@@ -213,10 +250,30 @@ module Rscons
         end
         options = options.dup
         options[:name] = name
-        options[:active] = options.fetch(:default, true)
+        options[:enabled] = options.fetch(:default, true)
         options[:key] = options.fetch(:key, name)
         @variant_groups.last[:variants] << options
       end
+    end
+
+    # Check if a variant is enabled.
+    #
+    # This can be used, for example, in a configuration block to omit or
+    # include configuration checks based on which variants have been
+    # configured.
+    #
+    # @param variant_name [String]
+    #   Variant name.
+    #
+    # @return [Boolean]
+    #   Whether the requested variant is enabled.
+    def variant_enabled?(variant_name)
+      each_variant do |variant|
+        if variant[:name] == variant_name
+          return variant[:enabled]
+        end
+      end
+      false
     end
 
     # Create a variant group.
@@ -224,13 +281,17 @@ module Rscons
       if args.first.is_a?(String)
         name = args.slice!(0)
       end
-      @variant_groups << {name: name, variants: []}
+      options = args.first || {}
+      @variant_groups << options.merge(name: name, variants: [])
       if block
         block[]
       end
     end
 
-    # Iterate through variants.
+    # Iterate through enabled variants.
+    #
+    # The given block is called for each combination of enabled variants
+    # across the defined variant groups.
     def with_variants(&block)
       if @active_variants
         raise "with_variants cannot be called within another with_variants block"
@@ -238,18 +299,15 @@ module Rscons
       if @variant_groups.empty?
         raise "with_variants cannot be called with no variants defined"
       end
-      if @variant_groups.any? {|variant_group| variant_group[:variants].empty?}
-        raise "Error: empty variant group found"
-      end
-      iter_vgs = lambda do |variants|
-        if variants.size == @variant_groups.size
-          @active_variants = variants
+      iter_vgs = lambda do |iter_variants|
+        if iter_variants.size == @variant_groups.size
+          @active_variants = iter_variants.compact
           block[]
           @active_variants = nil
         else
-          @variant_groups[variants.size][:variants].each do |variant|
-            if variant[:active]
-              iter_vgs[variants + [variant]]
+          @variant_groups[iter_variants.size][:variants].each do |variant|
+            if variant[:enabled]
+              iter_vgs[iter_variants + [variant]]
             end
           end
         end
@@ -258,6 +316,29 @@ module Rscons
     end
 
     private
+
+    def check_enabled_variants
+      @variant_groups.each do |variant_group|
+        enabled_count = variant_group[:variants].count do |variant|
+          variant[:enabled]
+        end
+        if enabled_count == 0
+          message = "No variants enabled for variant group"
+          if variant_group[:name]
+            message += " #{variant_group[:name].inspect}"
+          end
+          raise RsconsError.new(message)
+        end
+      end
+    end
+
+    def each_variant
+      @variant_groups.each do |variant_group|
+        variant_group[:variants].each do |variant|
+          yield variant
+        end
+      end
+    end
 
     def show_script_tasks
       puts "Tasks:"
