@@ -3185,6 +3185,37 @@ EOF
       expect(result.stdout).to match %r{two enabled}
       expect(result.stdout).to_not match %r{three enabled}
     end
+
+    it "shows available variants with -T" do
+      test_dir "variants"
+
+      result = run_rscons(args: %w[-f multiple_groups.rb -T])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      verify_lines(lines(result.stdout), [
+        "Variant group 'desktop-environment':",
+        "  kde (enabled)",
+        "  gnome (enabled)",
+        "Variant group 'debug':",
+        "  debug (enabled)",
+        "  release (enabled)",
+      ])
+
+      result = run_rscons(args: %w[-f multiple_groups.rb -e gnome,release configure])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      result = run_rscons(args: %w[-f multiple_groups.rb -T])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      verify_lines(lines(result.stdout), [
+        "Variant group 'desktop-environment':",
+        "  kde",
+        "  gnome (enabled)",
+        "Variant group 'debug':",
+        "  debug",
+        "  release (enabled)",
+      ])
+    end
   end
 
   context "build_dir method" do

@@ -69,12 +69,12 @@ module Rscons
       end
       @script = Script.new
       @script.load(rsconscript)
+      enable_variants
       if show_tasks
         show_script_tasks
         return 0
       end
       apply_task_params(tasks_and_params)
-      enable_variants
       if tasks_and_params.empty?
         check_process_environments
         if Task.tasks["default"]
@@ -351,6 +351,15 @@ module Rscons
               arg_text += "=#{param_name.upcase}"
             end
             puts %[    #{sprintf("%-25s", "#{arg_text}")} #{param.description}]
+          end
+        end
+      end
+
+      unless @variant_groups.empty?
+        @variant_groups.each do |variant_group|
+          puts "\nVariant group#{variant_group[:name] ? " '#{variant_group[:name]}'" : ""}:"
+          variant_group[:variants].each do |variant|
+            puts "  #{variant[:name]}#{variant[:enabled] ? " (enabled)" : ""}"
           end
         end
       end
