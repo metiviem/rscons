@@ -1336,6 +1336,7 @@ The command `./rscons --variants kde,release` would build just "prog-kde-release
   * `clean` (see ${#Clean Task})
   * `configure` (see ${#Configure Task})
   * `default` (see ${#Default Task})
+  * `download` (see ${#Downloading Files: The download Method})
   * `distclean` (see ${#Distclean Task})
   * `glob` (see ${#Finding Files: The glob Method})
   * `install` (see ${#Install Task})
@@ -1400,6 +1401,31 @@ end
 
 This example would build the `mytests` executable from all `.cc` source files
 found recursively under the `src` or `test` directory.
+
+###> Downloading Files: The download Method
+
+The [`download`](../yard/Rscons/Script/GlobalDsl.html#download-instance_method)
+method can be used to download a file from a given URL.
+
+Example use:
+
+```ruby
+default do
+  download "https://ftp.gnu.org/gnu/gcc/gcc-#{gcc_version}/gcc-#{gcc_version}.tar.xz",
+    "#{build_dir}/gcc-#{gcc_version}.tar.xz",
+    sha256_sum: gcc_checksum
+end
+```
+
+The `download` method downloads the file specified by the URL in the first
+parameter, and writes it to the local file specified by the second parameter.
+If the `:sha256sum` option is given, this causes two changes to the default
+behavior:
+
+  * If Rscons finds the local file and it already has this checksum, then the
+    file will not be downloaded again.
+  * After downloading, Rscons verifies that the checksum matches what is given
+    and exits with an error if it does not.
 
 ###> PATH Management
 
