@@ -865,7 +865,7 @@ It also instructs the linker to link against the `m` library.
 
   * uppercase strings - the default construction variables that Rscons uses
   * strings beginning with "_" - set and used internally by builders
-  * strings with a ":" as "#{task_name}:#{parameter_name}" - set to task parameter values
+  * lowercase strings with a ":" as "#{task_name}:#{parameter_name}" - set to task parameter values
   * symbols, lowercase strings - reserved as user-defined construction variables
 
 ###> Builders
