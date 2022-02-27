@@ -1934,6 +1934,88 @@ env do |env|
 end
 ```
 
+### Example: GCC Cross Compiler
+
+```ruby
+binutils_version = "2.35"
+binutils_checksum = "1b11659fb49e20e18db460d44485f09442c8c56d5df165de9461eb09c8302f85"
+gcc_version = "10.2.0"
+gcc_checksum = "b8dd4368bb9c7f0b98188317ee0254dd8cc99d1e3a18d0ff146c855fe16c1d8c"
+install_path = File.expand_path("i686-elf-gcc")
+target = "i686-elf"
+path_prepend "#{install_path}/bin"
+
+configure do
+  check_c_compiler "gcc"
+  check_program "make"
+  check_program "bison"
+  check_program "flex"
+  check_program "texi2any", on_fail: "Install the texinfo package"
+  check_program "wget"
+  check_lib "gmp", on_fail: "Install the libgmp-dev package"
+  check_lib "mpc", on_fail: "Install the libmpc-dev package"
+  check_lib "mpfr", on_fail: "Install the libmpfr-dev package"
+end
+
+default do
+  unless Dir.exist?(install_path)
+
+    # Download archives.
+    download "https://ftp.gnu.org/gnu/binutils/binutils-#{binutils_version}.tar.xz",
+      "#{build_dir}/binutils-#{binutils_version}.tar.xz",
+      sha256sum: binutils_checksum
+
+    download "https://ftp.gnu.org/gnu/gcc/gcc-#{gcc_version}/gcc-#{gcc_version}.tar.xz",
+      "#{build_dir}/gcc-#{gcc_version}.tar.xz",
+      sha256sum: gcc_checksum
+
+    # Extract archives.
+    sh "tar", "xJf", "binutils-#{binutils_version}.tar.xz",
+      chdir: build_dir
+
+    sh "tar", "xJf", "gcc-#{gcc_version}.tar.xz",
+      chdir: build_dir
+
+    # Build binutils.
+    rm_rf "#{build_dir}/build-binutils"
+    mkdir_p "#{build_dir}/build-binutils"
+    cd "#{build_dir}/build-binutils" do
+      sh %W[../binutils-#{binutils_version}/configure
+        --target=#{target} --prefix=#{install_path} --with-sysroot --disable-nls
+        --disable-werror]
+      sh "make"
+      sh "make install"
+    end
+
+    # Build gcc.
+    rm_rf "#{build_dir}/build-gcc"
+    mkdir_p "#{build_dir}/build-gcc"
+    cd "#{build_dir}/build-gcc" do
+      sh %W[../gcc-#{gcc_version}/configure
+        --target=#{target} --prefix=#{install_path} --disable-nls
+        --enable-languages=c,c++ --without-headers]
+      sh "make all-gcc"
+      sh "make all-target-libgcc"
+      sh "make install-gcc"
+      sh "make install-target-libgcc"
+    end
+  end
+end
+
+clean do
+  rm_f "#{build_dir}/binutils-#{binutils_version}.tar.xz"
+  rm_rf "#{build_dir}/binutils-#{binutils_version}"
+  rm_rf "#{build_dir}/build-binutils"
+  rm_f "#{build_dir}/gcc-#{gcc_version}.tar.xz"
+  rm_rf "#{build_dir}/gcc-#{gcc_version}"
+  rm_rf "#{build_dir}/build-gcc"
+end
+
+distclean do
+  rm_rf install_path
+end
+```
+
 ##> ./configure && make
 
 You can make your Rscons-based project more familiar to users of
