@@ -12,6 +12,7 @@ It supports the following features:
   * colorized output with build progress
   * build hooks
   * user-defined tasks with dependencies and custom parameters
+  * build variants
 
 At its core, Rscons is mainly an engine to:
 
@@ -67,8 +68,8 @@ incorrect decision being made to not rebuild when a rebuild is necessary.
 ### Build Flexibility
 
 Rscons supports multiple configurations of compilation flags or build options
-across multiple environments to build output files in different ways according
-to the user's desire.
+across multiple environments or build variants to build output files in
+different ways according to the user's desire.
 For example, the same source files can be built into a release executable, but
 also compiled with different compilation flags or build options into a test
 executable.
@@ -143,15 +144,18 @@ different version control systems):
 
 Rscons is typically invoked from the command-line as `./rscons`.
 
-    ./rscons [global options] [[task] [task options] ...]
+    Usage: ./rscons [global options] [[task] [task options] ...]
 
     Global options:
+      -A, --all                   Show all tasks (even without descriptions) in task list
       -b BUILD, --build=BUILD     Set build directory (default: build)
+      -e VS, --variants=VS        Enable or disable variants
       -f FILE                     Use FILE as Rsconscript
       -F, --show-failure          Show failed command log from previous build and exit
       -h, --help                  Show rscons help and exit
       -j N, --nthreads=N          Set number of threads
       -r COLOR, --color=COLOR     Set color mode (off, auto, force)
+      -T, --tasks                 Show task list and parameters and exit
       -v, --verbose               Run verbosely
       --version                   Show rscons version and exit
 
@@ -181,6 +185,19 @@ Rscons execution.
 The user can also invoke Rscons with the `-v` global command-line option which
 will cause Rscons to print each command it is executing.
 
+## Rscons Operation Phases
+
+When Rscons executes, it performs the following phases:
+
+  - Parse the command line.
+    - Exit if --help or --version specified.
+  - Load the build script.
+    - Show tasks and exit if -T specified.
+  - Configure the project by running the `configure` task if necessary (the
+    project has not yet been configured, autoconf is set to true, and the user
+    is requesting to execute a task that is marked with autoconf set to true)
+  - Execute user-requested tasks.
+
 #> The Build Script
 
 Rscons looks for instructions for what to build by reading a build script file
@@ -188,10 +205,8 @@ called `Rsconscript` (or `Rsconscript.rb`).
 Here is a simple example `Rsconscript` file:
 
 ```ruby
-default do
-  Environment.new do |env|
-    env.Program("myprog.exe", glob("src/**/*.c"))
-  end
+env do |env|
+  env.Program("myprog.exe", glob("src/**/*.c"))
 end
 ```
 
@@ -203,7 +218,7 @@ The `Rsconscript` file is a Ruby script.
 
 ##> Tasks
 
-Tasks are the high-level user interface for performing functionality in a build
+Tasks are a high-level user interface for performing functionality in a build
 script.
 Tasks can create Environments that perform compilation/linking steps.
 Tasks can also execute arbitrary commands or perform any miscellaneous logic.
@@ -219,7 +234,7 @@ Example:
 
 ```ruby
 task "build" do
-  Environment.new do |env|
+  env do |env|
     env.Program("^^/proj.elf", glob("src/**/*.c"))
   end
 end
@@ -240,9 +255,13 @@ Any newly specified dependencies are added to the current dependencies.
 Any action block is appended to the task's list of action blocks to execute
 when the task is executed.
 
+Note that for a simple project, the build script may not need to define any
+tasks at all and could just make use of the Rscons built-in default task (see
+${#Default Task}).
+
 ###> Task Parameters
 
-Tasks can also take parameters.
+Tasks can accept parameters.
 Parameters are defined by the build script author, and have default values.
 The user can override parameter values on the command line.
 
@@ -261,7 +280,7 @@ task "build", params: [
   param("myparam", "defaultvalue", true, "My special parameter"),
   param("xyz", nil, false, "Enable the xyz feature"),
 ] do |task, params|
-  Environment.new do |env|
+  env do |env|
     env["CPPDEFINES"] << "SOMEMACRO=#{params["myparam"]}"
     if params["flag"]
       env["CPPDEFINES"] << "ENABLE_FEATURE_XYZ"
@@ -399,8 +418,6 @@ configuration functionality that Rscons provides.
 
 The `default` task is special in that Rscons will execute it if no other task
 has been requested by the user on the command line.
-It is entirely feasible for the default task to be the only task defined for a
-project, and simple projects may wish to do just that.
 
 The default task can also be used to declare a dependency on another task that
 would effectively become the default.
@@ -432,7 +449,8 @@ It will not remove the cached configuration options.
 The `distclean` task is built-in to Rscons.
 It removes all built target files and all cached configuration options.
 Generally it will get the project directory back to the state it was in when
-unpacked before any configuration or build operations took place.
+unpacked or checked out, before any configuration or build operations took
+place.
 It will not remove items installed by an Install builder.
 
 ####> Install Task
@@ -734,17 +752,16 @@ If set, a build define of the specified String will be added to the
 ##> Building Targets
 
 Building target files is accomplished by using Environments.
-Environments are typically created within the default task or any user-defined
-tasks.
+Environments can be created at the top level of the build script, or from
+within a task action block.
 
-Here is an example `default` task block demonstrating how to create an
-Environment and register a build target:
+Environments are created with the `env` build script method.
+Here is an example build script that creates an Environment and registers a
+Program build target:
 
 ```ruby
-default do
-  Environment.new do |env|
-    env.Program("myprog.exe", glob("src/**/*.c"))
-  end
+env do |env|
+  env.Program("myprog.exe", glob("src/**/*.c"))
 end
 ```
 
@@ -759,24 +776,21 @@ An Environment includes:
   - a collection of construction variables
   - a collection of build hooks
   - a collection of user-registered build targets
-  - a build root
+  - a build root directory
 
 All build targets must be registered within an `Environment`.
 If the user does not specify a name for the environment, a name will be
 automatically generated based on the Environment's internal ID, for example
 "e.1".
-The Environment's build root is a directory created within the top-level
-Rscons build directory.
-It is based on the Environment name.
+The Environment's build root is a directory with the same name as the
+Environment, created within the top-level Rscons build directory.
 By default it holds all intermediate files generated by Rscons that are needed
 to produce a user-specified build target.
 For example, for the `Rsconscript`:
 
 ```ruby
-default do
-  Environment.new(name: "myproj") do |env|
-    env.Program("myprog.exe", glob("src/**/*.c"))
-  end
+env "myproj" do |env|
+  env.Program("myprog.exe", glob("src/**/*.c"))
 end
 ```
 
@@ -786,6 +800,9 @@ Assuming a top-level build directory of "build", the Environment's build root
 would be "build/myproj".
 This keeps the intermediate generated build artifacts separate from the source
 files.
+Source and target paths passed to a Builder (e.g. Program) can begin with "^/"
+to indicate that Rscons should expand those paths to be relative to the
+Environment's build root.
 
 ###> Construction Variables
 
@@ -797,11 +814,9 @@ construction variables.
 Example:
 
 ```ruby
-default do
-  Environment.new do |env|
-    env["CCFLAGS"] += %w[-O2 -Wall]
-    env["LIBS"] += %w[m]
-  end
+env do |env|
+  env["CCFLAGS"] += %w[-O2 -Wall]
+  env["LIBS"] += %w[m]
 end
 ```
 
@@ -813,6 +828,7 @@ It also instructs the linker to link against the `m` library.
 
   * uppercase strings - the default construction variables that Rscons uses
   * strings beginning with "_" - set and used internally by builders
+  * strings with a ":" as "#{task_name}:#{parameter_name}" - set to task parameter values
   * symbols, lowercase strings - reserved as user-defined construction variables
 
 ###> Builders
@@ -1099,7 +1115,7 @@ and flags can be specified with `SIZEFLAGS`.
 
 ###> Phony Targets
 
-rscons supports phony build targets.
+Rscons supports phony build targets.
 Normally, a builder produces an output file, and executes whenever the input
 files or command have changed.
 A phony build target can be used to register a builder that does not produce
@@ -1142,17 +1158,15 @@ build target or source file names.
 Example:
 
 ```ruby
-default do
-  Environment.new do |env|
-    env["CFLAGS"] << "-Wall"
-    env.add_build_hook do |builder|
-      # Compile sources from under src/tests without the -Wall flag.
-      if builder.sources.first =~ %r{src/tests/}
-        builder.vars["CFLAGS"] -= %w[-Wall]
-      end
+env do |env|
+  env["CFLAGS"] << "-Wall"
+  env.add_build_hook do |builder|
+    # Compile sources from under src/tests without the -Wall flag.
+    if builder.sources.first =~ %r{src/tests/}
+      builder.vars["CFLAGS"] -= %w[-Wall]
     end
-    env.Program("program.exe", glob("src/**/*.c"))
   end
+  env.Program("program.exe", glob("src/**/*.c"))
 end
 ```
 
@@ -1166,7 +1180,7 @@ Build hooks and post-build hooks can register new build targets.
 
 ###> Barriers
 
-Normally Rscons will parallelize all builders.
+Normally Rscons will parallelize all builders executed within an Environment.
 A barrier can be used to separate sets of build targets.
 All build targets registered before the barrier is created will be built before
 Rscons will schedule any build targets after the barrier.
@@ -1176,11 +1190,113 @@ In other words, build targets are not parallelized across a barrier.
 env.barrier
 ```
 
+##> Variants
+
+Rscons supports build variants.
+Variants can be used to built multiple variations of the same item with a
+specific change.
+For example, a desktop application with the same sources could be built to
+target KDE or GNOME using build variants.
+It is up to the build script author to define the variants and what effect they
+have on the build.
+
+This build script defines "kde" and "gnome" variants:
+
+```ruby
+variant "kde"
+variant "gnome"
+
+with_variants do
+  env "prog" do |env|
+    if variant "kde"
+      env["CPPDEFINES"] << "KDE"
+    end
+    if variant "gnome"
+      env["CPPDEFINES"] << "GNOME"
+    end
+    env.Program("^/prog.exe", "src/**/*.cpp")
+  end
+end
+```
+
+The `variant` build script method has two uses:
+
+  * At the top of the build script, it defines a variant.
+  * Within a `with_variants` block, it queries for whether the given variant is
+    active.
+
+The `with_variants` build script method allows the power of variants to be
+harnessed.
+It iterates through each enabled variant and calls the given block.
+In this example, the block would be called twice, once with the "kde" variant
+active, and the second time with the "gnome" variant active.
+
+Each `env()` call creates an Environment, so two environments are created.
+When an Environment is created within a `with_variants` block, the
+Environment's name has the active variant(s) appended to the given Environment
+name (if any), and separated by a "-".
+
+In this example, a "prog-kde" Environment would be created with build root
+build/prog-kde and -DKDE would be passed to the compiler when compiling each
+source.
+Next a "prog-gnome" Environment would be created with build root
+build/prog-gnome and -DGNOME would be passed to the compiler when compiling
+the sources.
+
+Variants are enabled by default, but can be disabled by passing a `false` value
+to the `:default` option of the `variant` method.
+For example:
+
+```ruby
+${include build_tests/variants/default.rb}
+```
+
+The `rscons` command line interface provides a `-e`/`--variants` argument which
+allows the user to enable a different set of variants from those enabled by
+default according to the build script author.
+This argument accepts a comma-separated list of variants to enable.
+Each entry in the list can begin with "-" to disable the variant instead of
+enable it.
+If the list begins with "+" or "-", then the entire given list modifies the
+defaults given in the build script.
+Otherwise, it exactly specifies which variants should be enabled, and any
+variant not listed is disabled.
+
+When the project is configured, the set of enabled variants is recorded and
+remembered for later Rscons invocations.
+This way, a user working on a single variant of a project does not need to
+specify the `-e`/`--variants` option on each build operation.
+
+The `variant_enabled?` build script method can be called to query whether the
+given variant is enabled.
+
+###> Variant Groups
+
+Variants may be grouped, which allows the build script author to define
+multiple combinations of desired variations to build with.
+For example:
+
+```ruby
+${include build_tests/variants/multiple_groups.rb}
+```
+
+This build script executes the block given to `with_variants` four times and
+results in four Environments being created:
+
+  * prog-kde-debug
+  * prog-kde-release
+  * prog-gnome-debug
+  * prog-gnome-release
+
+The command `./rscons -e-debug` would build just "prog-kde-release" and "prog-gnome-release".
+The command `./rscons --variants kde,release` would build just "prog-kde-release".
+
 ##> Build Script Methods
 
 `rscons` provides several methods that a build script can use.
 
   * `autoconf` (see ${#Configure Task})
+  * `build_dir` which returns the path to the top-level Rscons build directory
   * `clean` (see ${#Clean Task})
   * `configure` (see ${#Configure Task})
   * `default` (see ${#Default Task})
@@ -1197,6 +1313,10 @@ env.barrier
   * `sh` (see (${#Executing Commands: The sh Method})
   * `task` (see ${#Tasks})
   * `uninstall` (see ${#Uninstall Task})
+  * `variant` (see ${#Variants})
+  * `variant_enabled?` (see ${#Variant Groups})
+  * `variant_group` (see ${#Variant Groups})
+  * `with_variants` (see ${#Variant Groups})
 
 Additionally, the following methods from the Ruby
 [FileUtils](https://ruby-doc.org/stdlib-3.1.0/libdoc/fileutils/rdoc/FileUtils.html)
@@ -1237,10 +1357,8 @@ rather than file system directory ordering).
 Example use:
 
 ```ruby
-default do
-  Environment.new do |env|
-    env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
-  end
+env do |env|
+  env.Program("mytests", glob("src/**/*.cc", "test/**/*.cc"))
 end
 ```
 
@@ -1406,7 +1524,7 @@ class Rscons::Builders::Mine < Rscons::Builder
 end
 
 default do
-  Environment.new do |env|
+  env do |env|
     env.add_builder(Rscons::Builders::Mine)
   end
 end
@@ -1429,7 +1547,7 @@ Rscons::DEFAULT_BUILDERS << :Special
 load "SpecialBuilder.rb"
 
 default do
-  Environment.new do |env|
+  env do |env|
     # A build target using the "Special" builder can be registered.
     env.Special("target", "source")
   end
@@ -1656,40 +1774,36 @@ ${include lib/rscons/default_construction_variables.rb}
 ### Example: Building a C Program
 
 ```ruby
-default do
-  Environment.new do |env|
-    env["CFLAGS"] << "-Wall"
-    env.Program("program", glob("src/**/*.c"))
-  end
+env do |env|
+  env["CFLAGS"] << "-Wall"
+  env.Program("program", glob("src/**/*.c"))
 end
 ```
 
 ### Example: Building a D Program
 
 ```ruby
-default do
-  Environment.new do |env|
-    env["DFLAGS"] << "-Wall"
-    env.Program("program", glob("src/**/*.d"))
-  end
+env do |env|
+  env["DFLAGS"] << "-Wall"
+  env.Program("program", glob("src/**/*.d"))
 end
 ```
 
 ### Example: Cloning an Environment
 
 ```ruby
-default do
-  main_env = Environment.new do |env|
-    env["CFLAGS"] = ["-DSOME_DEFINE", "-O3"]
-    env["LIBS"] = ["SDL"]
-    env.Program("program", glob("src/**/*.cc"))
-  end
+main_env = env do |env|
+  env["CFLAGS"] = ["-fshort-enums", "-O3"]
+  env["CPPDEFINES"] << "SOME_DEFINE"
+  env["LIBS"] = ["SDL"]
+  env.Program("program", glob("src/**/*.cc"))
+end
 
-  debug_env = main_env.clone do |env|
-    env["CFLAGS"] -= ["-O3"]
-    env["CFLAGS"] += ["-g", "-O0"]
-    env.Program("program-debug", glob("src/**/*.cc"))
-  end
+test_env = main_env.clone do |env|
+  env["CFLAGS"] -= ["-O3"]
+  env["CFLAGS"] += ["-g", "-O0"]
+  env["CPPDEFINES"] = "ENABLE_TESTS"
+  env.Program("program-test", glob("src/**/*.cc"))
 end
 ```
 
@@ -1709,48 +1823,40 @@ EOF
   end
 end
 
-default do
-  Environment.new do |env|
-    env.add_builder(GenerateFoo)
-    env.GenerateFoo("foo.h", [])
-    env.Program("a.out", glob("*.c"))
-  end
+env do |env|
+  env.add_builder(GenerateFoo)
+  env.GenerateFoo("foo.h", [])
+  env.Program("a.out", glob("*.c"))
 end
 ```
 
 ### Example: Using different compilation flags for some sources
 
 ```ruby
-default do
-  Environment.new do |env|
-    env["CFLAGS"] = ["-O3", "-Wall"]
-    env.add_build_hook do |builder|
-      if builder.sources.first =~ %r{src/third-party/}
-        build_op[:vars]["CFLAGS"] -= ["-Wall"]
-      end
+env do |env|
+  env["CFLAGS"] = ["-O3", "-Wall"]
+  env.add_build_hook do |builder|
+    if builder.sources.first =~ %r{src/third-party/}
+      build_op[:vars]["CFLAGS"] -= ["-Wall"]
     end
-    env.Program("program", glob("**/*.cc"))
   end
+  env.Program("program", glob("**/*.cc"))
 end
 ```
 
 ### Example: Creating a static library
 
 ```ruby
-default do
-  Environment.new do |env|
-    env.Library("mylib.a", glob("src/**/*.c"))
-  end
+env do |env|
+  env.Library("mylib.a", glob("src/**/*.c"))
 end
 ```
 
 ### Example: Creating a C++ parser source from a Yacc/Bison input file
 
 ```ruby
-default do
-  Environment.new do |env|
-    env.CFile("^/parser.tab.cc", "parser.yy")
-  end
+env do |env|
+  env.CFile("^/parser.tab.cc", "parser.yy")
 end
 ```
 
