@@ -358,7 +358,7 @@ EOF
     expect(result.stderr).to match /Could not find a registered build target "foo"/
   end
 
-  context "clean operation" do
+  context "clean task" do
     it 'cleans built files' do
       test_dir("simple")
       result = run_rscons
@@ -1796,7 +1796,7 @@ EOF
     end
   end
 
-  context "configure operation" do
+  context "configure task" do
     it "does not print configuring messages when no configure block and configure task not called" do
       test_dir "configure"
       result = run_rscons(args: %w[-f no_configure_output.rb])
@@ -1812,7 +1812,7 @@ EOF
       expect(result.status).to_not eq 0
     end
 
-    it "automatically runs the configure operation if the project is not yet configured in the given build directory" do
+    it "automatically runs the configure task if the project is not yet configured in the given build directory" do
       test_dir "configure"
 
       result = run_rscons(args: %w[-f check_c_compiler.rb])
@@ -2236,7 +2236,7 @@ EOF
 
     context "check_cfg" do
       context "when passed a package" do
-        it "stores flags and uses them during a build operation" do
+        it "stores flags and uses them during a build" do
           test_dir "configure"
           create_exe "pkg-config", "echo '-DMYPACKAGE'"
           result = run_rscons(args: %w[-f check_cfg_package.rb configure])
@@ -2273,7 +2273,7 @@ EOF
       end
 
       context "when passed a program" do
-        it "stores flags and uses them during a build operation" do
+        it "stores flags and uses them during a build" do
           test_dir "configure"
           create_exe "my-config", "echo '-DMYCONFIG -lm'"
           result = run_rscons(args: %w[-f check_cfg.rb configure])
@@ -2512,15 +2512,15 @@ EOF
     end
   end
 
-  context "install operation" do
-    it "invokes a configure operation if the project is not yet configured" do
+  context "install task" do
+    it "invokes the configure task if the project is not yet configured" do
       test_dir "typical"
 
       result = run_rscons(args: %w[-f install.rb install])
       expect(result.stdout).to match /Configuring install_test/
     end
 
-    it "invokes a build operation" do
+    it "invokes a build dependency" do
       test_dir "typical"
 
       Dir.mktmpdir do |prefix|
@@ -2580,7 +2580,7 @@ EOF
     end
   end
 
-  context "uninstall operation" do
+  context "uninstall task" do
     it "removes installed files but not built files" do
       test_dir "typical"
 
