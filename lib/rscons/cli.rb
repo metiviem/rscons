@@ -149,17 +149,49 @@ module Rscons
 Usage: #{$0} [global options] [[task] [task options] ...]
 
 Global options:
-  -A, --all                   Show all tasks (even without descriptions) in task list
-  -b BUILD, --build=BUILD     Set build directory (default: build)
-  -e VS, --variants=VS        Enable or disable variants
-  -f FILE                     Use FILE as Rsconscript
-  -F, --show-failure          Show failed command log from previous build and exit
-  -h, --help                  Show rscons help and exit
-  -j N, --nthreads=N          Set number of threads (local default: #{Rscons.application.n_threads})
-  -r COLOR, --color=COLOR     Set color mode (off, auto, force)
-  -T, --tasks                 Show task list and parameters and exit
-  -v, --verbose               Run verbosely
-  --version                   Show rscons version and exit
+  -A, --all
+    Show all tasks (even those without descriptions) in task list. Use in
+    conjunction with the -T argument.
+
+  -b BUILD, --build=BUILD
+    Set build directory (default: build).
+
+  -e VS, --variants=VS
+    Enable or disable variants. VS is a comma-separated list of variant
+    entries. If the entry begins with "-" the variant is disabled instead of
+    enabled. If the full list begins with "+" or "-" then it modifies the
+    variants that are enabled by default by only enabling or disabling the
+    listed variants. Otherwise, the enabled set of variants is as given and
+    any variants not listed are disabled. The set of enabled variants is
+    remembered from when the project is configured.
+
+  -f FILE
+    Use FILE as Rsconscript.
+
+  -F, --show-failure
+    Show failed command log from previous build and exit (does not load build
+    script).
+
+  -h, --help
+    Show rscons help and exit (does not load build script).
+
+  -j N, --nthreads=N
+    Set number of threads (local default: #{Rscons.application.n_threads}).
+
+  -r COLOR, --color=COLOR
+    Set color mode (off, auto, force).
+
+  -T, --tasks
+    Show task list and parameters and exit (loads build script). By default
+    only tasks with a description are listed. Use -AT to show all tasks whether
+    they have a description or not.
+
+  -v, --verbose
+    Run verbosely. This causes Rscons to print the full build command used by
+    each builder.
+
+  --version
+    Show rscons version and exit (does not load build script).
 EOF
     end
 
