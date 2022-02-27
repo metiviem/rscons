@@ -195,6 +195,14 @@ EOF
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
   end
 
+  it "processes the environment when created within a task" do
+    test_dir("simple")
+    result = run_rscons(args: %w[-f env_in_task.rb])
+    expect(result.stderr).to eq ""
+    expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
+    expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
+  end
+
   it "uses the build directory specified with -b" do
     test_dir("simple")
     result = run_rscons(args: %w[-b b])

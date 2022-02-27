@@ -130,13 +130,21 @@ module Rscons
       #
       # If a block is given it is immediately executed and passed the newly
       # created Environment object as an argument.
+      # If the Environment is created in task context, the +process+ method is
+      # immediately called.
+      # Otherwise, the Environment is not processed until the task execution
+      # phase.
       #
       # @yield [env]
       # @yieldparam env [Environment]
       #   The created environment.
       def env(*args, &block)
         Rscons.application.check_configure
-        Environment.new(*args, &block)
+        e = Environment.new(*args, &block)
+        if Rscons.application.task_execution_phase?
+          e.process
+        end
+        e
       end
 
       # Construct a task parameter.

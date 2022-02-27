@@ -42,6 +42,16 @@ module Rscons
       @variant_groups = []
     end
 
+    # Return if Rscons is in the task execution phase.
+    #
+    # @api private
+    #
+    # @return [Boolean]
+    #   If Rscons is in the task execution phase.
+    def task_execution_phase?
+      @task_execution_phase
+    end
+
     # Run the application.
     #
     # Execute user-specified tasks.
@@ -77,6 +87,7 @@ module Rscons
         return 0
       end
       apply_task_params(tasks_and_params)
+      @task_execution_phase = true
       if tasks_and_params.empty?
         check_process_environments
         if Task.tasks["default"]
