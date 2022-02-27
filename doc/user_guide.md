@@ -1508,6 +1508,18 @@ default do
 end
 ```
 
+Options that Ruby's `spawn` method accepts can also be passed in to the `sh`
+method.
+For example, to execute the given command with a different working directory,
+the `:chdir` option can be specified:
+
+```ruby
+default do
+  # Execute 'ls' from within the 'src' directory:
+  sh "ls", chdir: "src"
+end
+```
+
 ##> Extending Rscons
 
 ### Adding New Languages
