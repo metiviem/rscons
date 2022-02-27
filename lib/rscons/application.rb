@@ -54,12 +54,14 @@ module Rscons
     #   List of task(s) to execute.
     # @param show_tasks [Boolean]
     #   Flag to show tasks and exit.
+    # @param all_tasks [Boolean]
+    #   Flag to show all tasks (not just those with a description).
     # @param enabled_variants [String]
     #   User-specified variants list.
     #
     # @return [Integer]
     #   Process exit code (0 on success).
-    def run(rsconscript, tasks_and_params, show_tasks, enabled_variants)
+    def run(rsconscript, tasks_and_params, show_tasks, all_tasks, enabled_variants)
       Cache.instance["failed_commands"] = []
       @enabled_variants = enabled_variants
       if enabled_variants == "" && !tasks_and_params.include?("configure")
@@ -71,7 +73,7 @@ module Rscons
       @script.load(rsconscript)
       enable_variants
       if show_tasks
-        show_script_tasks
+        show_script_tasks(all_tasks)
         return 0
       end
       apply_task_params(tasks_and_params)
@@ -340,10 +342,10 @@ module Rscons
       end
     end
 
-    def show_script_tasks
+    def show_script_tasks(all_tasks)
       puts "Tasks:"
       Task[].sort.each do |task_name, task|
-        if task.description
+        if task.description || all_tasks
           puts %[  #{sprintf("%-27s", task_name)} #{task.description}]
           task.params.each do |param_name, param|
             arg_text = "--#{param_name}"

@@ -2956,6 +2956,26 @@ EOF
       expect(result.stdout).to_not match /^\s*one\b/
       expect(result.stdout).to_not match /^\s*two\b/
     end
+
+    context "with -A flag" do
+      it "displays all tasks and their parameters" do
+        test_dir "tasks"
+        result = run_rscons(args: %w[-f tasks.rb -AT])
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        verify_lines(lines(result.stdout), [
+          "Tasks:",
+          /\bone\b/,
+          /\btwo\b/,
+          /\bthree\b\s+Task three/,
+          /\bfour\b\s+Task four/,
+          /--myparam=MYPARAM\s+My special parameter/,
+          /--myp2\s+My parameter 2/,
+          /\bfive\b/,
+          /\bsix\b/,
+        ])
+      end
+    end
   end
 
   context "download script method" do
