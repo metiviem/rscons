@@ -102,6 +102,38 @@ module Rscons
       end
 
       # Create an environment.
+      #
+      # @overload env(name, options)
+      #   @param name [String]
+      #     Environment name. This determines the folder name used to store all
+      #     environment build files under the top-level build directory.
+      #   @param options [Hash]
+      #   @option options [Symbol] :echo
+      #     :command, :short, or :off (default :short)
+      #   @option options [Boolean] :exclude_builders
+      #     Whether to omit adding default builders (default false)
+      #   @option options [String, Array<String>] :use
+      #     Use flag(s). If specified, any configuration flags which were saved
+      #     with a corresponding `:use` value will be applied to this
+      #     Environment.
+      #
+      # @overload env(options)
+      #   @param options [Hash]
+      #   @option options [Symbol] :echo
+      #     :command, :short, or :off (default :short)
+      #   @option options [Boolean] :exclude_builders
+      #     Whether to omit adding default builders (default false)
+      #   @option options [String, Array<String>] :use
+      #     Use flag(s). If specified, any configuration flags which were saved
+      #     with a corresponding `:use` value will be applied to this
+      #     Environment.
+      #
+      # If a block is given it is immediately executed and passed the newly
+      # created Environment object as an argument.
+      #
+      # @yield [env]
+      # @yieldparam env [Environment]
+      #   The created environment.
       def env(*args, &block)
         Rscons.application.check_configure
         Environment.new(*args, &block)

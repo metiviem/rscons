@@ -194,9 +194,6 @@ module Rscons
     #
     # @api private
     #
-    # @param options [Hash]
-    #   Options.
-    #
     # @return [void]
     def configure
       co = ConfigureOp.new(@script)

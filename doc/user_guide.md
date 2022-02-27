@@ -787,7 +787,9 @@ Building target files is accomplished by using Environments.
 Environments can be created at the top level of the build script, or from
 within a task action block.
 
-Environments are created with the `env` build script method.
+Environments are created with the
+[`env`](../yard/Rscons/Script/GlobalDsl.html#env-instance_method) build script
+method.
 Here is an example build script that creates an Environment and registers a
 Program build target:
 

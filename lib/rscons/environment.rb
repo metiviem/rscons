@@ -72,24 +72,6 @@ module Rscons
     attr_reader :name
 
     # Create an Environment object.
-    #
-    # @overload initialize(name, options)
-    # @overload initialize(options)
-    #
-    # @param name [String]
-    #   Environment name. This determines the folder name used to store all
-    #   environment build files under the top-level build directory.
-    # @param options [Hash]
-    # @option options [Symbol] :echo
-    #   :command, :short, or :off (default :short)
-    # @option options [Boolean] :exclude_builders
-    #   Whether to omit adding default builders (default false)
-    # @option options [String, Array<String>] :use
-    #   Use flag(s). If specified, any configuration flags which were saved
-    #   with a corresponding `:use` value will be applied to this Environment.
-    #
-    # If a block is given, the Environment object is yielded to the block and
-    # when the block returns, the {#process} method is automatically called.
     def initialize(*args, &block)
       @id = self.class.get_id
       if args.first.is_a?(String)
