@@ -1,3 +1,25 @@
+## v3.0.0
+
+- #136 - Move rsconscache into build directory
+- #140 - Support naming environments
+- #143 - Add Size builder
+- #142 - Add 'sh' script DSL method
+- #144 - Add FileUtils class methods to script DSL
+- #145 - Support environment variable to set rscons build directory
+- #146 - Add ^^/ shortcut to top-level build directory
+- #139 - Add tasks
+- #147 - Add task options
+- #148 - Add license/copyright to distributable script
+- #150 - Add env.expand() shortcut method to expand paths and construction variables
+- #152 - Add download script method
+- #153 - Allow passing spawn options to sh
+- #154 - Record build directory absolute path
+- #149 - Add shortcut method for creating environments
+- #131 - Only configure if necessary
+- #151 - Store configure task parameters in configuration cache data
+- #137 - Add variants
+- #155 - Add build_dir script method
+
 ## v2.3.0
 
 ### New Features
