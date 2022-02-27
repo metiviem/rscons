@@ -372,6 +372,17 @@ EOF
       expect(File.exists?('simple.c')).to be_truthy
     end
 
+    it "does not process environments" do
+      test_dir("simple")
+      result = run_rscons(args: %w[clean])
+      expect(result.stderr).to eq ""
+      expect(File.exists?('build/e.1/simple.c.o')).to be_falsey
+      expect(File.exists?('build/e.1')).to be_falsey
+      expect(File.exists?('simple.exe')).to be_falsey
+      expect(File.exists?('simple.c')).to be_truthy
+      expect(result.stdout).to eq ""
+    end
+
     it 'does not clean created directories if other non-rscons-generated files reside there' do
       test_dir("simple")
       result = run_rscons
