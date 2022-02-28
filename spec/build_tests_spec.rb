@@ -372,6 +372,17 @@ EOF
       expect(File.exists?('simple.c')).to be_truthy
     end
 
+    it "executes custom clean action blocks" do
+      test_dir("simple")
+      result = run_rscons(args: %w[-f clean.rb])
+      expect(result.stderr).to eq ""
+      expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
+      result = run_rscons(args: %w[-f clean.rb clean])
+      expect(result.stderr).to eq ""
+      expect(result.stdout).to match %r{custom clean action}
+      expect(File.exists?("build/e.1/simple.c.o")).to be_falsey
+    end
+
     it "does not process environments" do
       test_dir("simple")
       result = run_rscons(args: %w[clean])
