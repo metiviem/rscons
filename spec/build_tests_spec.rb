@@ -1666,7 +1666,7 @@ EOF
       test_dir("library")
       result = run_rscons(args: %w[-f override_arcmd.rb])
       expect(result.stderr).to eq ""
-      verify_lines(lines(result.stdout), [%r{ar rcsu lib.a build/e.1/one.c.o build/e.1/three.c.o build/e.1/two.c.o}])
+      verify_lines(lines(result.stdout), [%r{ar rc lib.a build/e.1/one.c.o build/e.1/three.c.o build/e.1/two.c.o}])
     end
 
     it "allows passing object files as sources" do
