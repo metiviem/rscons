@@ -1,0 +1,3 @@
+void two(void)
+{
+}

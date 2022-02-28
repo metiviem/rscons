@@ -565,14 +565,16 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     verify_lines(lines(result.stdout), [
-      %r{gcc -c -o build/e.1/one.c.o -MMD -MF build/e.1/one.c.o.mf -Dmake_lib one.c},
       %r{gcc -c -o build/e.1/two.c.o -MMD -MF build/e.1/two.c.o.mf -Dmake_lib two.c},
-      %r{ar rcs lib.a build/e.1/one.c.o build/e.1/two.c.o},
-      %r{gcc -c -o build/e.1/three.c.o -MMD -MF build/e.1/three.c.o.mf three.c},
-      %r{gcc -o library.exe lib.a build/e.1/three.c.o},
+      %r{gcc -c -o build/e.1/three.c.o -MMD -MF build/e.1/three.c.o.mf -Dmake_lib three.c},
+      %r{ar rcs libmylib.a build/e.1/two.c.o build/e.1/three.c.o},
+      %r{gcc -c -o build/e.1/one.c.o -MMD -MF build/e.1/one.c.o.mf one.c},
+      %r{gcc -o library.exe build/e.1/one.c.o -L. -lmylib},
     ])
     expect(File.exists?("library.exe")).to be_truthy
-    expect(nr(`ar t lib.a`)).to eq "one.c.o\ntwo.c.o\n"
+    ar_t = nr(`ar t libmylib.a`)
+    expect(ar_t).to match %r{\btwo.c.o\b}
+    expect(ar_t).to match %r{\bthree.c.o\b}
   end
 
   it 'supports build hooks to override construction variables' do
@@ -1664,7 +1666,7 @@ EOF
       test_dir("library")
       result = run_rscons(args: %w[-f override_arcmd.rb])
       expect(result.stderr).to eq ""
-      verify_lines(lines(result.stdout), [%r{ar rcf lib.a build/e.1/one.c.o build/e.1/three.c.o build/e.1/two.c.o}])
+      verify_lines(lines(result.stdout), [%r{ar rcsu lib.a build/e.1/one.c.o build/e.1/three.c.o build/e.1/two.c.o}])
     end
 
     it "allows passing object files as sources" do
@@ -1709,7 +1711,7 @@ EOF
       ])
       expect(File.exist?("simple.exe")).to be_truthy
       expect(File.exist?("simple.size")).to be_truthy
-      expect(File.read("simple.size")).to match /text.*data.*bss/
+      expect(File.read("simple.size")).to match /text.*data/i
     end
   end
 

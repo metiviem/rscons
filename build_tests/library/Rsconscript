@@ -1,4 +1,7 @@
 env(echo: :command) do |env|
-  env.Program('library.exe', ['lib.a', 'three.c'])
-  env.Library("lib.a", ['one.c', 'two.c'], 'CPPFLAGS' => ['-Dmake_lib'])
+  env["LIBS"] << "mylib"
+  env["LIBPATH"] << "."
+  env.Program("library.exe", "one.c")
+  env.depends("library.exe", "libmylib.a")
+  env.Library("libmylib.a", ["two.c", "three.c"], "CPPFLAGS" => ["-Dmake_lib"])
 end

@@ -1,8 +1,11 @@
 #include <stdio.h>
 
-#ifdef make_lib
+void two();
+void three();
+
 int main(int argc, char *argv[])
 {
+    two();
     printf("Library\n");
+    three();
 }
-#endif
