@@ -60,7 +60,13 @@ combined_file.each do |line|
   end
 end
 
-license = File.read("LICENSE.txt").gsub(/^/, "# ")
+license = File.read("LICENSE.txt").gsub(/^(.*?)$/) do |line|
+  if line.size > 0
+    "# #{line}"
+  else
+    "#"
+  end
+end
 
 require "zlib"
 require "base64"
