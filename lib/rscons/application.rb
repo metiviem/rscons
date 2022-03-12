@@ -207,15 +207,18 @@ module Rscons
     #
     # @return [void]
     def configure
-      co = ConfigureOp.new(@script)
-      begin
-        @script.configure(co)
-      rescue RsconsError => e
-        co.close(false)
-        raise e
+      unless @_configured
+        @_configured = true
+        co = ConfigureOp.new(@script)
+        begin
+          @script.configure(co)
+        rescue RsconsError => e
+          co.close(false)
+          raise e
+        end
+        Cache.instance["configuration_data"]["enabled_variants"] = @enabled_variants
+        co.close(true)
       end
-      Cache.instance["configuration_data"]["enabled_variants"] = @enabled_variants
-      co.close(true)
     end
 
     # Remove installed files.
