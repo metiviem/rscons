@@ -1,3 +1,11 @@
+## v3.0.1
+
+### Fixes
+
+- #156 - Avoid running configure operation twice
+- #157 - Load configure task arguments before early configure operations
+- #158 - Do not configure for clean tasks when not yet configured
+
 ## v3.0.0
 
 - #136 - Move rsconscache into build directory
