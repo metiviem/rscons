@@ -73,6 +73,7 @@ module Rscons
     #   Process exit code (0 on success).
     def run(rsconscript, tasks_and_params, show_tasks, all_tasks, enabled_variants)
       Cache.instance["failed_commands"] = []
+      @tasks_and_params = tasks_and_params
       @enabled_variants = enabled_variants
       if enabled_variants == "" && !tasks_and_params.include?("configure")
         if cache_enabled_variants = Cache.instance["configuration_data"]["enabled_variants"]
@@ -86,7 +87,7 @@ module Rscons
         show_script_tasks(all_tasks)
         return 0
       end
-      apply_task_params(tasks_and_params)
+      apply_task_params(false)
       @task_execution_phase = true
       if tasks_and_params.empty?
         check_process_environments
@@ -179,6 +180,7 @@ module Rscons
     #
     # @return [void]
     def check_configure
+      apply_task_params(true)
       enable_variants
       unless Cache.instance["configuration_data"]["configured"]
         if @script.autoconf
@@ -378,13 +380,15 @@ module Rscons
       end
     end
 
-    def apply_task_params(tasks_and_params)
-      tasks_and_params.each do |task_name, task_params|
-        task_params.each do |param_name, param_value|
-          if param = Task[task_name].params[param_name]
-            Task[task_name].set_param_value(param_name, param_value)
-          else
-            raise RsconsError.new("Unknown parameter #{param_name.inspect} for task #{task_name}")
+    def apply_task_params(only_configure)
+      @tasks_and_params.each do |task_name, task_params|
+        unless only_configure && task_name != "configure"
+          task_params.each do |param_name, param_value|
+            if param = Task[task_name].params[param_name]
+              Task[task_name].set_param_value(param_name, param_value)
+            else
+              raise RsconsError.new("Unknown parameter #{param_name.inspect} for task #{task_name}")
+            end
           end
         end
       end

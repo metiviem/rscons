@@ -446,6 +446,9 @@ end
 See ${#Configuring the Project} for more details on how to make use of the
 configuration functionality that Rscons provides.
 
+Configure blocks must be defined in the Rsconscript file before any
+environments are created.
+
 ####> Default Task
 
 The `default` task is special in that Rscons will execute it if no other task

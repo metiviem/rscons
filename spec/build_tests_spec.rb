@@ -1845,6 +1845,15 @@ EOF
       expect(result.stdout).to_not match %r{Configuring project.*Configuring project}m
     end
 
+    it "loads configure parameters before invoking configure" do
+      test_dir "configure"
+
+      result = run_rscons(args: %w[-f configure_with_top_level_env.rb configure --prefix=/yodabob])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to match "Prefix is /yodabob"
+    end
+
     it "automatically runs the configure task if the project is not yet configured in the given build directory" do
       test_dir "configure"
 
