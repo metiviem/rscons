@@ -65,7 +65,7 @@ module Rscons
         ccc = %w[gcc clang]
       end
       cc = ccc.find do |cc|
-        test_c_compiler(cc)
+        test_c_compiler(cc, options)
       end
       complete(cc ? 0 : 1, options.merge(success_message: cc))
     end
@@ -87,7 +87,7 @@ module Rscons
         ccc = %w[g++ clang++]
       end
       cc = ccc.find do |cc|
-        test_cxx_compiler(cc)
+        test_cxx_compiler(cc, options)
       end
       complete(cc ? 0 : 1, options.merge(success_message: cc))
     end
@@ -109,7 +109,7 @@ module Rscons
         cdc = %w[gdc ldc2]
       end
       dc = cdc.find do |dc|
-        test_d_compiler(dc)
+        test_d_compiler(dc, options)
       end
       complete(dc ? 0 : 1, options.merge(success_message: dc))
     end
@@ -415,7 +415,7 @@ module Rscons
     #
     # @return [Boolean]
     #   Whether the C compiler tested successfully.
-    def test_c_compiler(cc)
+    def test_c_compiler(cc, options)
       File.open("#{@work_dir}/cfgtest.c", "wb") do |fh|
         fh.puts <<-EOF
           int fun(int val) {
@@ -427,7 +427,7 @@ module Rscons
       merge = {"CC" => cc}
       _, _, status = log_and_test_command(command)
       if status == 0
-        store_merge(merge)
+        store_merge(merge, options)
         true
       end
     end
@@ -439,7 +439,7 @@ module Rscons
     #
     # @return [Boolean]
     #   Whether the C++ compiler tested successfully.
-    def test_cxx_compiler(cc)
+    def test_cxx_compiler(cc, options)
       File.open("#{@work_dir}/cfgtest.cxx", "wb") do |fh|
         fh.puts <<-EOF
           template<typename T>
@@ -452,7 +452,7 @@ module Rscons
       merge = {"CXX" => cc}
       _, _, status = log_and_test_command(command)
       if status == 0
-        store_merge(merge)
+        store_merge(merge, options)
         true
       end
     end
@@ -464,7 +464,7 @@ module Rscons
     #
     # @return [Boolean]
     #   Whether the D compiler tested successfully.
-    def test_d_compiler(dc)
+    def test_d_compiler(dc, options)
       File.open("#{@work_dir}/cfgtest.d", "wb") do |fh|
         fh.puts <<-EOF
           import core.math;
@@ -493,7 +493,7 @@ module Rscons
         end
         _, _, status = log_and_test_command(command)
         if status == 0
-          store_merge(merge)
+          store_merge(merge, options)
           true
         end
       end

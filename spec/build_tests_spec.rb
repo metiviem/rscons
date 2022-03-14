@@ -1940,6 +1940,17 @@ EOF
         end
       end
 
+      it "respects use flag" do
+        test_dir "configure"
+        result = run_rscons(args: %w[-f check_c_compiler_use.rb -v])
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match %r{\bgcc .*/t1/}
+        expect(result.stdout).to_not match %r{\bclang .*/t1/}
+        expect(result.stdout).to match %r{\bclang .*/t2/}
+        expect(result.stdout).to_not match %r{\bgcc .*/t2/}
+      end
+
       it "successfully tests a compiler with an unknown name" do
         test_dir "configure"
         create_exe "mycompiler", %[exec gcc "$@"]
@@ -1981,6 +1992,17 @@ EOF
             expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. not found/
           end
         end
+      end
+
+      it "respects use flag" do
+        test_dir "configure"
+        result = run_rscons(args: %w[-f check_cxx_compiler_use.rb -v])
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match %r{\bg\+\+ .*/t1/}
+        expect(result.stdout).to_not match %r{\bclang\+\+ .*/t1/}
+        expect(result.stdout).to match %r{\bclang\+\+ .*/t2/}
+        expect(result.stdout).to_not match %r{\bg\+\+ .*/t2/}
       end
 
       it "successfully tests a compiler with an unknown name" do
@@ -2026,6 +2048,17 @@ EOF
             expect(result.stdout).to match /Checking for D compiler\.\.\. not found/
           end
         end
+      end
+
+      it "respects use flag" do
+        test_dir "configure"
+        result = run_rscons(args: %w[-f check_d_compiler_use.rb -v])
+        expect(result.stderr).to eq ""
+        expect(result.status).to eq 0
+        expect(result.stdout).to match %r{\bgdc .*/t1/}
+        expect(result.stdout).to_not match %r{\bldc2 .*/t1/}
+        expect(result.stdout).to match %r{\bldc2 .*/t2/}
+        expect(result.stdout).to_not match %r{\bgdc .*/t2/}
       end
 
       unless RUBY_PLATFORM =~ /mingw|msys/
