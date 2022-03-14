@@ -1854,6 +1854,33 @@ EOF
       expect(result.stdout).to match "Prefix is /yodabob"
     end
 
+    it "does not configure for distclean operation" do
+      test_dir "configure"
+
+      result = run_rscons(args: %w[-f configure_with_top_level_env.rb distclean])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to_not match %r{Configuring project}
+    end
+
+    it "does not configure for clean operation" do
+      test_dir "configure"
+
+      result = run_rscons(args: %w[-f configure_with_top_level_env.rb clean])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to_not match %r{Configuring project}
+    end
+
+    it "does not configure for uninstall operation" do
+      test_dir "configure"
+
+      result = run_rscons(args: %w[-f configure_with_top_level_env.rb uninstall])
+      expect(result.stderr).to eq ""
+      expect(result.status).to eq 0
+      expect(result.stdout).to_not match %r{Configuring project}
+    end
+
     it "automatically runs the configure task if the project is not yet configured in the given build directory" do
       test_dir "configure"
 

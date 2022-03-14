@@ -81,8 +81,10 @@ module Rscons
         end
       end
       @script = Script.new
-      @script.load(rsconscript)
-      enable_variants
+      if should_load_script
+        @script.load(rsconscript)
+        enable_variants
+      end
       if show_tasks
         show_script_tasks(all_tasks)
         return 0
@@ -170,8 +172,8 @@ module Rscons
     def distclean
       cache = Cache.instance
       clean
-      FileUtils.rm_rf(@build_dir)
       cache.clear
+      FileUtils.rm_rf(@build_dir)
     end
 
     # Check if the project needs to be configured.
@@ -392,6 +394,13 @@ module Rscons
           end
         end
       end
+    end
+
+    def should_load_script
+      return true if @tasks_and_params.empty?
+      return true if Cache.instance["configuration_data"]["configured"]
+      return false if (@tasks_and_params.keys - %w[distclean clean uninstall]).empty?
+      true
     end
 
   end

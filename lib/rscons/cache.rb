@@ -101,6 +101,7 @@ module Rscons
     #
     # @return [void]
     def write
+      return unless Dir.exist?(File.dirname(cache_file))
       @cache["version"] = VERSION
       File.open(cache_file, "w") do |fh|
         fh.puts(JSON.dump(@cache))
