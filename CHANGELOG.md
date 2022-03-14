@@ -1,3 +1,10 @@
+## v3.0.2
+
+### Fixes
+
+- #159 - Compiler check configure methods should respect :use flag
+- #160 - Configure parameters should not be stored as unscoped construction variables
+
 ## v3.0.1
 
 ### Fixes
