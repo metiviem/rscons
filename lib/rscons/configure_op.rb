@@ -23,14 +23,11 @@ module Rscons
           $stdout.puts "Configuring project..."
         end
       end
-      vars = {}
       Task["configure"].params.each do |name, param|
         unless Rscons.application.silent_configure
           Ansi.write($stdout, "Setting #{name}... ", :green, param.value, :reset, "\n")
         end
-        vars[name] = param.value
       end
-      store_merge(vars)
     end
 
     # Close the log file handle.
