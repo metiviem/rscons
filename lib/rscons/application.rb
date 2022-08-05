@@ -237,7 +237,7 @@ module Rscons
       cache = Cache.instance
       cache.targets(true).each do |target|
         cache.remove_target(target)
-        next unless File.exists?(target)
+        next unless File.exist?(target)
         puts "Removing #{target}" if verbose
         FileUtils.rm_f(target)
       end

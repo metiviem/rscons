@@ -1,7 +1,7 @@
 class MyObject < Rscons::Builder
   def run(options)
     if @builder
-      if File.exists?(@target)
+      if File.exist?(@target)
         true
       else
         false

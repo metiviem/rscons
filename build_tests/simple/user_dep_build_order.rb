@@ -4,7 +4,7 @@ class TestBuilder < Rscons::Builder
       true
     else
       if @target == "two"
-        return false unless File.exists?("one")
+        return false unless File.exist?("one")
       end
       wait_time = @env.expand_varref("${wait_time}", @vars)
       @command = ["ruby", "-e", "require 'fileutils'; sleep #{wait_time}; FileUtils.touch('#{@target}');"]

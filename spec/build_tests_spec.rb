@@ -7,16 +7,16 @@ describe Rscons do
 
   def rm_rf(dir)
     FileUtils.rm_rf(dir)
-    if File.exists?(dir)
+    if File.exist?(dir)
       sleep 0.2
       FileUtils.rm_rf(dir)
-      if File.exists?(dir)
+      if File.exist?(dir)
         sleep 0.5
         FileUtils.rm_rf(dir)
-        if File.exists?(dir)
+        if File.exist?(dir)
           sleep 1.0
           FileUtils.rm_rf(dir)
-          if File.exists?(dir)
+          if File.exist?(dir)
             raise "Could not remove #{dir}"
           end
         end
@@ -191,7 +191,7 @@ EOF
     test_dir('simple')
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
+    expect(File.exist?('build/e.1/simple.c.o')).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
   end
 
@@ -199,7 +199,7 @@ EOF
     test_dir("simple")
     result = run_rscons(args: %w[-f env_in_task.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
+    expect(File.exist?("build/e.1/simple.c.o")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
   end
 
@@ -208,7 +208,7 @@ EOF
     result = run_rscons(args: %w[-b b])
     expect(result.stderr).to eq ""
     expect(Dir.exist?("build")).to be_falsey
-    expect(File.exists?("b/e.1/simple.c.o")).to be_truthy
+    expect(File.exist?("b/e.1/simple.c.o")).to be_truthy
   end
 
   it "uses the build directory specified by an environment variable" do
@@ -217,14 +217,14 @@ EOF
     result = run_rscons
     expect(result.stderr).to eq ""
     expect(Dir.exist?("build")).to be_falsey
-    expect(File.exists?("b2/e.1/simple.c.o")).to be_truthy
+    expect(File.exist?("b2/e.1/simple.c.o")).to be_truthy
   end
 
   it "allows specifying a Builder object as the source to another build target" do
     test_dir("simple")
     result = run_rscons(args: %w[-f builder_as_source.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("simple.o")).to be_truthy
+    expect(File.exist?("simple.o")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
   end
 
@@ -252,7 +252,7 @@ EOF
     test_dir('header')
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(File.exists?('build/e.1/header.c.o')).to be_truthy
+    expect(File.exist?('build/e.1/header.c.o')).to be_truthy
     expect(nr(`./header.exe`)).to eq "The value is 2\n"
   end
 
@@ -348,7 +348,7 @@ EOF
     test_dir('json_to_yaml')
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(File.exists?('foo.yml')).to be_truthy
+    expect(File.exist?('foo.yml')).to be_truthy
     expect(nr(IO.read('foo.yml'))).to eq("---\nkey: value\n")
   end
 
@@ -364,33 +364,33 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       expect(`./simple.exe`).to match /This is a simple C program/
-      expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
+      expect(File.exist?('build/e.1/simple.c.o')).to be_truthy
       result = run_rscons(args: %w[clean])
-      expect(File.exists?('build/e.1/simple.c.o')).to be_falsey
-      expect(File.exists?('build/e.1')).to be_falsey
-      expect(File.exists?('simple.exe')).to be_falsey
-      expect(File.exists?('simple.c')).to be_truthy
+      expect(File.exist?('build/e.1/simple.c.o')).to be_falsey
+      expect(File.exist?('build/e.1')).to be_falsey
+      expect(File.exist?('simple.exe')).to be_falsey
+      expect(File.exist?('simple.c')).to be_truthy
     end
 
     it "executes custom clean action blocks" do
       test_dir("simple")
       result = run_rscons(args: %w[-f clean.rb])
       expect(result.stderr).to eq ""
-      expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
+      expect(File.exist?("build/e.1/simple.c.o")).to be_truthy
       result = run_rscons(args: %w[-f clean.rb clean])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match %r{custom clean action}
-      expect(File.exists?("build/e.1/simple.c.o")).to be_falsey
+      expect(File.exist?("build/e.1/simple.c.o")).to be_falsey
     end
 
     it "does not process environments" do
       test_dir("simple")
       result = run_rscons(args: %w[clean])
       expect(result.stderr).to eq ""
-      expect(File.exists?('build/e.1/simple.c.o')).to be_falsey
-      expect(File.exists?('build/e.1')).to be_falsey
-      expect(File.exists?('simple.exe')).to be_falsey
-      expect(File.exists?('simple.c')).to be_truthy
+      expect(File.exist?('build/e.1/simple.c.o')).to be_falsey
+      expect(File.exist?('build/e.1')).to be_falsey
+      expect(File.exist?('simple.exe')).to be_falsey
+      expect(File.exist?('simple.c')).to be_truthy
       expect(result.stdout).to eq ""
     end
 
@@ -399,11 +399,11 @@ EOF
       result = run_rscons
       expect(result.stderr).to eq ""
       expect(`./simple.exe`).to match /This is a simple C program/
-      expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
+      expect(File.exist?('build/e.1/simple.c.o')).to be_truthy
       File.open('build/e.1/dum', 'w') { |fh| fh.puts "dum" }
       result = run_rscons(args: %w[clean])
-      expect(File.exists?('build/e.1')).to be_truthy
-      expect(File.exists?('build/e.1/dum')).to be_truthy
+      expect(File.exist?('build/e.1')).to be_truthy
+      expect(File.exist?('build/e.1/dum')).to be_truthy
     end
 
     it "removes built files but not installed files" do
@@ -415,13 +415,13 @@ EOF
 
         result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
-        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_truthy
+        expect(File.exist?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exist?("build/e.1/src/one/one.c.o")).to be_truthy
 
         result = run_rscons(args: %w[-f install.rb clean])
         expect(result.stderr).to eq ""
-        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_falsey
+        expect(File.exist?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exist?("build/e.1/src/one/one.c.o")).to be_falsey
       end
     end
 
@@ -437,8 +437,8 @@ EOF
 
         result = run_rscons(args: %w[-f install.rb clean])
         expect(result.stderr).to eq ""
-        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_falsey
+        expect(File.exist?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exist?("build/e.1/src/one/one.c.o")).to be_falsey
 
         result = run_rscons(args: %w[-f install.rb -v uninstall])
         expect(result.stderr).to eq ""
@@ -456,7 +456,7 @@ EOF
       %r{Compiling program.c},
       %r{Linking program.exe},
     ])
-    expect(File.exists?('inc.h')).to be_truthy
+    expect(File.exist?('inc.h')).to be_truthy
     expect(nr(`./program.exe`)).to eq "The value is 5678\n"
   end
 
@@ -471,8 +471,8 @@ EOF
       %r{Compiling inc.c},
       %r{Linking program.exe},
     ])
-    expect(File.exists?("inc.c")).to be_truthy
-    expect(File.exists?("inc.h")).to be_truthy
+    expect(File.exist?("inc.c")).to be_truthy
+    expect(File.exist?("inc.h")).to be_truthy
     expect(nr(`./program.exe`)).to eq "The value is 42\n"
 
     File.open("inc.c", "w") {|fh| fh.puts "int THE_VALUE = 33;"}
@@ -502,7 +502,7 @@ EOF
     expect(result.stderr).to eq ""
     expect(result.status).to eq 0
     verify_lines(lines(result.stdout), [%r{MyBuilder foo}])
-    expect(File.exists?("foo")).to be_truthy
+    expect(File.exist?("foo")).to be_truthy
   end
 
   it 'supports a Builder waiting for another Builder' do
@@ -511,8 +511,8 @@ EOF
     expect(result.stderr).to eq ""
     expect(result.status).to eq 0
     verify_lines(lines(result.stdout), [%r{MyObject simple.o}])
-    expect(File.exists?("simple.o")).to be_truthy
-    expect(File.exists?("simple.exe")).to be_truthy
+    expect(File.exist?("simple.o")).to be_truthy
+    expect(File.exist?("simple.exe")).to be_truthy
   end
 
   it 'allows cloning Environment objects' do
@@ -546,7 +546,7 @@ EOF
     test_dir('simple_cc')
     result = run_rscons
     expect(result.stderr).to eq ""
-    expect(File.exists?('build/e.1/simple.cc.o')).to be_truthy
+    expect(File.exist?('build/e.1/simple.cc.o')).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C++ program\n"
   end
 
@@ -554,7 +554,7 @@ EOF
     test_dir("simple_cc")
     result = run_rscons(args: %w[-f link_objects.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("simple.o")).to be_truthy
+    expect(File.exist?("simple.o")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C++ program\n"
   end
 
@@ -567,7 +567,7 @@ EOF
       %r{gcc -c -o build/e.1/two.c.o -MMD -MF build/e.1/two.c.o.mf two.c},
       %r{gcc -o two_sources.exe one.o build/e.1/two.c.o},
     ])
-    expect(File.exists?("two_sources.exe")).to be_truthy
+    expect(File.exist?("two_sources.exe")).to be_truthy
     expect(nr(`./two_sources.exe`)).to eq "This is a C program with two sources.\n"
   end
 
@@ -582,7 +582,7 @@ EOF
       %r{gcc -c -o build/e.1/one.c.o -MMD -MF build/e.1/one.c.o.mf one.c},
       %r{gcc -o library.exe build/e.1/one.c.o -L. -lmylib},
     ])
-    expect(File.exists?("library.exe")).to be_truthy
+    expect(File.exist?("library.exe")).to be_truthy
     ar_t = nr(`ar t libmylib.a`)
     expect(ar_t).to match %r{\btwo.c.o\b}
     expect(ar_t).to match %r{\bthree.c.o\b}
@@ -608,8 +608,8 @@ EOF
       %r{gcc -c -o one.o -MMD -MF build/e.1/one.o.mf -Isrc -Isrc/one -Isrc/two -O1 src/two/two.c},
       %r{gcc -c -o two.o -MMD -MF build/e.1/two.o.mf -Isrc -Isrc/one -Isrc/two -O2 src/two/two.c},
     ])
-    expect(File.exists?('one.o')).to be_truthy
-    expect(File.exists?('two.o')).to be_truthy
+    expect(File.exist?('one.o')).to be_truthy
+    expect(File.exist?('two.o')).to be_truthy
   end
 
   it 'rebuilds when user-specified dependencies change' do
@@ -622,7 +622,7 @@ EOF
       %r{Compiling simple.c},
       %r{Linking simple.exe},
     ])
-    expect(File.exists?('build/e.1/simple.c.o')).to be_truthy
+    expect(File.exist?('build/e.1/simple.c.o')).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
 
     File.open("program.ld", "w") {|fh| fh.puts("2")}
@@ -712,8 +712,8 @@ EOF
       test_dir("d")
       result = run_rscons(args: %w[-f link_objects.rb])
       expect(result.stderr).to eq ""
-      expect(File.exists?("main.o")).to be_truthy
-      expect(File.exists?("mod.o")).to be_truthy
+      expect(File.exist?("main.o")).to be_truthy
+      expect(File.exist?("mod.o")).to be_truthy
       expect(`./hello-d.exe`.rstrip).to eq "Hello from D, value is 42!"
     end
 
@@ -756,7 +756,7 @@ EOF
 
     result = run_rscons(args: %w[-f disassemble.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("simple.txt")).to be_truthy
+    expect(File.exist?("simple.txt")).to be_truthy
     expect(File.read("simple.txt")).to match /Disassembly of section .text:/
 
     result = run_rscons(args: %w[-f disassemble.rb])
@@ -794,7 +794,7 @@ EOF
       %r{Compiling program.c},
       %r{Linking program.exe},
     ])
-    expect(File.exists?('inc.h')).to be_truthy
+    expect(File.exist?('inc.h')).to be_truthy
     expect(nr(`./program.exe`)).to eq "The value is 678\n"
   end
 
@@ -809,8 +809,8 @@ EOF
     test_dir("simple")
     result = run_rscons(args: %w[-f register_target_in_build_hook.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
-    expect(File.exists?("build/e.1/simple.c.o.txt")).to be_truthy
+    expect(File.exist?("build/e.1/simple.c.o")).to be_truthy
+    expect(File.exist?("build/e.1/simple.c.o.txt")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
   end
 
@@ -819,8 +819,8 @@ EOF
     File.open("other.cccc", "w") {|fh| fh.puts}
     result = run_rscons(args: %w[-f cxxsuffix.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/simple.cc.o")).to be_truthy
-    expect(File.exists?("build/e.1/other.cccc.o")).to be_truthy
+    expect(File.exist?("build/e.1/simple.cc.o")).to be_truthy
+    expect(File.exist?("build/e.1/other.cccc.o")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C++ program\n"
   end
 
@@ -829,8 +829,8 @@ EOF
     FileUtils.mv("src/one/one.c", "src/one/one.yargh")
     result = run_rscons(args: %w[-f csuffix.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/src/one/one.yargh.o")).to be_truthy
-    expect(File.exists?("build/e.1/src/two/two.c.o")).to be_truthy
+    expect(File.exist?("build/e.1/src/one/one.yargh.o")).to be_truthy
+    expect(File.exist?("build/e.1/src/two/two.c.o")).to be_truthy
     expect(nr(`./program.exe`)).to eq "Hello from two()\n"
   end
 
@@ -838,9 +838,9 @@ EOF
     test_dir("two_sources")
     result = run_rscons(args: %w[-f objsuffix.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("two_sources.exe")).to be_truthy
-    expect(File.exists?("one.oooo")).to be_truthy
-    expect(File.exists?("two.ooo")).to be_truthy
+    expect(File.exist?("two_sources.exe")).to be_truthy
+    expect(File.exist?("one.oooo")).to be_truthy
+    expect(File.exist?("two.ooo")).to be_truthy
     expect(nr(`./two_sources.exe`)).to eq "This is a C program with two sources.\n"
   end
 
@@ -848,7 +848,7 @@ EOF
     test_dir("two_sources")
     result = run_rscons(args: %w[-f libsuffix.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("two_sources.exe")).to be_truthy
+    expect(File.exist?("two_sources.exe")).to be_truthy
     expect(nr(`./two_sources.exe`)).to eq "This is a C program with two sources.\n"
   end
 
@@ -863,7 +863,7 @@ EOF
       %r{Assembling two.sss},
       %r{Linking two_sources.exe},
     ])
-    expect(File.exists?("two_sources.exe")).to be_truthy
+    expect(File.exist?("two_sources.exe")).to be_truthy
     expect(nr(`./two_sources.exe`)).to eq "This is a C program with two sources.\n"
   end
 
@@ -902,7 +902,7 @@ EOF
     test_dir("simple")
     result = run_rscons(args: %w[-f cvar_array.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("build/e.1/simple.c.o")).to be_truthy
+    expect(File.exist?("build/e.1/simple.c.o")).to be_truthy
     expect(nr(`./simple.exe`)).to eq "This is a simple C program\n"
   end
 
@@ -910,7 +910,7 @@ EOF
     test_dir("typical")
     result = run_rscons(args: %w[-f multiple_targets_same_name.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("one.o")).to be_truthy
+    expect(File.exist?("one.o")).to be_truthy
     verify_lines(lines(result.stdout), [
       %r{Compiling src/one/one.c},
       %r{Compiling src/two/two.c},
@@ -921,8 +921,8 @@ EOF
     test_dir("typical")
     result = run_rscons(args: %w[-f post_build_hook_expansion.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("one.o")).to be_truthy
-    expect(File.exists?("two.o")).to be_truthy
+    expect(File.exist?("one.o")).to be_truthy
+    expect(File.exist?("two.o")).to be_truthy
     verify_lines(lines(result.stdout), [
       %r{Compiling src/one/one.c},
       %r{Compiling src/two/two.c},
@@ -936,8 +936,8 @@ EOF
     end
     result = run_rscons(args: %w[-f cache_successful_builds_when_one_fails.rb -j1])
     expect(result.stderr).to match /FOO/
-    expect(File.exists?("simple.o")).to be_truthy
-    expect(File.exists?("two.o")).to be_falsey
+    expect(File.exist?("simple.o")).to be_truthy
+    expect(File.exist?("two.o")).to be_falsey
 
     File.open("two.c", "w") {|fh|}
     result = run_rscons(args: %w[-f cache_successful_builds_when_one_fails.rb -j1])
@@ -994,10 +994,10 @@ EOF
     slines = lines(result.stdout)
     if RUBY_PLATFORM =~ /mingw|msys/
       verify_lines(slines, [%r{Linking mine.dll}])
-      expect(File.exists?("mine.dll")).to be_truthy
+      expect(File.exist?("mine.dll")).to be_truthy
     else
       verify_lines(slines, [%r{Linking libmine.so}])
-      expect(File.exists?("libmine.so")).to be_truthy
+      expect(File.exist?("libmine.so")).to be_truthy
     end
 
     result = run_rscons
@@ -1014,7 +1014,7 @@ EOF
 
     result = run_rscons(args: %w[-f shared_library_as.rb])
     expect(result.stderr).to eq ""
-    expect(File.exists?("file.S")).to be_truthy
+    expect(File.exist?("file.S")).to be_truthy
   end
 
   it "creates shared libraries using C++" do
@@ -1248,7 +1248,7 @@ EOF
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
 
-      expect(File.exists?("inst.exe")).to be_truthy
+      expect(File.exist?("inst.exe")).to be_truthy
       expect(File.read("inst.exe", mode: "rb")).to eq(File.read("copy.rb", mode: "rb"))
 
       FileUtils.rm("inst.exe")
@@ -1268,9 +1268,9 @@ EOF
       expect(result.stderr).to eq ""
       expect(result.stdout).to eq ""
 
-      expect(Dir.exists?("dest")).to be_truthy
-      expect(File.exists?("dest/copy.rb")).to be_truthy
-      expect(File.exists?("dest/copy_multiple.rb")).to be_truthy
+      expect(Dir.exist?("dest")).to be_truthy
+      expect(File.exist?("dest/copy.rb")).to be_truthy
+      expect(File.exist?("dest/copy_multiple.rb")).to be_truthy
 
       FileUtils.rm_rf("dest")
       result = run_rscons(args: %w[-f copy_multiple.rb])
@@ -1284,7 +1284,7 @@ EOF
       result = run_rscons(args: %w[-f copy_directory.rb])
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy copy_directory.rb => copy}])
-      expect(File.exists?("copy/copy_directory.rb")).to be_truthy
+      expect(File.exist?("copy/copy_directory.rb")).to be_truthy
       expect(File.read("copy/copy_directory.rb", mode: "rb")).to eq(File.read("copy_directory.rb", mode: "rb"))
 
       result = run_rscons(args: %w[-f copy_directory.rb])
@@ -1298,7 +1298,7 @@ EOF
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy src => noexist/src}])
       %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
-        expect(File.exists?("noexist/#{f}")).to be_truthy
+        expect(File.exist?("noexist/#{f}")).to be_truthy
         expect(File.read("noexist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
       end
     end
@@ -1309,7 +1309,7 @@ EOF
       expect(result.stderr).to eq ""
       verify_lines(lines(result.stdout), [%r{Copy src => exist/src}])
       %w[src/one/one.c src/two/two.c src/two/two.h].each do |f|
-        expect(File.exists?("exist/#{f}")).to be_truthy
+        expect(File.exist?("exist/#{f}")).to be_truthy
         expect(File.read("exist/#{f}", mode: "rb")).to eq(File.read(f, mode: "rb"))
       end
     end
@@ -1366,10 +1366,10 @@ EOF
 
     it "forces a build when the target file does not exist and is not in the cache" do
       test_dir("simple")
-      expect(File.exists?("simple.exe")).to be_falsey
+      expect(File.exist?("simple.exe")).to be_falsey
       result = run_rscons
       expect(result.stderr).to eq ""
-      expect(File.exists?("simple.exe")).to be_truthy
+      expect(File.exist?("simple.exe")).to be_truthy
     end
 
     it "forces a build when the target file does exist but is not in the cache" do
@@ -1379,7 +1379,7 @@ EOF
       end
       result = run_rscons
       expect(result.stderr).to eq ""
-      expect(File.exists?("simple.exe")).to be_truthy
+      expect(File.exist?("simple.exe")).to be_truthy
       expect(File.read("simple.exe", mode: "rb")).to_not eq "hi"
     end
 
@@ -1393,7 +1393,7 @@ EOF
       test_dir("simple")
       result = run_rscons
       expect(result.stderr).to eq ""
-      expect(File.exists?("simple.exe")).to be_truthy
+      expect(File.exist?("simple.exe")).to be_truthy
       expect(File.read("simple.exe", mode: "rb")).to_not eq "hi"
     end
 
@@ -1684,7 +1684,7 @@ EOF
       test_dir("library")
       result = run_rscons(args: %w[-f library_from_object.rb])
       expect(result.stderr).to eq ""
-      expect(File.exists?("two.o")).to be_truthy
+      expect(File.exist?("two.o")).to be_truthy
       verify_lines(lines(result.stdout), [%r{Building static library archive lib.a}])
     end
   end
@@ -1707,7 +1707,7 @@ EOF
       test_dir "shared_library"
       result = run_rscons(args: %w[-f shared_library_from_object.rb])
       expect(result.stderr).to eq ""
-      expect(File.exists?("one.c.o"))
+      expect(File.exist?("one.c.o"))
     end
   end
 
@@ -1752,14 +1752,14 @@ EOF
       test_dir("custom_builder")
       result = run_rscons(args: %w[-f produces.rb -j 4])
       expect(result.stderr).to eq ""
-      expect(File.exists?("copy_inc.h")).to be_truthy
+      expect(File.exist?("copy_inc.h")).to be_truthy
     end
 
     it "allows the user to specify side-effect files produced by another builder with Environment#produces" do
       test_dir("custom_builder")
       result = run_rscons(args: %w[-f produces_env.rb -j 4])
       expect(result.stderr).to eq ""
-      expect(File.exists?("copy_inc.h")).to be_truthy
+      expect(File.exist?("copy_inc.h")).to be_truthy
     end
   end
 
@@ -2522,7 +2522,7 @@ EOF
       result = run_rscons(args: %w[-f autoconf_rebuild.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
-      expect(File.exists?("simple.exe")).to be_truthy
+      expect(File.exist?("simple.exe")).to be_truthy
       result = run_rscons(args: %w[-f autoconf_rebuild.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
@@ -2536,13 +2536,13 @@ EOF
       result = run_rscons(args: %w[-f distclean.rb])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
-      expect(File.exists?("simple.o")).to be_truthy
-      expect(File.exists?("build")).to be_truthy
+      expect(File.exist?("simple.o")).to be_truthy
+      expect(File.exist?("build")).to be_truthy
       result = run_rscons(args: %w[-f distclean.rb distclean])
       expect(result.stderr).to eq ""
       expect(result.status).to eq 0
-      expect(File.exists?("simple.o")).to be_falsey
-      expect(File.exists?("build")).to be_falsey
+      expect(File.exist?("simple.o")).to be_falsey
+      expect(File.exist?("build")).to be_falsey
     end
   end
 
@@ -2576,7 +2576,7 @@ EOF
       result = run_rscons(args: %w[-f c_program.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match %r{Compiling/Linking}
-      expect(File.exists?("test.exe")).to be_truthy
+      expect(File.exist?("test.exe")).to be_truthy
       expect(`./test.exe`).to match /three/
 
       result = run_rscons(args: %w[-f c_program.rb])
@@ -2597,7 +2597,7 @@ EOF
       result = run_rscons(args: %w[-f c_shared_library.rb])
       expect(result.stderr).to eq ""
       expect(result.stdout).to match %r{Compiling/Linking}
-      expect(File.exists?("test.exe")).to be_truthy
+      expect(File.exist?("test.exe")).to be_truthy
       ld_library_path_prefix = (RUBY_PLATFORM =~ /mingw|msys/ ? "" : "LD_LIBRARY_PATH=. ")
       expect(`#{ld_library_path_prefix}./test.exe`).to match /three/
 
@@ -2651,11 +2651,11 @@ EOF
         expect(File.directory?("#{prefix}/bin")).to be_truthy
         expect(File.directory?("#{prefix}/src")).to be_truthy
         expect(File.directory?("#{prefix}/share")).to be_truthy
-        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("#{prefix}/src/one/one.c")).to be_truthy
-        expect(File.exists?("#{prefix}/share/proj/install.rb")).to be_truthy
-        expect(File.exists?("#{prefix}/mult/install.rb")).to be_truthy
-        expect(File.exists?("#{prefix}/mult/copy.rb")).to be_truthy
+        expect(File.exist?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exist?("#{prefix}/src/one/one.c")).to be_truthy
+        expect(File.exist?("#{prefix}/share/proj/install.rb")).to be_truthy
+        expect(File.exist?("#{prefix}/mult/install.rb")).to be_truthy
+        expect(File.exist?("#{prefix}/mult/copy.rb")).to be_truthy
 
         result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
@@ -2692,14 +2692,14 @@ EOF
 
         result = run_rscons(args: %w[-f install.rb install])
         expect(result.stderr).to eq ""
-        expect(File.exists?("#{prefix}/bin/program.exe")).to be_truthy
-        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_truthy
+        expect(File.exist?("#{prefix}/bin/program.exe")).to be_truthy
+        expect(File.exist?("build/e.1/src/one/one.c.o")).to be_truthy
 
         result = run_rscons(args: %w[-f install.rb uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to_not match /Removing/
-        expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
-        expect(File.exists?("build/e.1/src/one/one.c.o")).to be_truthy
+        expect(File.exist?("#{prefix}/bin/program.exe")).to be_falsey
+        expect(File.exist?("build/e.1/src/one/one.c.o")).to be_truthy
         expect(Dir.entries(prefix)).to match_array %w[. ..]
       end
     end
@@ -2717,7 +2717,7 @@ EOF
         result = run_rscons(args: %w[-f install.rb -v uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match %r{Removing #{prefix}/bin/program.exe}
-        expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
+        expect(File.exist?("#{prefix}/bin/program.exe")).to be_falsey
         expect(Dir.entries(prefix)).to match_array %w[. ..]
       end
     end
@@ -2735,7 +2735,7 @@ EOF
         result = run_rscons(args: %w[-f install.rb -v uninstall])
         expect(result.stderr).to eq ""
         expect(result.stdout).to match %r{Removing #{prefix}/bin/program.exe}
-        expect(File.exists?("#{prefix}/bin/program.exe")).to be_falsey
+        expect(File.exist?("#{prefix}/bin/program.exe")).to be_falsey
         expect(Dir.entries(prefix)).to match_array %w[. ..]
 
         FileUtils.mkdir_p("#{prefix}/bin")

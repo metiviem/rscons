@@ -118,13 +118,13 @@ module Rscons
 
       # Find the build script.
       if rsconscript
-        unless File.exists?(rsconscript)
+        unless File.exist?(rsconscript)
           $stderr.puts "Cannot read #{rsconscript}"
           return 1
         end
       else
         rsconscript = DEFAULT_RSCONSCRIPTS.find do |f|
-          File.exists?(f)
+          File.exist?(f)
         end
       end
 

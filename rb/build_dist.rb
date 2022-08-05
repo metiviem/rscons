@@ -22,7 +22,7 @@ combine_files = lambda do |file|
       require_name = $1
       if require_name =~ %r{^#{PROG_NAME}(?:/.*)?$}
         path = "#{LIB_DIR}/#{require_name}.rb"
-        if File.exists?(path)
+        if File.exist?(path)
           unless files_processed[path]
             files_processed[path] = true
             combine_files[path]
@@ -83,7 +83,7 @@ File.open("#{DIST}/#{PROG_NAME}", "wb", 0755) do |fh|
 #{license}
 
 script = File.join(File.dirname(__FILE__), ".rscons-#{VERSION}-#{hash}.rb")
-unless File.exists?(script)
+unless File.exist?(script)
   if File.read(__FILE__, mode: "rb") =~ /^#==>(.*)/
     require "zlib"
     require "base64"

@@ -147,7 +147,7 @@ module Rscons
 
         unless Rscons.phony_target?(target)
           # target file must exist on disk
-          unless File.exists?(target)
+          unless File.exist?(target)
             if options[:debug]
               puts "Target #{target} needs rebuilding because it does not exist on disk"
             end
@@ -307,7 +307,7 @@ module Rscons
       parts.each_index do |i|
         next if parts[i] == ""
         subpath = File.join(*parts[0, i + 1])
-        unless File.exists?(subpath)
+        unless File.exist?(subpath)
           FileUtils.mkdir_p(subpath)
           @cache["directories"][subpath] = !!options[:install]
         end

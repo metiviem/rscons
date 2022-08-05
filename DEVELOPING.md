@@ -9,6 +9,6 @@ To run the rscons specs, the following commands must be available:
 * g++
 * clang++
 * gdc
-* ldc
+* ldc2
 * flex
 * bison

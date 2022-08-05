@@ -17,14 +17,14 @@ module Rscons
       it "makes directories and records any created in the cache" do
         _cache = {}
         cache = build_from(_cache)
-        expect(File).to receive(:exists?).with("one").and_return(true)
-        expect(File).to receive(:exists?).with("one/two").and_return(false)
+        expect(File).to receive(:exist?).with("one").and_return(true)
+        expect(File).to receive(:exist?).with("one/two").and_return(false)
         expect(FileUtils).to receive(:mkdir_p).with("one/two")
-        expect(File).to receive(:exists?).with("one/two/three").and_return(false)
+        expect(File).to receive(:exist?).with("one/two/three").and_return(false)
         expect(FileUtils).to receive(:mkdir_p).with("one/two/three")
-        expect(File).to receive(:exists?).with("one").and_return(true)
-        expect(File).to receive(:exists?).with("one/two").and_return(true)
-        expect(File).to receive(:exists?).with("one/two/four").and_return(false)
+        expect(File).to receive(:exist?).with("one").and_return(true)
+        expect(File).to receive(:exist?).with("one/two").and_return(true)
+        expect(File).to receive(:exist?).with("one/two/four").and_return(false)
         expect(FileUtils).to receive(:mkdir_p).with("one/two/four")
         cache.mkdir_p("one/two/three")
         cache.mkdir_p("one\\two\\four")
@@ -34,8 +34,8 @@ module Rscons
       it "handles absolute paths" do
         _cache = {}
         cache = build_from(_cache)
-        expect(File).to receive(:exists?).with("/one").and_return(true)
-        expect(File).to receive(:exists?).with("/one/two").and_return(false)
+        expect(File).to receive(:exist?).with("/one").and_return(true)
+        expect(File).to receive(:exist?).with("/one/two").and_return(false)
         expect(FileUtils).to receive(:mkdir_p).with("/one/two")
         cache.mkdir_p("/one/two")
         expect(cache.directories(false)).to eq ["/one/two"]
