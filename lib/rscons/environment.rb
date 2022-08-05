@@ -116,6 +116,7 @@ module Rscons
         end
       @build_root = "#{Rscons.application.build_dir}/#{@name}"
       @n_threads = Rscons.application.n_threads
+      @build_steps = 0
       self.class.register(self)
       if block
         Environment.running_environment = self
@@ -359,6 +360,7 @@ module Rscons
           @builder_sets << build_builder_set
         end
         @builder_sets.last << builder
+        @build_steps += 1
         @build_targets[target] = builder
         builder
       else
