@@ -1,3 +1,14 @@
+## v3.1.0
+
+### New Features
+
+- #162 - Improve configuration error messages
+- #163 - Ruby 3.2 compatibility
+
+### Fixes
+
+- #161 - builder registered during build hooks should increase build step count
+
 ## v3.0.2
 
 ### Fixes
