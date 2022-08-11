@@ -43,7 +43,11 @@ describe Rscons do
     Dir.chdir(@owd)
     if example.exception
       @statics[:keep_test_run_dir] = true
-      puts "Leaving #{@build_test_run_dir} for inspection due to test failure"
+      message = "Leaving #{@build_test_run_dir} for inspection due to test failure"
+      if example.exception.backtrace.find {|e| e =~ %r{^(.*/#{File.basename(__FILE__)}:\d+)}}
+        message += " (#{$1})"
+      end
+      puts "\n#{message}"
     else
       rm_rf(@build_test_run_dir)
     end
@@ -1933,9 +1937,9 @@ EOF
             create_exe "gcc", "exit 1"
             create_exe "clang", "exit 1"
             result = run_rscons(args: %W[-f #{rsconscript} configure])
-            expect(result.stderr).to match /Configuration failed/
+            expect(result.stderr).to match %r{Configuration failed; log file written to build/_configure/config.log}
             expect(result.status).to_not eq 0
-            expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
+            expect(result.stdout).to match /Checking for C compiler\.\.\. not found \(checked gcc, clang\)/
           end
         end
       end
@@ -1987,9 +1991,9 @@ EOF
             create_exe "g++", "exit 1"
             create_exe "clang++", "exit 1"
             result = run_rscons(args: %W[-f #{rsconscript} configure])
-            expect(result.stderr).to match /Configuration failed/
+            expect(result.stderr).to match %r{Configuration failed; log file written to build/_configure/config.log}
             expect(result.status).to_not eq 0
-            expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. not found/
+            expect(result.stdout).to match /Checking for C\+\+ compiler\.\.\. not found \(checked g\+\+, clang\+\+\)/
           end
         end
       end
@@ -2043,9 +2047,9 @@ EOF
             create_exe "gdc", "exit 1"
             create_exe "ldc2", "exit 1"
             result = run_rscons(args: %W[-f #{rsconscript} configure])
-            expect(result.stderr).to match /Configuration failed/
+            expect(result.stderr).to match %r{Configuration failed; log file written to build/_configure/config.log}
             expect(result.status).to_not eq 0
-            expect(result.stdout).to match /Checking for D compiler\.\.\. not found/
+            expect(result.stdout).to match /Checking for D compiler\.\.\. not found \(checked gdc, ldc2\)/
           end
         end
       end
@@ -2514,7 +2518,7 @@ EOF
       expect(result.stdout).to match /Checking for C compiler\.\.\. not found/
       expect(result.status).to_not eq 0
       expect(result.stderr).to_not match /from\s/
-      expect(lines(result.stderr).last).to eq "Configuration failed"
+      expect(lines(result.stderr).last).to match /Configuration failed/
     end
 
     it "does not rebuild after building with auto-configuration" do

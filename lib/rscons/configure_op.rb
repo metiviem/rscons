@@ -12,7 +12,8 @@ module Rscons
     def initialize(script)
       @work_dir = "#{Rscons.application.build_dir}/_configure"
       FileUtils.mkdir_p(@work_dir)
-      @log_fh = File.open("#{@work_dir}/config.log", "wb")
+      @log_file_name = "#{@work_dir}/config.log"
+      @log_fh = File.open(@log_file_name, "wb")
       cache = Cache.instance
       cache["failed_commands"] = []
       cache["configuration_data"] = {}
@@ -64,7 +65,9 @@ module Rscons
       cc = ccc.find do |cc|
         test_c_compiler(cc, options)
       end
-      complete(cc ? 0 : 1, options.merge(success_message: cc))
+      complete(cc ? 0 : 1, options.merge(
+        success_message: cc,
+        fail_message: "not found (checked #{ccc.join(", ")})"))
     end
 
     # Check for a working C++ compiler.
@@ -86,7 +89,9 @@ module Rscons
       cc = ccc.find do |cc|
         test_cxx_compiler(cc, options)
       end
-      complete(cc ? 0 : 1, options.merge(success_message: cc))
+      complete(cc ? 0 : 1, options.merge(
+        success_message: cc,
+        fail_message: "not found (checked #{ccc.join(", ")})"))
     end
 
     # Check for a working D compiler.
@@ -108,7 +113,9 @@ module Rscons
       dc = cdc.find do |dc|
         test_d_compiler(dc, options)
       end
-      complete(dc ? 0 : 1, options.merge(success_message: dc))
+      complete(dc ? 0 : 1, options.merge(
+        success_message: dc,
+        fail_message: "not found (checked #{cdc.join(", ")})"))
     end
 
     # Check for a package or configure program output.
@@ -375,6 +382,8 @@ module Rscons
     #   A define to set (in CPPDEFINES) if the requested item is found.
     # @option options [String] :success_message
     #   Message to print on success (default "found").
+    # @option options [String] :fail_message
+    #   Message to print on failure (default "not found").
     def complete(status, options)
       success_message = options[:success_message] || "found"
       fail_message = options[:fail_message] || "not found"
@@ -398,7 +407,7 @@ module Rscons
           options[:on_fail].call
         end
         if should_fail
-          raise RsconsError.new("Configuration failed")
+          raise RsconsError.new("Configuration failed; log file written to #{@log_file_name}")
         end
       end
     end
