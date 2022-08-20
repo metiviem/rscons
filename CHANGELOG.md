@@ -1,5 +1,9 @@
 ## ChangeLog
 
+### v1.20.0
+
+- ruby 3.2 compatibility
+
 ### v1.19.1
 
 #### Fixes

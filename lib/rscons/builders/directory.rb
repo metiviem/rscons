@@ -16,7 +16,7 @@ module Rscons
       def run(target, sources, cache, env, vars)
         if File.directory?(target)
           target
-        elsif File.exists?(target)
+        elsif File.exist?(target)
           Ansi.write($stderr, :red, "Error: `#{target}' already exists and is not a directory", :reset, "\n")
           false
         else

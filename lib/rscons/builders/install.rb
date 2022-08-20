@@ -17,14 +17,14 @@ module Rscons
       #   Name of the target file on success or false on failure.
       def run(target, sources, cache, env, vars)
         target_is_dir = (sources.length > 1) ||
-                        Dir.exists?(sources.first) ||
-                        Dir.exists?(target)
+                        Dir.exist?(sources.first) ||
+                        Dir.exist?(target)
         outdir = target_is_dir ? target : File.dirname(target)
         # Collect the list of files to copy over.
         file_map = {}
         if target_is_dir
           sources.each do |src|
-            if Dir.exists? src
+            if Dir.exist? src
               Dir.glob("#{src}/**/*", File::FNM_DOTMATCH).select do |f|
                 File.file?(f)
               end.each do |subfile|
@@ -52,7 +52,7 @@ module Rscons
           end
           cache.register_build(dest, :Copy, [src], env)
         end
-        target if (target_is_dir ? Dir.exists?(target) : File.exists?(target))
+        target if (target_is_dir ? Dir.exist?(target) : File.exist?(target))
       end
 
 

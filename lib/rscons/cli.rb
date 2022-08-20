@@ -67,13 +67,13 @@ module Rscons
         end
 
         if rsconsfile
-          unless File.exists?(rsconsfile)
+          unless File.exist?(rsconsfile)
             $stderr.puts "Cannot read #{rsconsfile}"
             exit 1
           end
         else
           rsconsfile = DEFAULT_RSCONSFILES.find do |f|
-            File.exists?(f)
+            File.exist?(f)
           end
           unless rsconsfile
             $stderr.puts "Could not find the Rsconsfile to execute."

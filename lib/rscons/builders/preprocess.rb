@@ -54,7 +54,7 @@ module Rscons
       def finalize(options)
         if options[:command_status]
           target, deps, cache, env, vars = options.values_at(:target, :sources, :cache, :env, :vars)
-          if File.exists?(vars['_DEPFILE'])
+          if File.exist?(vars['_DEPFILE'])
             deps += Environment.parse_makefile_deps(vars['_DEPFILE'])
             FileUtils.rm_f(vars['_DEPFILE'])
           end
